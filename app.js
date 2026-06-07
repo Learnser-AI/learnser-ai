@@ -60,6 +60,9 @@ function initializeAuthListeners() {
 
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+    // Google Sign-In
+    safeOn('googleAuthBtn', 'click', handleGoogleAuth);
 }
 
 function switchAuthTab(tab) {
@@ -188,6 +191,99 @@ function handleLogout() {
     auth.signOut();
 }
 
+async function handleGoogleAuth() {
+    const messageEl = document.getElementById('authMessage');
+    try {
+        showLoading();
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        
+        console.log('Google login successful for uid:', user.uid);
+        
+        // Save user profile to database if it doesn't exist
+        const snapshot = await database.ref('users/' + user.uid).once('value');
+        if (!snapshot.exists()) {
+            const userData = {
+                name: user.displayName || user.email.split('@')[0],
+                email: user.email,
+                class: 'Select Class',
+                board: 'Select Board',
+                createdAt: new Date().toISOString()
+            };
+            await database.ref('users/' + user.uid).set(userData);
+            console.log('Created default user profile for Google user in DB');
+        }
+        
+        messageEl.textContent = 'Login successful!';
+        messageEl.className = 'auth-message success';
+    } catch (error) {
+        console.error('Google auth error:', error);
+        let errorMessage = error.message || 'An error occurred during Google sign-in';
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            errorMessage = 'An account already exists with this email. Please log in with your email and password, then link your Google account in your profile settings.';
+        }
+        messageEl.textContent = errorMessage;
+        messageEl.className = 'auth-message error';
+        hideLoading();
+    }
+}
+
+async function handleGoogleLinkToggle() {
+    if (!currentUser) return;
+    
+    const isGoogleLinked = currentUser.providerData.some(profile => profile.providerId === 'google.com');
+    
+    try {
+        showLoading();
+        if (isGoogleLinked) {
+            // Check if user has password provider or another provider linked so they don't get locked out
+            const providersCount = currentUser.providerData.length;
+            if (providersCount <= 1) {
+                alert('You cannot unlink Google account because it is your only sign-in method.');
+                hideLoading();
+                return;
+            }
+            
+            await currentUser.unlink('google.com');
+            alert('Google account unlinked successfully.');
+        } else {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            await currentUser.linkWithPopup(provider);
+            alert('Google account linked successfully.');
+        }
+        await loadUserProfile();
+    } catch (error) {
+        console.error('Google linking/unlinking error:', error);
+        alert(error.message || 'An error occurred while linking/unlinking Google account');
+    } finally {
+        hideLoading();
+    }
+}
+
+function updateGoogleLinkUI() {
+    if (!currentUser) return;
+    
+    const googleLinkStatus = document.getElementById('googleLinkStatus');
+    const googleLinkBtn = document.getElementById('googleLinkBtn');
+    
+    if (!googleLinkStatus || !googleLinkBtn) return;
+    
+    const isGoogleLinked = currentUser.providerData.some(profile => profile.providerId === 'google.com');
+    
+    if (isGoogleLinked) {
+        googleLinkStatus.textContent = 'Linked';
+        googleLinkStatus.className = 'link-status linked';
+        googleLinkBtn.textContent = 'Unlink';
+        googleLinkBtn.className = 'btn-danger btn-sm';
+    } else {
+        googleLinkStatus.textContent = 'Not Linked';
+        googleLinkStatus.className = 'link-status unlinked';
+        googleLinkBtn.textContent = 'Link Account';
+        googleLinkBtn.className = 'btn-secondary btn-sm';
+    }
+}
+
 function checkAuthState() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -247,13 +343,15 @@ async function loadUserProfile() {
             const profilePhotoFullUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'Student')}&background=667eea&color=fff&size=150`;
             document.getElementById('profilePhotoFull').src = profilePhotoFullUrl;
 
+            updateGoogleLinkUI();
             console.log('Profile updated successfully');
         } else {
             console.warn('No user data found in database for user:', currentUser.uid);
             // If no data in database, use email from auth
-            document.getElementById('userName').textContent = currentUser.email.split('@')[0];
-            document.getElementById('profileEmail').textContent = currentUser.email;
-            document.getElementById('profileNameFull').textContent = currentUser.email.split('@')[0];
+            document.getElementById('userName').textContent = currentUser.email ? currentUser.email.split('@')[0] : 'Student';
+            document.getElementById('profileEmail').textContent = currentUser.email || 'No email';
+            document.getElementById('profileNameFull').textContent = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Student');
+            updateGoogleLinkUI();
         }
     } catch (error) {
         console.error('Error loading profile:', error);
@@ -295,6 +393,7 @@ function initializeNavigationListeners() {
     safeOn('adminNavLink', 'click', (e) => { e.preventDefault(); showPage('admin'); loadAdminData(); });
     safeOn('profilePreview', 'click', () => showPage('profile'));
     safeOn('backToHomeBtn', 'click', () => showPage('home'));
+    safeOn('googleLinkBtn', 'click', handleGoogleLinkToggle);
     safeOn('pyqCard', 'click', () => showPage('pyqSubject'));
     safeOn('backFromSubjectBtn', 'click', () => showPage('home'));
     safeOn('backFromChapterBtn', 'click', () => showPage('pyqSubject'));
