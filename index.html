@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learnser AI - JEE Mains PYQ Practice</title>
+    <meta name="description" content="Learnser AI - Practice JEE Mains Previous Year Questions">
+    <meta name="keywords" content="Learnser AI, JEE Mains, PYQ, Previous Year Questions">
+    <meta name="author" content="Learnser AI">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar" style="display: none;">
+        <div class="sidebar-top">
+            <a href="#" class="sidebar-logo" id="sidebarLogo">
+                <span class="sidebar-logo-mark">LA</span>
+                <span class="sidebar-label sidebar-logo-text">Learnser AI</span>
+            </a>
+        </div>
+        <div class="sidebar-nav">
+            <a href="#" class="sidebar-link" id="homeNavLink">
+                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg></span>
+                <span class="sidebar-label">Home</span>
+            </a>
+            <a href="#" class="sidebar-link" id="upcomingNavLink">
+                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg></span>
+                <span class="sidebar-label">Upcoming Exams</span>
+            </a>
+            <a href="#" class="sidebar-link" id="podcastNavLink">
+                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" y1="19" x2="12" y2="23" />
+                        <line x1="8" y1="23" x2="16" y2="23" />
+                    </svg></span>
+                <span class="sidebar-label">EduPod</span>
+            </a>
+            <a href="#" class="sidebar-link" id="adminNavLink" style="display: none;">
+                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg></span>
+                <span class="sidebar-label">Admin Panel</span>
+            </a>
+        </div>
+        <div class="sidebar-bottom">
+            <button class="sidebar-link sidebar-logout" id="logoutBtn">
+                <span class="sidebar-icon sidebar-logout-icon"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg></span>
+                <span class="sidebar-label">Logout</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Login/Signup Page -->
+    <div id="authPage" class="auth-container">
+        <div class="auth-box">
+            <h1 class="auth-heading">Learnser AI</h1>
+            <p class="auth-subheading">Your Intelligent Learning Companion</p>
+
+            <div class="auth-tabs">
+                <button class="tab-btn active" id="loginTab">Login</button>
+                <button class="tab-btn" id="signupTab">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signupForm" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <input type="text" id="signupName" placeholder="Full Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" id="signupEmail" placeholder="Email" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" required>
+                </div>
+                <div class="form-group">
+                    <select id="signupClass" required>
+                        <option value="">Select Class</option>
+                        <option value="11">Class 11</option>
+                        <option value="12">Class 12</option>
+                        <option value="Dropper">Dropper</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="signupBoard" required>
+                        <option value="">Select Board</option>
+                        <option value="CBSE">CBSE</option>
+                        <option value="ICSE">ICSE</option>
+                        <option value="State Board">State Board</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Sign Up</button>
+            </form>
+
+            <p class="auth-message" id="authMessage"></p>
+        </div>
+    </div>
+
+    <!-- Home Page -->
+    <div id="homePage" class="container" style="display: none;">
+        <div class="profile-section" id="profilePreview">
+            <img id="profilePhoto" src="https://ui-avatars.com/api/?name=Student&background=667eea&color=fff&size=80"
+                alt="Profile" class="profile-img">
+            <div class="profile-info">
+                <h3 id="userName">Student Name</h3>
+                <p id="userClass" class="user-subtitle">Class 12</p>
+            </div>
+        </div>
+
+        <div class="exam-cards-section">
+            <h2 class="section-heading">Select Your Exam</h2>
+            <div class="exam-cards-grid">
+                <!-- JEE Card (enabled by default) -->
+                <div class="exam-card exam-card-jee" id="examCard-jee" data-exam="jee">
+                    <div class="exam-card-badge enabled-badge">Active</div>
+                    <div class="exam-card-icon">⚛️</div>
+                    <h3 class="exam-card-title">JEE</h3>
+                    <p class="exam-card-sub">Joint Entrance Examination</p>
+                    <div class="exam-card-arrow">→</div>
+                </div>
+                <!-- BITSAT Card (disabled) -->
+                <div class="exam-card exam-card-disabled" id="examCard-bitsat" data-exam="bitsat">
+                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
+                    <div class="exam-card-icon">🎯</div>
+                    <h3 class="exam-card-title">BITSAT</h3>
+                    <p class="exam-card-sub">BITS Admission Test</p>
+                    <div class="exam-card-lock">🔒</div>
+                </div>
+                <!-- VITEEE Card (disabled) -->
+                <div class="exam-card exam-card-disabled" id="examCard-viteee" data-exam="viteee">
+                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
+                    <div class="exam-card-icon">🏛️</div>
+                    <h3 class="exam-card-title">VITEEE</h3>
+                    <p class="exam-card-sub">VIT Engineering Entrance</p>
+                    <div class="exam-card-lock">🔒</div>
+                </div>
+                <!-- MHTCET Card (disabled) -->
+                <div class="exam-card exam-card-disabled" id="examCard-mhtcet" data-exam="mhtcet">
+                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
+                    <div class="exam-card-icon">📐</div>
+                    <h3 class="exam-card-title">MHT CET</h3>
+                    <p class="exam-card-sub">Maharashtra CET</p>
+                    <div class="exam-card-lock">🔒</div>
+                </div>
+                <!-- MET Card (disabled) -->
+                <div class="exam-card exam-card-disabled" id="examCard-met" data-exam="met">
+                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
+                    <div class="exam-card-icon">🔬</div>
+                    <h3 class="exam-card-title">MET</h3>
+                    <p class="exam-card-sub">Manipal Entrance Test</p>
+                    <div class="exam-card-lock">🔒</div>
+                </div>
+                <!-- NDA Card (disabled) -->
+                <div class="exam-card exam-card-disabled" id="examCard-nda" data-exam="nda">
+                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
+                    <div class="exam-card-icon">🎖️</div>
+                    <h3 class="exam-card-title">NDA</h3>
+                    <p class="exam-card-sub">National Defence Academy</p>
+                    <div class="exam-card-lock">🔒</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Page -->
+    <div id="profilePage" class="container profile-page" style="display: none;">
+        <div class="profile-card">
+            <div class="profile-header-full">
+                <img id="profilePhotoFull"
+                    src="https://ui-avatars.com/api/?name=Student&background=667eea&color=fff&size=150" alt="Profile"
+                    class="profile-img-large">
+                <h2 id="profileNameFull">Student Name</h2>
+            </div>
+            <div class="profile-details">
+                <div class="profile-field">
+                    <label>📧 Email</label>
+                    <p id="profileEmail">-</p>
+                </div>
+                <div class="profile-field">
+                    <label>🎓 Class</label>
+                    <p id="profileClass">-</p>
+                </div>
+                <div class="profile-field">
+                    <label>📖 Board of Examination</label>
+                    <p id="profileBoard">-</p>
+                </div>
+            </div>
+            <button class="btn-secondary btn-full" id="backToHomeBtn">Back to Home</button>
+        </div>
+    </div>
+
+    <!-- PYQ Subject Selection Page -->
+    <div id="pyqSubjectPage" class="container" style="display: none;">
+        <h2 class="page-title">Select Subject</h2>
+        <p class="page-subtitle">Choose a subject to practice PYQs</p>
+
+        <div class="subject-grid">
+            <div class="subject-card" data-subject="physics">
+                <div class="subject-icon">⚛️</div>
+                <h3>Physics</h3>
+                <p>Practice Physics PYQs</p>
+            </div>
+            <div class="subject-card" data-subject="chemistry">
+                <div class="subject-icon">🧪</div>
+                <h3>Chemistry</h3>
+                <p>Practice Chemistry PYQs</p>
+            </div>
+            <div class="subject-card" data-subject="mathematics">
+                <div class="subject-icon">📐</div>
+                <h3>Mathematics</h3>
+                <p>Practice Mathematics PYQs</p>
+            </div>
+        </div>
+        <button class="btn-secondary btn-back" id="backFromSubjectBtn">← Back to Home</button>
+    </div>
+
+    <!-- Chapter Selection Page -->
+    <div id="chapterPage" class="container" style="display: none;">
+        <h2 class="page-title" id="chapterPageTitle">Select Chapter</h2>
+        <p class="page-subtitle" id="chapterPageSubtitle">Choose a chapter to start practicing</p>
+
+        <div class="chapter-list" id="chapterList">
+            <!-- Chapters will be loaded dynamically -->
+        </div>
+        <button class="btn-secondary btn-back" id="backFromChapterBtn">← Back to Subjects</button>
+    </div>
+
+    <!-- Practice Page (New - Replaces Quiz Page) -->
+    <div id="practicePage" class="container practice-container" style="display: none;">
+        <div class="practice-header">
+            <div class="practice-info-bar">
+                <h2 class="practice-title">
+                    <span id="practiceSubject">Physics</span> - <span id="practiceChapter">Chapter Name</span>
+                </h2>
+            </div>
+            <div class="practice-stats" id="practiceStats">
+                Showing 0 questions
+            </div>
+        </div>
+
+        <!-- Filters and Sort Section -->
+        <div class="filters-section">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Year:</label>
+                    <select id="filterYear">
+                        <option value="all">All Years</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Shift:</label>
+                    <select id="filterShift">
+                        <option value="all">All Shifts</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Difficulty:</label>
+                    <select id="filterDifficulty">
+                        <option value="all">All Difficulties</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Subtopic:</label>
+                    <select id="filterSubtopic">
+                        <option value="all">All Subtopics</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Sort By:</label>
+                    <select id="sortBy">
+                        <option value="default">Default Order</option>
+                        <option value="year-desc">Year (Newest First)</option>
+                        <option value="year-asc">Year (Oldest First)</option>
+                        <option value="shift">Shift</option>
+                        <option value="difficulty">Difficulty</option>
+                        <option value="subtopic">Subtopic</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questions Container -->
+        <div class="questions-container" id="questionsContainer">
+            <!-- Questions will be loaded dynamically -->
+        </div>
+
+        <button class="btn-secondary btn-back" id="backFromPracticeBtn">← Back to Chapters</button>
+    </div>
+
+    <!-- Quiz Results Page -->
+    <div id="resultsPage" class="container results-container" style="display: none;">
+        <div class="results-card">
+            <div class="results-icon">🎉</div>
+            <h2>Practice Session Complete!</h2>
+            <div class="results-message">
+                <p>Great work! Review your answers and detailed solutions above.</p>
+            </div>
+            <div class="results-actions">
+                <button class="btn-primary" id="backToChaptersFromResultsBtn">Back to Chapters</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Exams Page -->
+    <div id="upcomingPage" class="container" style="display: none;">
+        <h2 class="page-title">Upcoming Entrance Exams</h2>
+        <p class="page-subtitle">Stay updated with important exam dates</p>
+
+        <div class="exam-list" id="examList">
+            <div class="loading">Loading exams...</div>
+        </div>
+        <button class="btn-secondary btn-back" id="backFromUpcomingBtn">← Back to Home</button>
+    </div>
+
+    <!-- AI Podcast Page -->
+    <div id="podcastPage" class="container podcast-page-container" style="display: none;">
+        <h2 class="page-title">🎙️ EduPod - AI Podcast</h2>
+        <p class="page-subtitle">Learn any topic through an AI-generated educational podcast</p>
+
+        <div class="podcast-config-card">
+            <div class="form-group">
+                <label for="podcastTopic">What topic do you want to learn today?</label>
+                <input type="text" id="podcastTopic"
+                    placeholder="e.g., Newton's three laws, Photosynthesis, Organic Chemistry">
+            </div>
+            <div class="podcast-settings-toggle-container">
+                <button type="button" class="btn-settings-toggle" id="podcastSettingsToggleBtn">⚙️ Backend Settings</button>
+            </div>
+            <div class="podcast-settings-panel" id="podcastSettingsPanel" style="display: none; margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="podcastBackendUrl" style="font-size: 12px; margin-bottom: 6px;">TTS Backend Server URL:</label>
+                    <input type="text" id="podcastBackendUrl" placeholder="http://127.0.0.1:8080" style="padding: 8px 12px; font-size: 13px; width: 100%; box-sizing: border-box;">
+                    <p style="font-size: 11px; color: var(--ig-text-secondary); margin-top: 6px; line-height: 1.4;">
+                        Use local backend (<code>http://127.0.0.1:8080</code>) or a secure HTTPS tunnel/deploy URL (e.g. <code>https://your-tunnel.ngrok-free.app</code> or <code>https://your-backend.onrender.com</code>).
+                    </p>
+                </div>
+            </div>
+            <button class="btn-primary btn-full" id="generatePodcastBtn" style="margin-top: 16px;">🎙️ Generate Podcast</button>
+        </div>
+
+        <div id="podcastError" class="podcast-error" style="display: none;"></div>
+        <div id="podcastLoading" class="podcast-loading" style="display: none;">
+            <div class="podcast-loading-spinner"></div>
+            <p>Writing highly energetic, conversational script...</p>
+        </div>
+
+        <div id="podcastScriptDisplay" class="podcast-script-container" style="display: none;"></div>
+
+        <button class="btn-secondary btn-back" id="backFromPodcastBtn">← Back to Home</button>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPage" class="container admin-panel" style="display: none;">
+        <h2 class="page-title">Admin Panel</h2>
+        <p class="page-subtitle">Manage questions, chapters, and exams</p>
+
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" data-tab="questions">📝 Questions</button>
+            <button class="admin-tab-btn" data-tab="chapters">📚 Chapters</button>
+            <button class="admin-tab-btn" data-tab="exams">📅 Exams</button>
+        </div>
+
+        <!-- Manage Questions Tab -->
+        <div id="adminQuestionsTab" class="admin-tab-content">
+            <div class="admin-card">
+                <h3>Add New Question</h3>
+                <form id="addQuestionForm" class="admin-form">
+                    <div class="form-row">
+                        <select id="adminSubject" required>
+                            <option value="">Select Subject</option>
+                            <option value="physics">Physics</option>
+                            <option value="chemistry">Chemistry</option>
+                            <option value="mathematics">Mathematics</option>
+                        </select>
+                        <select id="adminChapter" required disabled>
+                            <option value="">Select Chapter First</option>
+                        </select>
+                    </div>
+                    <textarea id="adminQuestion" placeholder="Enter question text" rows="3" required></textarea>
+                    <div class="options-input">
+                        <input type="text" id="adminOption1" placeholder="Option A" required>
+                        <input type="text" id="adminOption2" placeholder="Option B" required>
+                        <input type="text" id="adminOption3" placeholder="Option C" required>
+                        <input type="text" id="adminOption4" placeholder="Option D" required>
+                    </div>
+                    <div class="form-row">
+                        <select id="adminCorrectAnswer" required>
+                            <option value="">Select Correct Answer</option>
+                            <option value="0">Option A</option>
+                            <option value="1">Option B</option>
+                            <option value="2">Option C</option>
+                            <option value="3">Option D</option>
+                        </select>
+                        <input type="text" id="adminYear" placeholder="Year (e.g., 2024)" required>
+                    </div>
+
+                    <!-- New Metadata Fields -->
+                    <div class="form-row">
+                        <input type="text" id="adminShift" placeholder="Shift (e.g., Shift 1, Morning)">
+                        <input type="text" id="adminSubtopic" placeholder="Subtopic (optional)">
+                    </div>
+                    <div class="form-row">
+                        <select id="adminDifficulty">
+                            <option value="">Select Difficulty (optional)</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+
+                    <!-- Detailed Answer Field -->
+                    <div class="detailed-answer-section">
+                        <label for="adminDetailedAnswer">Detailed Solution (optional):</label>
+                        <textarea id="adminDetailedAnswer"
+                            placeholder="Enter detailed step-by-step solution, explanation, formulas, or any helpful notes for students..."
+                            rows="6"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Add Question</button>
+                </form>
+            </div>
+
+            <div class="admin-card">
+                <h3>Existing Questions</h3>
+                <div class="filter-section">
+                    <select id="filterSubject">
+                        <option value="">All Subjects</option>
+                        <option value="physics">Physics</option>
+                        <option value="chemistry">Chemistry</option>
+                        <option value="mathematics">Mathematics</option>
+                    </select>
+                    <select id="filterChapter" disabled>
+                        <option value="">All Chapters</option>
+                    </select>
+                    <button class="btn-secondary" id="loadQuestionsBtn">Load Questions</button>
+                </div>
+                <div id="questionsList" class="admin-list">
+                    <p class="no-data">Select subject and chapter, then click 'Load Questions'</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Chapters Tab -->
+        <div id="adminChaptersTab" class="admin-tab-content" style="display: none;">
+            <div class="admin-card">
+                <h3>Add New Chapter</h3>
+                <form id="addChapterForm" class="admin-form">
+                    <select id="chapterSubject" required>
+                        <option value="">Select Subject</option>
+                        <option value="physics">Physics</option>
+                        <option value="chemistry">Chemistry</option>
+                        <option value="mathematics">Mathematics</option>
+                    </select>
+                    <input type="text" id="chapterName" placeholder="Chapter Name" required>
+                    <input type="number" id="chapterOrder" placeholder="Display Order (e.g., 1, 2, 3)" required>
+                    <button type="submit" class="btn-primary">Add Chapter</button>
+                </form>
+            </div>
+
+            <div class="admin-card">
+                <h3>Existing Chapters</h3>
+                <div class="chapters-by-subject">
+                    <div class="subject-chapters">
+                        <h4>Physics</h4>
+                        <div id="physicsChaptersList" class="admin-list">
+                            <p class="no-data">No chapters added yet</p>
+                        </div>
+                    </div>
+                    <div class="subject-chapters">
+                        <h4>Chemistry</h4>
+                        <div id="chemistryChaptersList" class="admin-list">
+                            <p class="no-data">No chapters added yet</p>
+                        </div>
+                    </div>
+                    <div class="subject-chapters">
+                        <h4>Mathematics</h4>
+                        <div id="mathematicsChaptersList" class="admin-list">
+                            <p class="no-data">No chapters added yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Exams Tab -->
+        <div id="adminExamsTab" class="admin-tab-content" style="display: none;">
+            <!-- NEW: Exam Toggles -->
+            <div class="admin-card">
+                <h3>🎛️ Exam Access Controls</h3>
+                <p style="color: var(--ig-text-secondary); font-size: 13px; margin-bottom: 16px;">Enable or disable
+                    exams on the home page. JEE is always active.</p>
+                <div class="exam-toggles-grid">
+                    <div class="exam-toggle-row">
+                        <div class="exam-toggle-info">
+                            <span class="exam-toggle-icon">⚛️</span>
+                            <div>
+                                <strong>JEE</strong>
+                                <p>Joint Entrance Examination</p>
+                            </div>
+                        </div>
+                        <div class="exam-toggle-control always-on">Always On</div>
+                    </div>
+                    <div class="exam-toggle-row" id="toggle-row-bitsat">
+                        <div class="exam-toggle-info">
+                            <span class="exam-toggle-icon">🎯</span>
+                            <div>
+                                <strong>BITSAT</strong>
+                                <p>BITS Admission Test</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-bitsat" data-exam="bitsat">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="exam-toggle-row" id="toggle-row-viteee">
+                        <div class="exam-toggle-info">
+                            <span class="exam-toggle-icon">🏛️</span>
+                            <div>
+                                <strong>VITEEE</strong>
+                                <p>VIT Engineering Entrance</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-viteee" data-exam="viteee">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="exam-toggle-row" id="toggle-row-mhtcet">
+                        <div class="exam-toggle-info">
+                            <span class="exam-toggle-icon">📐</span>
+                            <div>
+                                <strong>MHT CET</strong>
+                                <p>Maharashtra CET</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-mhtcet" data-exam="mhtcet">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="exam-toggle-row" id="toggle-row-met">
+                        <div class="exam-toggle-info">
+                            <span class="exam-toggle-icon">🔬</span>
+                            <div>
+                                <strong>MET</strong>
+                                <p>Manipal Entrance Test</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-met" data-exam="met">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="exam-toggle-row" id="toggle-row-nda">
+                        <div class="exam-toggle-info">
+                            <span class="exam-toggle-icon">🎖️</span>
+                            <div>
+                                <strong>NDA</strong>
+                                <p>National Defence Academy</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-nda" data-exam="nda">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h3>Add Upcoming Exam</h3>
+                <form id="addExamForm" class="admin-form">
+                    <input type="text" id="adminExamName" placeholder="Exam Name (e.g., JEE Mains 2024 Session 1)"
+                        required>
+                    <input type="date" id="adminExamDate" required>
+                    <textarea id="adminExamDetails" placeholder="Exam Details" rows="3" required></textarea>
+                    <input type="url" id="adminExamLink" placeholder="Registration/Information Link (optional)">
+                    <button type="submit" class="btn-primary">Add Exam</button>
+                </form>
+            </div>
+
+            <div class="admin-card">
+                <h3>Upcoming Exams</h3>
+                <div id="examListAdmin" class="admin-list">
+                    <p class="no-data">No exams added yet</p>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-secondary btn-back" id="backFromAdminBtn">← Back to Home</button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Podcast Player Panel -->
+    <div id="podcastPlayerPanel" class="podcast-player-panel" style="display: none;">
+        <div class="podcast-player-layout">
+            <div class="podcast-controls-cluster">
+                <button class="podcast-control-btn" id="podcastSkipBack">-5s</button>
+                <button class="podcast-control-btn podcast-play-btn" id="podcastPlayPauseBtn">▶</button>
+                <button class="podcast-control-btn" id="podcastSkipForward">+5s</button>
+            </div>
+            <div class="podcast-timeline">
+                <span id="podcastCurrentTime" class="podcast-time-label">0:00</span>
+                <input type="range" id="podcastScrubber" class="podcast-scrubber" min="0" max="100" value="0">
+                <span id="podcastTotalTime" class="podcast-time-label">0:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Learnser AI - Your Intelligent Learning Companion</p>
+        <p class="footer-tagline">Empowering JEE Aspirants with Smart Practice</p>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
