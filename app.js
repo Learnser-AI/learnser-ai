@@ -201,6 +201,8 @@ function checkAuthState() {
             // Check if user is admin
             if (isAdmin(user.email)) {
                 document.getElementById('adminNavLink').style.display = 'flex';
+                const podcastSettingsToggle = document.getElementById('podcastSettingsToggleContainer');
+                if (podcastSettingsToggle) podcastSettingsToggle.style.display = 'flex';
             }
         } else {
             currentUser = null;
@@ -208,6 +210,8 @@ function checkAuthState() {
             sidebar.style.display = 'none';
             document.body.classList.remove('sidebar-active');
             document.getElementById('adminNavLink').style.display = 'none';
+            const podcastSettingsToggle = document.getElementById('podcastSettingsToggleContainer');
+            if (podcastSettingsToggle) podcastSettingsToggle.style.display = 'none';
         }
         hideLoading();
     });
@@ -1303,7 +1307,11 @@ let podcastElapsedOffset = 0;
 let podcastLineDurations = [];
 let podcastAbortController = null;
 let podcastAudioCache = {};
-let BACKEND_URL = localStorage.getItem('EDUPOD_BACKEND_URL') || (window.location.port === '8080' ? '' : 'http://127.0.0.1:8080');
+let BACKEND_URL = localStorage.getItem('EDUPOD_BACKEND_URL');
+if (!BACKEND_URL || BACKEND_URL.includes('127.0.0.1') || BACKEND_URL.includes('localhost')) {
+    BACKEND_URL = window.location.port === '8080' ? '' : 'https://learnser-ai-backend.onrender.com';
+    localStorage.setItem('EDUPOD_BACKEND_URL', BACKEND_URL);
+}
 
 const SARVAM_API_KEY = "sk_4rrt5bjm_3GMlfBpRrJ0bFhMGWYaLd5KB";
 
