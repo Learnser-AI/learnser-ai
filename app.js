@@ -1477,6 +1477,8 @@ async function generatePodcast() {
     scriptDisplay.style.display = 'none';
     errorDisplay.style.display = 'none';
     scriptDisplay.innerHTML = '';
+    const loadingText = document.getElementById('podcastLoadingText');
+    if (loadingText) loadingText.textContent = 'Writing highly energetic, conversational script...';
 
     const systemPrompt = `You are an expert audio dramatist and academic curriculum designer specializing in high-engagement educational podcasts. Your goal is to convert technical study notes into a flawless, high-retention audio script.
 
@@ -1547,6 +1549,8 @@ Return strictly valid raw JSON.
         const decoder = new TextDecoder('utf-8');
         let accumulated = '';
         let buffer = '';
+        let chunkCount = 0;
+        const loadingTextEl = document.getElementById('podcastLoadingText');
 
         while (true) {
             const { done, value } = await reader.read();
@@ -1571,10 +1575,18 @@ Return strictly valid raw JSON.
                 if (!trimmed.startsWith('data: ')) continue;
                 try {
                     const delta = JSON.parse(trimmed.slice(6))?.choices?.[0]?.delta?.content;
-                    if (delta) accumulated += delta;
+                    if (delta) {
+                        accumulated += delta;
+                        chunkCount++;
+                        if (chunkCount % 10 === 0 && loadingTextEl) {
+                            loadingTextEl.textContent = `Streaming script... (${accumulated.length} chars received)`;
+                        }
+                    }
                 } catch (e) { console.error("SSE parse error", e, trimmed); }
             }
         }
+
+        if (loadingTextEl) loadingTextEl.textContent = 'Processing script...';
 
         if (accumulated.includes('</think>')) {
             accumulated = accumulated.split('</think>')[1].trim();
@@ -1645,8 +1657,8 @@ Return strictly valid raw JSON.
             while (searchIndex < rawContent.length) {
                 const nextQuote = rawContent.indexOf('"', searchIndex);
                 if (nextQuote === -1) break;
-                const afterQuote = rawContent.substring(nextQuote + 1);
-                if (/^\s*}/.test(afterQuote)) {
+                const afterQuote = rawContent.substring(nextQuote + 1).trimStart();
+                if (/^[}\]]/.test(afterQuote) || /^,/.test(afterQuote)) {
                     trueEndQuoteIndex = nextQuote;
                     break;
                 }
