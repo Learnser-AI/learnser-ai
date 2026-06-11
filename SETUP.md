@@ -138,8 +138,8 @@ Edit `index.html`:
 {
   "rules": {
     "users": {
+      ".read": "auth != null",
       "$uid": {
-        ".read": "$uid === auth.uid",
         ".write": "$uid === auth.uid"
       }
     },
@@ -159,6 +159,26 @@ Edit `index.html`:
       "$uid": {
         ".read": "$uid === auth.uid",
         ".write": "$uid === auth.uid"
+      }
+    },
+    "podcastHistory": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    },
+    "communityMessages": {
+      "general": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      },
+      "updates": {
+        ".read": "auth != null",
+        ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'aryamansingh2w16@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'gk123ganubanu@gmail.com')"
+      },
+      "tests": {
+        ".read": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'aryamansingh2w16@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'gk123ganubanu@gmail.com')",
+        ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'aryamansingh2w16@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'gk123ganubanu@gmail.com')"
       }
     }
   }

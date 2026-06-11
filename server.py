@@ -23,8 +23,11 @@ def sanitize_text(text):
     text = text.replace('*', '').replace('#', '').strip()
     return text
 
-@app.route('/')
-def index():
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    if path and os.path.exists(path):
+        return send_from_directory('.', path)
     return send_from_directory('.', 'index.html')
 
 @app.route('/stream-line', methods=['POST'])

@@ -39,6 +39,14 @@
                     </svg></span>
                 <span class="sidebar-label">Upcoming Exams</span>
             </a>
+            <a href="#" class="sidebar-link" id="customTestNavLink">
+                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                    </svg></span>
+                <span class="sidebar-label">Custom Test</span>
+            </a>
             <a href="#" class="sidebar-link" id="podcastNavLink">
                 <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -48,6 +56,13 @@
                         <line x1="8" y1="23" x2="16" y2="23" />
                     </svg></span>
                 <span class="sidebar-label">EduPod</span>
+            </a>
+            <a href="#" class="sidebar-link" id="communityNavLink">
+                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg></span>
+                <span class="sidebar-label">Community</span>
             </a>
             <a href="#" class="sidebar-link" id="adminNavLink" style="display: none;">
                 <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -59,6 +74,19 @@
             </a>
         </div>
         <div class="sidebar-bottom">
+            <button class="sidebar-link" id="themeSwitchBtn">
+                <span class="sidebar-icon">
+                    <svg id="themeIconInstagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                    <svg id="themeIconWhatsapp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                </span>
+                <span class="sidebar-label" id="themeSwitchLabel">WhatsApp Theme</span>
+            </button>
             <button class="sidebar-link sidebar-logout" id="logoutBtn">
                 <span class="sidebar-icon sidebar-logout-icon"><svg viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -138,6 +166,15 @@
                 <span>Continue with Google</span>
             </button>
 
+            <!-- Commented out to remove Apple sign-in option for users, keeping base code in the file
+            <button id="appleAuthBtn" class="btn-apple">
+                <svg class="apple-logo" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-.96.04-2.13.64-2.82 1.45-.6.69-1.12 1.84-.98 2.94.1.08 2.15.48 2.81-1.33"/>
+                </svg>
+                <span>Continue with Apple</span>
+            </button>
+            -->
+
             <p class="auth-message" id="authMessage"></p>
         </div>
     </div>
@@ -150,6 +187,21 @@
             <div class="profile-info">
                 <h3 id="userName">Student Name</h3>
                 <p id="userClass" class="user-subtitle">Class 12</p>
+            </div>
+        </div>
+
+        <!-- Custom Test Banner -->
+        <div class="custom-test-banner" id="homeCustomTestBanner">
+            <div class="custom-test-banner-content">
+                <h3 class="custom-test-banner-title">Create Your Own Test &rsaquo;</h3>
+            </div>
+            <div class="custom-test-banner-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
             </div>
         </div>
 
@@ -230,6 +282,23 @@
                     <label>📖 Board of Examination</label>
                     <p id="profileBoard">-</p>
                 </div>
+                <div class="profile-field">
+                    <label>⏱️ Question Timer Setting</label>
+                    <div class="profile-link-row">
+                        <span style="font-size: 13.5px; color: var(--ig-text-secondary);">Auto-start timer when opening questions</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="profileAutoStartTimer" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="profile-field">
+                    <label>💬 Community Username</label>
+                    <div class="profile-link-row">
+                        <input type="text" id="profileCommunityUsername" placeholder="e.g. @studious_jee" style="max-width: 200px; width: 100%;">
+                        <button id="saveCommunityUsernameBtn" class="btn-primary btn-sm" style="margin-top: 0;">Save</button>
+                    </div>
+                </div>
                 <div class="profile-field" id="googleLinkField">
                     <label>🔗 Google Account</label>
                     <div class="profile-link-row">
@@ -237,8 +306,19 @@
                         <button id="googleLinkBtn" class="btn-secondary btn-sm">Link Account</button>
                     </div>
                 </div>
+                <!-- Commented out to remove Apple account linking for users, keeping base code in the file
+                <div class="profile-field" id="appleLinkField">
+                    <label> Apple Account</label>
+                    <div class="profile-link-row">
+                        <span id="appleLinkStatus" class="link-status">Checking...</span>
+                        <button id="appleLinkBtn" class="btn-secondary btn-sm">Link Account</button>
+                    </div>
+                </div>
+                -->
             </div>
-            <button class="btn-secondary btn-full" id="backToHomeBtn">Back to Home</button>
+            <div class="profile-actions">
+                <button class="btn-secondary btn-full" id="backToHomeBtn">← Back to Home</button>
+            </div>
         </div>
     </div>
 
@@ -269,13 +349,13 @@
 
     <!-- Chapter Selection Page -->
     <div id="chapterPage" class="container" style="display: none;">
+        <button class="btn-secondary btn-back btn-back-top" id="backFromChapterBtn">← <span id="backFromChapterText">Back to Subjects</span></button>
         <h2 class="page-title" id="chapterPageTitle">Select Chapter</h2>
         <p class="page-subtitle" id="chapterPageSubtitle">Choose a chapter to start practicing</p>
 
         <div class="chapter-list" id="chapterList">
             <!-- Chapters will be loaded dynamically -->
         </div>
-        <button class="btn-secondary btn-back" id="backFromChapterBtn">← Back to Subjects</button>
     </div>
 
     <!-- Practice Page (New - Replaces Quiz Page) -->
@@ -398,6 +478,13 @@
         </div>
 
         <div id="podcastScriptDisplay" class="podcast-script-container" style="display: none;"></div>
+
+        <div class="podcast-history-card" id="podcastHistoryCard">
+            <h3>📜 Your Past Podcasts</h3>
+            <div id="podcastHistoryList" class="podcast-history-list">
+                <p class="no-history">No past podcast requests found</p>
+            </div>
+        </div>
 
         <button class="btn-secondary btn-back" id="backFromPodcastBtn">← Back to Home</button>
     </div>
@@ -642,6 +729,469 @@
         </div>
 
         <button class="btn-secondary btn-back" id="backFromAdminBtn">← Back to Home</button>
+    </div>
+
+    <!-- Custom Test Wizard Page -->
+    <div id="customTestWizardPage" class="container" style="display: none;">
+        <h2 class="page-title">Create Your Own Test</h2>
+        <p class="page-subtitle">Configure your custom JEE Mains practice paper</p>
+
+        <div class="wizard-card">
+            <!-- Out of Syllabus Switch -->
+            <div class="wizard-row syllabus-toggle-row">
+                <div class="syllabus-toggle-info">
+                    <span class="wizard-crown-icon">👑</span>
+                    <span>Don't include out of syllabus Qs</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="wizardSyllabusToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- Subject Accordions -->
+            <div class="wizard-section">
+                <h3>Select Subjects and Chapters</h3>
+                
+                <!-- Physics Accordion -->
+                <div class="subject-accordion" id="physicsAccordion">
+                    <div class="subject-accordion-header">
+                        <div class="subject-header-info">
+                            <span class="subject-dot dot-physics">⚛️</span>
+                            <span class="subject-title">Physics</span>
+                            <span class="subject-count" id="physicsSelectedCount">0 Chapters Selected</span>
+                        </div>
+                        <button class="btn-show-units" data-subject="physics">SHOW UNITS</button>
+                    </div>
+                    <div class="subject-accordion-content" id="physicsAccordionContent" style="display: none;">
+                        <div class="accordion-actions">
+                            <button class="btn-link-select" data-action="all" data-subject="physics">Select All</button>
+                            <button class="btn-link-select" data-action="none" data-subject="physics">Select None</button>
+                        </div>
+                        <div class="chapters-checkbox-grid" id="physicsChaptersGrid">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chemistry Accordion -->
+                <div class="subject-accordion" id="chemistryAccordion">
+                    <div class="subject-accordion-header">
+                        <div class="subject-header-info">
+                            <span class="subject-dot dot-chemistry">🧪</span>
+                            <span class="subject-title">Chemistry</span>
+                            <span class="subject-count" id="chemistrySelectedCount">0 Chapters Selected</span>
+                        </div>
+                        <button class="btn-show-units" data-subject="chemistry">SHOW UNITS</button>
+                    </div>
+                    <div class="subject-accordion-content" id="chemistryAccordionContent" style="display: none;">
+                        <div class="accordion-actions">
+                            <button class="btn-link-select" data-action="all" data-subject="chemistry">Select All</button>
+                            <button class="btn-link-select" data-action="none" data-subject="chemistry">Select None</button>
+                        </div>
+                        <div class="chapters-checkbox-grid" id="chemistryChaptersGrid">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mathematics Accordion -->
+                <div class="subject-accordion" id="mathematicsAccordion">
+                    <div class="subject-accordion-header">
+                        <div class="subject-header-info">
+                            <span class="subject-dot dot-math">📐</span>
+                            <span class="subject-title">Mathematics</span>
+                            <span class="subject-count" id="mathematicsSelectedCount">0 Chapters Selected</span>
+                        </div>
+                        <button class="btn-show-units" data-subject="mathematics">SHOW UNITS</button>
+                    </div>
+                    <div class="subject-accordion-content" id="mathematicsAccordionContent" style="display: none;">
+                        <div class="accordion-actions">
+                            <button class="btn-link-select" data-action="all" data-subject="mathematics">Select All</button>
+                            <button class="btn-link-select" data-action="none" data-subject="mathematics">Select None</button>
+                        </div>
+                        <div class="chapters-checkbox-grid" id="mathematicsChaptersGrid">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Test From Section -->
+            <div class="wizard-section">
+                <h3>Create Test From</h3>
+                <div class="test-source-grid">
+                    <div class="source-card active" data-source="all">
+                        <div class="source-icon">📋</div>
+                        <h4>All Qs</h4>
+                        <p>The test will be created from All PYQs</p>
+                    </div>
+                    <div class="source-card" data-source="incorrect">
+                        <div class="source-icon">❌</div>
+                        <h4>Incorrect Qs</h4>
+                        <p>From your previously wrong attempts</p>
+                    </div>
+                    <div class="source-card" data-source="unattempted">
+                        <div class="source-icon">⚠️</div>
+                        <h4>Unattempted Qs</h4>
+                        <p>Questions you haven't tried yet</p>
+                    </div>
+                    <div class="source-card" data-source="bookmarked">
+                        <div class="source-icon">🔖</div>
+                        <h4>Bookmarked Qs</h4>
+                        <p>Questions saved to your bookmarks</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Count Section -->
+            <div class="wizard-section">
+                <h3>Number of Qs per subject</h3>
+                <div class="count-pills-grid">
+                    <div class="count-pill" data-count="5">5 Qs</div>
+                    <div class="count-pill" data-count="10">10 Qs</div>
+                    <div class="count-pill" data-count="15">15 Qs</div>
+                    <div class="count-pill" data-count="20">20 Qs</div>
+                    <div class="count-pill" data-count="25">25 Qs</div>
+                    <div class="count-pill active" data-count="30">30 Qs</div>
+                </div>
+                <div class="wizard-summary-text" id="wizardTotalQsSummary">Total Questions: 0</div>
+            </div>
+
+            <!-- Test Duration Section -->
+            <div class="wizard-section">
+                <h3>Test Duration</h3>
+                <div class="duration-control-container">
+                    <button class="duration-btn" id="btnDurationDec">- 5 m</button>
+                    <div class="duration-display">
+                        <span class="duration-value" id="durationValue">180</span>
+                        <span class="duration-unit">min</span>
+                    </div>
+                    <button class="duration-btn" id="btnDurationInc">+ 5 m</button>
+                </div>
+                <div class="wizard-recommendation" id="wizardDurationRecommendation">Recommended Time: -- min</div>
+            </div>
+
+            <!-- Year Selection Section -->
+            <div class="wizard-section">
+                <h3>Select Year of Paper You Want to Include</h3>
+                <div class="years-cards-grid">
+                    <div class="year-card active" data-years="all">
+                        <div class="year-card-checkmark">✓</div>
+                        <h4>All Years</h4>
+                    </div>
+                    <div class="year-card" data-years="3">
+                        <div class="year-card-number">3</div>
+                        <h4>Last 3 Years</h4>
+                    </div>
+                    <div class="year-card" data-years="5">
+                        <div class="year-card-number">5</div>
+                        <h4>Last 5 Years</h4>
+                    </div>
+                    <div class="year-card" data-years="10">
+                        <div class="year-card-number">10</div>
+                        <h4>Last 10 Years</h4>
+                    </div>
+                </div>
+                
+                <!-- Custom Years Selection -->
+                <button class="btn-custom-years" id="btnCustomYears">✏️ Select Custom Years</button>
+                <div class="custom-years-select-panel" id="customYearsPanel" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid var(--ig-border); border-radius: 8px; background: var(--ig-bg-secondary);">
+                    <div class="custom-years-checkbox-grid" id="customYearsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="wizard-actions">
+                <button class="btn-primary btn-full" id="btnStartCustomTest">🚀 Start Test</button>
+                <button class="btn-secondary btn-full" id="btnCancelCustomTest" style="margin-top: 10px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Test Exam Page -->
+    <div id="customTestExamPage" class="container exam-mode-container" style="display: none;">
+        <div class="exam-header-bar">
+            <div class="exam-title-box">
+                <h2>JEE Mains Custom Test</h2>
+                <div class="exam-info-badges">
+                    <span class="exam-badge" id="examSubjectBadge">Physics + Chem + Math</span>
+                    <span class="exam-badge" id="examTabSwitchWarning" style="background-color: var(--ig-danger); color: white; display: none;">Tab Switch Warning: 0/3</span>
+                </div>
+            </div>
+            <div class="exam-timer-box">
+                <span class="timer-icon">⏰</span>
+                <span class="exam-timer" id="examTimer">180:00</span>
+            </div>
+        </div>
+
+        <div class="exam-workspace">
+            <!-- Left Panel: Question and Options -->
+            <div class="exam-question-panel">
+                <div class="exam-question-card">
+                    <div class="question-card-header">
+                        <span class="question-index-label" id="examQuestionNumber">Question 1</span>
+                        <div class="question-header-actions">
+                            <span class="difficulty-tag" id="examQuestionDifficulty">Medium</span>
+                            <span class="subject-tag" id="examQuestionSubject">Physics</span>
+                            <button class="btn-bookmark" id="btnBookmarkActiveQuestion" style="background: none; border: none; cursor: pointer; color: var(--ig-text-secondary); display: flex; align-items: center; justify-content: center; padding: 4px;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" class="bookmark-svg">
+                                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="question-text" id="examQuestionText">
+                        Question body text...
+                    </div>
+                    
+                    <div class="options-container-exam" id="examOptionsContainer">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="exam-navigation-bar">
+                    <div class="nav-left">
+                        <button class="btn-exam-nav btn-danger-outline" id="btnExamClear">Clear Response</button>
+                        <button class="btn-exam-nav btn-warning-outline" id="btnExamMarkReview">Mark for Review</button>
+                    </div>
+                    <div class="nav-right">
+                        <button class="btn-exam-nav btn-secondary-outline" id="btnExamPrev">Previous</button>
+                        <button class="btn-exam-nav btn-primary" id="btnExamSaveNext">Save & Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Palette and Palette Navigation -->
+            <div class="exam-palette-panel">
+                <div class="palette-summary">
+                    <h3>Question Palette</h3>
+                    <div class="palette-grid" id="examPaletteGrid">
+                        <!-- Dynamic buttons 1 to N -->
+                    </div>
+                </div>
+                
+                <!-- Legend -->
+                <div class="palette-legend">
+                    <div class="legend-item"><span class="legend-color legend-answered"></span> Answered</div>
+                    <div class="legend-item"><span class="legend-color legend-unanswered"></span> Unanswered</div>
+                    <div class="legend-item"><span class="legend-color legend-notvisited"></span> Not Visited</div>
+                    <div class="legend-item"><span class="legend-color legend-review"></span> Marked for Review</div>
+                </div>
+
+                <div class="palette-actions">
+                    <button class="btn-primary btn-full" id="btnSubmitExam">Submit Test</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Test Results Page -->
+    <div id="customTestResultsPage" class="container" style="display: none;">
+        <h2 class="page-title">Test Performance Analysis</h2>
+        <p class="page-subtitle" id="resultsTestSubtitle">JEE Mains Custom Test Completed</p>
+
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+            <div class="metric-card card-score">
+                <div class="metric-value" id="resScore">0</div>
+                <div class="metric-label">Score (JEE Mains)</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="resAccuracy">0%</div>
+                <div class="metric-label">Accuracy</div>
+            </div>
+            <div class="metric-card card-success">
+                <div class="metric-value" id="resCorrect">0</div>
+                <div class="metric-label">Correct</div>
+            </div>
+            <div class="metric-card card-danger">
+                <div class="metric-value" id="resIncorrect">0</div>
+                <div class="metric-label">Incorrect</div>
+            </div>
+            <div class="metric-card card-warning">
+                <div class="metric-value" id="resUnattempted">0</div>
+                <div class="metric-label">Unattempted</div>
+            </div>
+        </div>
+
+        <div class="results-tab-container">
+            <div class="results-tabs">
+                <button class="results-tab-btn active" data-tab="ai-review">🤖 Sarvam AI Review</button>
+                <button class="results-tab-btn" data-tab="questions-review">📝 Questions & Solutions</button>
+            </div>
+
+            <!-- Tab 1: AI Review -->
+            <div class="results-tab-content" id="tabContent-ai-review">
+                <div class="ai-review-card">
+                    <div class="ai-review-header">
+                        <span class="ai-sparkles-icon">✨</span>
+                        <h3>Detailed AI Assessment</h3>
+                    </div>
+                    <div class="ai-review-body" id="resAiReviewContent">
+                        Generating AI review of your performance...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Question & Solutions -->
+            <div class="results-tab-content" id="tabContent-questions-review" style="display: none;">
+                <div class="solutions-filter-bar">
+                    <button class="filter-btn active" data-filter="all">All Qs</button>
+                    <button class="filter-btn" data-filter="correct">Correct</button>
+                    <button class="filter-btn" data-filter="incorrect">Incorrect</button>
+                    <button class="filter-btn" data-filter="unattempted">Unattempted</button>
+                </div>
+                <div class="solutions-list" id="resSolutionsList">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <div class="results-actions-bar">
+            <button class="btn-primary" id="btnResultsBackHome">Back to Home</button>
+        </div>
+    </div>
+
+    <!-- Fullscreen Blocker Overlay -->
+    <div id="fullscreenBlocker" class="fullscreen-blocker-overlay" style="display: none;">
+        <div class="blocker-card">
+            <div class="blocker-icon">⚠️</div>
+            <h2>Fullscreen Required</h2>
+            <p>To maintain exam integrity, this test can only be attempted in fullscreen mode. Any attempt to exit fullscreen or resize the window is restricted.</p>
+            <button class="btn-primary" id="btnResumeFullscreen">Go Fullscreen & Resume</button>
+        </div>
+    </div>
+
+    <!-- Single Question Detail Page -->
+    <div id="questionDetailPage" class="container question-detail-container" style="display: none;">
+        <div class="question-detail-header">
+            <button class="btn-secondary btn-back btn-back-top" id="btnBackToQuestionList">← Back to List</button>
+            <div class="question-detail-info-bar">
+                <div class="q-detail-title-group">
+                    <span class="q-detail-num" id="detailQuestionNumber">Q 1</span>
+                    <span class="q-detail-meta" id="detailQuestionMeta">JEE Main 2026 (08 April Shift 2)</span>
+                </div>
+                
+                <div class="q-detail-controls">
+                    <button class="btn-timer-toggle" id="btnQuestionTimer">⏱️ Start Timer</button>
+                    
+                    <button class="btn-bookmark" id="btnBookmarkDetailQuestion" style="background: none; border: none; cursor: pointer; color: var(--ig-text-secondary); display: inline-flex; align-items: center; justify-content: center; padding: 4px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" class="bookmark-svg">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="question-detail-body">
+            <div class="question-detail-card">
+                <div class="question-detail-text" id="detailQuestionText">
+                    Question text...
+                </div>
+                
+                <div class="options-grid-2x2" id="detailOptionsContainer">
+                    <!-- Populated dynamically (2x2 grid) -->
+                </div>
+                
+                <div class="detailed-answer" id="detailExplanationContainer" style="display: none;">
+                    <div class="answer-header">
+                        <strong>📝 Detailed Solution:</strong>
+                    </div>
+                    <div class="answer-content" id="detailExplanationContent">
+                        Detailed explanation...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="question-detail-footer">
+            <button class="btn-nav-arrow" id="btnDetailPrev">Previous</button>
+            <button class="btn-action-primary" id="btnDetailCheckAnswer">Check Answer</button>
+            <button class="btn-nav-arrow" id="btnDetailNext">Next</button>
+        </div>
+    </div>
+
+    <!-- Community Chat Page -->
+    <div id="communityChatPage" class="container community-chat-page" style="display: none;">
+        <div class="community-chat-layout">
+            <!-- Channels Sidebar (Left Column) -->
+            <div class="chat-channels-sidebar">
+                <div class="sidebar-channels-header">
+                    <h3>💬 Community</h3>
+                </div>
+                <div class="channels-list">
+                    <div class="channel-item active" id="channelGeneralBtn" data-channel="general">
+                        <span class="channel-hashtag">#</span>
+                        <div class="channel-details">
+                            <span class="channel-name">general</span>
+                            <span class="channel-desc">Public discussions</span>
+                        </div>
+                    </div>
+                    <div class="channel-item" id="channelUpdatesBtn" data-channel="updates">
+                        <span class="channel-hashtag">📢</span>
+                        <div class="channel-details">
+                            <span class="channel-name">updates</span>
+                            <span class="channel-desc">Admins only posts</span>
+                        </div>
+                    </div>
+                    <div class="channel-item" id="channelTestsBtn" data-channel="tests" style="display: none;">
+                        <span class="channel-hashtag">🧪</span>
+                        <div class="channel-details">
+                            <span class="channel-name">tests</span>
+                            <span class="channel-desc">Admin testing channel</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Conversation Panel (Right Column) -->
+            <div class="chat-main-panel">
+                <div class="chat-panel-header">
+                    <div class="chat-header-info">
+                        <h4 id="activeChannelHeaderTitle"># general</h4>
+                        <p id="activeChannelHeaderSubtitle">Public channel for all students</p>
+                    </div>
+                </div>
+                
+                <!-- Messages container -->
+                <div class="chat-messages-container" id="chatMessagesList">
+                    <!-- Messages will be loaded here dynamically -->
+                </div>
+                
+                <!-- Chat Input Section -->
+                <div class="chat-input-wrapper">
+                    <!-- Updates read-only warning -->
+                    <div id="chatUpdatesReadOnlyBanner" class="chat-read-only-banner" style="display: none;">
+                        🔒 Only admins can post updates in this channel.
+                    </div>
+                    <!-- Send Message Form -->
+                    <form id="chatMessageForm" class="chat-message-form">
+                        <input type="text" id="chatMessageInput" placeholder="Type a message..." autocomplete="off">
+                        <button type="submit" class="chat-send-btn" id="chatSendBtn">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Emoji Reaction Popover -->
+    <div id="emojiReactionPopover" class="emoji-reaction-popover" style="display: none;">
+        <span class="emoji-option" data-emoji="👍">👍</span>
+        <span class="emoji-option" data-emoji="❤️">❤️</span>
+        <span class="emoji-option" data-emoji="😂">😂</span>
+        <span class="emoji-option" data-emoji="😮">😮</span>
+        <span class="emoji-option" data-emoji="😢">😢</span>
+        <span class="emoji-option" data-emoji="🙏">🙏</span>
     </div>
 
     <!-- Loading Overlay -->

@@ -15,6 +15,7 @@ let currentFilters = {
     subtopic: 'all'
 };
 
+
 // DOM Elements
 const pages = {
     auth: document.getElementById('authPage'),
@@ -26,7 +27,12 @@ const pages = {
     results: document.getElementById('resultsPage'),
     upcoming: document.getElementById('upcomingPage'),
     admin: document.getElementById('adminPage'),
-    podcast: document.getElementById('podcastPage')
+    podcast: document.getElementById('podcastPage'),
+    customTestWizard: document.getElementById('customTestWizardPage'),
+    customTestExam: document.getElementById('customTestExamPage'),
+    customTestResults: document.getElementById('customTestResultsPage'),
+    questionDetail: document.getElementById('questionDetailPage'),
+    community: document.getElementById('communityChatPage')
 };
 
 const sidebar = document.getElementById('sidebar');
@@ -34,11 +40,13 @@ const loadingOverlay = document.getElementById('loadingOverlay');
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+    applySavedTheme();
     initializeAuthListeners();
     initializeNavigationListeners();
     initializeAdminListeners();
     initializePracticeListeners();
     initializePodcastListeners();
+    initializeCustomTestListeners();
     checkAuthState();
 });
 
@@ -63,6 +71,9 @@ function initializeAuthListeners() {
 
     // Google Sign-In
     safeOn('googleAuthBtn', 'click', handleGoogleAuth);
+
+    // Apple Sign-In
+    safeOn('appleAuthBtn', 'click', handleAppleAuth);
 }
 
 function switchAuthTab(tab) {
@@ -284,15 +295,109 @@ function updateGoogleLinkUI() {
     }
 }
 
+async function handleAppleAuth() {
+    const messageEl = document.getElementById('authMessage');
+    try {
+        showLoading();
+        const provider = new firebase.auth.OAuthProvider('apple.com');
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        
+        console.log('Apple login successful for uid:', user.uid);
+        
+        // Save user profile to database if it doesn't exist
+        const snapshot = await database.ref('users/' + user.uid).once('value');
+        if (!snapshot.exists()) {
+            const userData = {
+                name: user.displayName || user.email.split('@')[0] || 'Apple Student',
+                email: user.email || '',
+                class: 'Select Class',
+                board: 'Select Board',
+                createdAt: new Date().toISOString()
+            };
+            await database.ref('users/' + user.uid).set(userData);
+            console.log('Created default user profile for Apple user in DB');
+        }
+        
+        messageEl.textContent = 'Login successful!';
+        messageEl.className = 'auth-message success';
+    } catch (error) {
+        console.error('Apple auth error:', error);
+        let errorMessage = error.message || 'An error occurred during Apple sign-in';
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            errorMessage = 'An account already exists with this email. Please log in with your email and password, then link your Apple account in your profile settings.';
+        }
+        messageEl.textContent = errorMessage;
+        messageEl.className = 'auth-message error';
+        hideLoading();
+    }
+}
+
+async function handleAppleLinkToggle() {
+    if (!currentUser) return;
+    
+    const isAppleLinked = currentUser.providerData.some(profile => profile.providerId === 'apple.com');
+    
+    try {
+        showLoading();
+        if (isAppleLinked) {
+            // Check if user has password provider or another provider linked so they don't get locked out
+            const providersCount = currentUser.providerData.length;
+            if (providersCount <= 1) {
+                alert('You cannot unlink Apple account because it is your only sign-in method.');
+                hideLoading();
+                return;
+            }
+            
+            await currentUser.unlink('apple.com');
+            alert('Apple account unlinked successfully.');
+        } else {
+            const provider = new firebase.auth.OAuthProvider('apple.com');
+            await currentUser.linkWithPopup(provider);
+            alert('Apple account linked successfully.');
+        }
+        await loadUserProfile();
+    } catch (error) {
+        console.error('Apple linking/unlinking error:', error);
+        alert(error.message || 'An error occurred while linking/unlinking Apple account');
+    } finally {
+        hideLoading();
+    }
+}
+
+function updateAppleLinkUI() {
+    if (!currentUser) return;
+    
+    const appleLinkStatus = document.getElementById('appleLinkStatus');
+    const appleLinkBtn = document.getElementById('appleLinkBtn');
+    
+    if (!appleLinkStatus || !appleLinkBtn) return;
+    
+    const isAppleLinked = currentUser.providerData.some(profile => profile.providerId === 'apple.com');
+    
+    if (isAppleLinked) {
+        appleLinkStatus.textContent = 'Linked';
+        appleLinkStatus.className = 'link-status linked';
+        appleLinkBtn.textContent = 'Unlink';
+        appleLinkBtn.className = 'btn-danger btn-sm';
+    } else {
+        appleLinkStatus.textContent = 'Not Linked';
+        appleLinkStatus.className = 'link-status unlinked';
+        appleLinkBtn.textContent = 'Link Account';
+        appleLinkBtn.className = 'btn-secondary btn-sm';
+    }
+}
+
 function checkAuthState() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             currentUser = user;
             await loadUserProfile();
             await loadExamToggles();
-            showPage('home');
+            routeCurrentUrl();
             sidebar.style.display = 'flex';
             document.body.classList.add('sidebar-active');
+            loadPodcastHistory();
 
             // Check if user is admin
             if (isAdmin(user.email)) {
@@ -302,7 +407,7 @@ function checkAuthState() {
             }
         } else {
             currentUser = null;
-            showPage('auth');
+            navigateToUrl('/auth');
             sidebar.style.display = 'none';
             document.body.classList.remove('sidebar-active');
             document.getElementById('adminNavLink').style.display = 'none';
@@ -343,7 +448,14 @@ async function loadUserProfile() {
             const profilePhotoFullUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'Student')}&background=667eea&color=fff&size=150`;
             document.getElementById('profilePhotoFull').src = profilePhotoFullUrl;
 
+            // Update community username input field
+            const communityUsernameInput = document.getElementById('profileCommunityUsername');
+            if (communityUsernameInput) {
+                communityUsernameInput.value = userData.communityUsername || '';
+            }
+
             updateGoogleLinkUI();
+            updateAppleLinkUI();
             console.log('Profile updated successfully');
         } else {
             console.warn('No user data found in database for user:', currentUser.uid);
@@ -351,7 +463,20 @@ async function loadUserProfile() {
             document.getElementById('userName').textContent = currentUser.email ? currentUser.email.split('@')[0] : 'Student';
             document.getElementById('profileEmail').textContent = currentUser.email || 'No email';
             document.getElementById('profileNameFull').textContent = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Student');
+            
+            const communityUsernameInput = document.getElementById('profileCommunityUsername');
+            if (communityUsernameInput) {
+                communityUsernameInput.value = '';
+            }
+            
             updateGoogleLinkUI();
+            updateAppleLinkUI();
+        }
+        
+        // Auto-start timer checkbox setting init
+        const autoStartCheck = document.getElementById('profileAutoStartTimer');
+        if (autoStartCheck) {
+            autoStartCheck.checked = localStorage.getItem('autoStartTimer') !== 'false';
         }
     } catch (error) {
         console.error('Error loading profile:', error);
@@ -388,40 +513,55 @@ function safeOn(id, event, fn) {
 }
 
 function initializeNavigationListeners() {
-    safeOn('homeNavLink', 'click', (e) => { e.preventDefault(); showPage('home'); });
-    safeOn('sidebarLogo', 'click', (e) => { e.preventDefault(); showPage('home'); });
-    safeOn('adminNavLink', 'click', (e) => { e.preventDefault(); showPage('admin'); loadAdminData(); });
-    safeOn('profilePreview', 'click', () => showPage('profile'));
-    safeOn('backToHomeBtn', 'click', () => showPage('home'));
+    safeOn('homeNavLink', 'click', (e) => { e.preventDefault(); navigateToUrl('/home'); });
+    safeOn('sidebarLogo', 'click', (e) => { e.preventDefault(); navigateToUrl('/home'); });
+    safeOn('adminNavLink', 'click', (e) => { e.preventDefault(); navigateToUrl('/admin'); });
+    safeOn('profilePreview', 'click', () => navigateToUrl('/profile'));
+    safeOn('backToHomeBtn', 'click', () => navigateToUrl('/home'));
     safeOn('googleLinkBtn', 'click', handleGoogleLinkToggle);
-    safeOn('pyqCard', 'click', () => showPage('pyqSubject'));
-    safeOn('backFromSubjectBtn', 'click', () => showPage('home'));
-    safeOn('backFromChapterBtn', 'click', () => showPage('pyqSubject'));
-    safeOn('upcomingCard', 'click', () => { loadUpcomingExams(); showPage('upcoming'); });
-    safeOn('upcomingNavLink', 'click', (e) => { e.preventDefault(); loadUpcomingExams(); showPage('upcoming'); });
-    safeOn('backFromUpcomingBtn', 'click', () => showPage('home'));
-    safeOn('podcastCard', 'click', () => showPage('podcast'));
-    safeOn('podcastNavLink', 'click', (e) => { e.preventDefault(); showPage('podcast'); });
-    safeOn('backToChaptersFromResultsBtn', 'click', () => { showPage('chapter'); loadChapters(currentSubject); });
-    safeOn('backFromAdminBtn', 'click', () => showPage('home'));
+    safeOn('appleLinkBtn', 'click', handleAppleLinkToggle);
+    safeOn('themeSwitchBtn', 'click', handleThemeSwitch);
+    safeOn('communityNavLink', 'click', (e) => { e.preventDefault(); navigateToUrl('/community'); });
+    safeOn('saveCommunityUsernameBtn', 'click', saveCommunityUsername);
+    safeOn('pyqCard', 'click', () => navigateToUrl('/practice'));
+    safeOn('backFromSubjectBtn', 'click', () => navigateToUrl('/home'));
+    safeOn('backFromChapterBtn', 'click', () => navigateToUrl('/practice'));
+    safeOn('upcomingCard', 'click', () => navigateToUrl('/upcoming'));
+    safeOn('upcomingNavLink', 'click', (e) => { e.preventDefault(); navigateToUrl('/upcoming'); });
+    safeOn('backFromUpcomingBtn', 'click', () => navigateToUrl('/home'));
+    safeOn('podcastCard', 'click', () => navigateToUrl('/podcast'));
+    safeOn('podcastNavLink', 'click', (e) => { e.preventDefault(); navigateToUrl('/podcast'); });
+    safeOn('backToChaptersFromResultsBtn', 'click', () => navigateToUrl(`/practice/${currentSubject}`));
+    safeOn('backFromAdminBtn', 'click', () => navigateToUrl('/home'));
 
     // Subject selection
     document.querySelectorAll('.subject-card').forEach(card => {
-        card.addEventListener('click', () => loadChapters(card.dataset.subject));
+        card.addEventListener('click', () => navigateToUrl(`/practice/${card.dataset.subject}`));
     });
 
     // Exam cards (new grid, if present)
     document.querySelectorAll('.exam-card').forEach(card => {
         card.addEventListener('click', () => {
             if (card.classList.contains('exam-card-disabled')) return;
-            if (card.dataset.exam === 'jee') showPage('pyqSubject');
+            if (card.dataset.exam === 'jee') navigateToUrl('/practice');
         });
     });
+
+    // Auto-start timer toggle listener
+    const autoStartCheck = document.getElementById('profileAutoStartTimer');
+    if (autoStartCheck) {
+        autoStartCheck.addEventListener('change', () => {
+            localStorage.setItem('autoStartTimer', autoStartCheck.checked);
+        });
+    }
 }
 
 function showPage(pageName) {
     if (pageName !== 'podcast') {
         resetPodcastPlayer();
+    }
+    if (pageName !== 'questionDetail') {
+        pauseQuestionTimer();
     }
     Object.values(pages).forEach(page => { if (page) page.style.display = 'none'; });
     if (pages[pageName]) {
@@ -462,6 +602,10 @@ function displayChapters(chapters, subject) {
 
     document.getElementById('chapterPageTitle').textContent = subjectName + ' Chapters';
     document.getElementById('chapterPageSubtitle').textContent = 'Select a chapter to start practicing';
+    
+    // Update back button to show subject name
+    const backText = document.getElementById('backFromChapterText');
+    if (backText) backText.textContent = subjectName + ' \u203A Subjects';
 
     if (chapters.length === 0) {
         chapterList.innerHTML = '<p class="no-data">No chapters available yet</p>';
@@ -482,8 +626,7 @@ function displayChapters(chapters, subject) {
     document.querySelectorAll('.chapter-item').forEach(item => {
         item.addEventListener('click', () => {
             const chapterId = item.dataset.chapterId;
-            const chapterName = item.dataset.chapterName;
-            loadPracticeMode(subject, chapterName, chapterId);
+            navigateToUrl(`/practice/${subject}/${chapterId}`);
         });
     });
 }
@@ -500,8 +643,17 @@ function initializePracticeListeners() {
 
     // Navigation
     document.getElementById('backFromPracticeBtn').addEventListener('click', () => {
-        showPage('chapter');
-        loadChapters(currentSubject);
+        navigateToUrl('/practice/' + currentSubject);
+    });
+
+    // Question Detail listeners
+    safeOn('btnDetailCheckAnswer', 'click', submitDetailAnswer);
+    safeOn('btnQuestionTimer', 'click', () => {
+        if (questionTimerState === 'running') {
+            pauseQuestionTimer();
+        } else {
+            startQuestionTimer();
+        }
     });
 }
 
@@ -520,9 +672,22 @@ async function loadPracticeMode(subject, chapterName, chapterId) {
         snapshot.forEach(childSnapshot => {
             quizQuestions.push({
                 id: childSnapshot.key,
+                subject: subject,
                 ...childSnapshot.val()
             });
         });
+
+        // Fetch bookmarks
+        let userBookmarks = {};
+        if (currentUser) {
+            try {
+                const bookmarksSnapshot = await database.ref(`bookmarks/${currentUser.uid}`).once('value');
+                userBookmarks = bookmarksSnapshot.val() || {};
+            } catch (e) {
+                console.error("Error fetching bookmarks:", e);
+            }
+        }
+        currentUserBookmarks = userBookmarks;
 
         if (quizQuestions.length === 0) {
             alert('No questions available for this chapter yet.');
@@ -651,101 +816,56 @@ function displayQuestions(questions) {
         <span class="stat-unattempted">${questions.length - attempted} Unattempted</span>
     `;
 
-    container.innerHTML = questions.map((question, displayIdx) => {
+    // Render as a clean list of rows (like img1)
+    let html = '<div class="practice-question-list">';
+    html += questions.map((question, displayIdx) => {
         const originalIdx = quizQuestions.findIndex(q => q.id === question.id);
         const userAnswer = userAnswers[originalIdx];
         const isAttempted = userAnswer !== null;
         const isCorrect = userAnswer === question.correctAnswer;
 
         let statusClass = '';
-        let statusText = 'Unattempted';
+        let badgeHtml = '';
 
         if (isAttempted) {
             if (isCorrect) {
-                statusClass = 'question-correct';
-                statusText = 'Correct ✓';
+                statusClass = 'status-row-correct';
+                badgeHtml = '<span class="row-badge correct">Correct</span>';
             } else {
-                statusClass = 'question-incorrect';
-                statusText = 'Incorrect ✗';
+                statusClass = 'status-row-incorrect';
+                badgeHtml = '<span class="row-badge incorrect">Incorrect</span>';
             }
         }
 
         return `
-            <div class="question-practice-card ${statusClass}" id="question-${originalIdx}">
-                <div class="question-header-practice">
-                    <div class="question-meta">
-                        <span class="question-number">Q${displayIdx + 1}</span>
-                        ${question.year ? `<span class="meta-badge">📅 ${question.year}</span>` : ''}
-                        ${question.shift ? `<span class="meta-badge">⏰ ${question.shift}</span>` : ''}
-                        ${question.difficulty ? `<span class="meta-badge difficulty-${question.difficulty.toLowerCase()}">${question.difficulty}</span>` : ''}
-                        ${question.subtopic ? `<span class="meta-badge">📚 ${question.subtopic}</span>` : ''}
+            <div class="practice-question-row ${statusClass}" data-question-id="${question.id}" data-original-idx="${originalIdx}">
+                <div class="question-index-col">${displayIdx + 1}</div>
+                <div class="question-content-col">
+                    <div class="question-text-summary">${question.question}</div>
+                    <div class="question-sub-meta">
+                        <span>JEE Main ${question.year || ''} ${question.shift ? `(${question.shift})` : ''}</span>
+                        ${badgeHtml}
                     </div>
-                    <span class="question-status ${statusClass}">${statusText}</span>
                 </div>
-                
-                <div class="question-text-practice">${question.question}</div>
-                
-                <div class="options-practice" id="options-${originalIdx}">
-                    ${question.options.map((option, optIdx) => {
-            const isSelected = userAnswer === optIdx;
-            const isCorrectOption = question.correctAnswer === optIdx;
-            let optionClass = 'option-practice';
-
-            if (isAttempted) {
-                if (isCorrectOption) {
-                    optionClass += ' option-correct';
-                } else if (isSelected && !isCorrectOption) {
-                    optionClass += ' option-incorrect';
-                }
-            } else if (isSelected) {
-                optionClass += ' option-selected';
-            }
-
-            return `
-                            <button class="${optionClass}" 
-                                    data-question-idx="${originalIdx}" 
-                                    data-option-idx="${optIdx}"
-                                    ${isAttempted ? 'disabled' : ''}>
-                                <span class="option-label">${String.fromCharCode(65 + optIdx)}</span>
-                                <span class="option-text">${option}</span>
-                                ${isAttempted && isCorrectOption ? '<span class="option-indicator">✓ Correct Answer</span>' : ''}
-                                ${isAttempted && isSelected && !isCorrectOption ? '<span class="option-indicator">✗ Your Answer</span>' : ''}
-                            </button>
-                        `;
-        }).join('')}
-                </div>
-                
-                ${isAttempted && question.detailedAnswer ? `
-                    <div class="detailed-answer">
-                        <div class="answer-header">
-                            <strong>📝 Detailed Solution:</strong>
-                        </div>
-                        <div class="answer-content">${question.detailedAnswer}</div>
-                    </div>
-                ` : ''}
-                
-                ${!isAttempted ? `
-                    <button class="btn-submit-answer" data-question-idx="${originalIdx}">
-                        Submit Answer
-                    </button>
-                ` : ''}
+                <div class="question-arrow-col">›</div>
             </div>
         `;
     }).join('');
+    html += '</div>';
 
-    // Add event listeners for options and submit buttons
-    document.querySelectorAll('.option-practice:not([disabled])').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const questionIdx = parseInt(this.dataset.questionIdx);
-            const optionIdx = parseInt(this.dataset.optionIdx);
-            selectOptionPractice(questionIdx, optionIdx);
-        });
-    });
+    container.innerHTML = html;
 
-    document.querySelectorAll('.btn-submit-answer').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const questionIdx = parseInt(this.dataset.questionIdx);
-            submitAnswer(questionIdx);
+    // Add click listeners to rows to navigate to single question page
+    container.querySelectorAll('.practice-question-row').forEach(row => {
+        row.addEventListener('click', () => {
+            const questionId = row.dataset.questionId;
+            // Save current state to localStorage so we can reload/back nav easily
+            localStorage.setItem('lastSubject', currentSubject);
+            localStorage.setItem('lastChapterId', currentChapterId);
+            localStorage.setItem('lastChapterName', currentChapter);
+            
+            // Navigate cleanly
+            navigateToUrl(`/question/${questionId}`);
         });
     });
 }
@@ -1418,7 +1538,7 @@ function initializePodcastListeners() {
     document.getElementById('generatePodcastBtn').addEventListener('click', generatePodcast);
     document.getElementById('backFromPodcastBtn').addEventListener('click', () => {
         resetPodcastPlayer();
-        showPage('home');
+        navigateToUrl('/home');
     });
     document.getElementById('podcastPlayPauseBtn').addEventListener('click', togglePodcastPlayback);
     document.getElementById('podcastSkipBack').addEventListener('click', () => skipPodcastAudio(-5));
@@ -1696,6 +1816,19 @@ Return strictly valid raw JSON.
         document.getElementById('podcastTotalTime').textContent = formatPodcastTimestamp(podcastTotalDuration);
         document.getElementById('podcastScrubber').max = Math.floor(podcastTotalDuration);
 
+        // Save to history in Firebase
+        if (currentUser) {
+            database.ref(`podcastHistory/${currentUser.uid}`).push({
+                topic: topic,
+                timestamp: new Date().toISOString(),
+                script: podcastScriptArray
+            }).then(() => {
+                loadPodcastHistory();
+            }).catch(err => {
+                console.error("Error saving podcast history:", err);
+            });
+        }
+
         loadingStatus.style.display = 'none';
         playerPanel.style.display = 'flex';
 
@@ -1945,4 +2078,1973 @@ function showLoading() {
 
 function hideLoading() {
     loadingOverlay.style.display = 'none';
+}
+
+// ==================== CORE CUSTOM TEST & BOOKMARKS ENGINE ====================
+
+let currentUserBookmarks = {};
+let currentExamQuestions = [];
+let currentExamQuestionIndex = 0;
+let examAnswers = [];
+let examQuestionStatuses = []; // 'notvisited', 'unanswered', 'answered', 'review'
+let examQuestionTimes = []; // Time spent in seconds per question
+let examTimerInterval = null;
+let examSecondsRemaining = 0;
+let examTabSwitchCount = 0;
+let activeQuestionStartTime = null;
+let isExamActive = false;
+
+// Selected chapters for the custom test wizard
+let wizardSelectedChapters = {
+    physics: [],
+    chemistry: [],
+    mathematics: []
+};
+
+// Available years for custom selection
+const WIZARD_AVAILABLE_YEARS = ['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019'];
+
+function initializeCustomTestListeners() {
+    safeOn('customTestNavLink', 'click', (e) => { e.preventDefault(); navigateToUrl('/custom-test'); });
+    safeOn('homeCustomTestBanner', 'click', () => navigateToUrl('/custom-test'));
+    safeOn('btnCancelCustomTest', 'click', () => navigateToUrl('/home'));
+    safeOn('btnResultsBackHome', 'click', () => navigateToUrl('/home'));
+
+    // Accordion headers
+    ['physics', 'chemistry', 'mathematics'].forEach(subject => {
+        const header = document.querySelector(`#${subject}Accordion .subject-accordion-header`);
+        if (header) {
+            header.addEventListener('click', (e) => {
+                // Avoid toggling if "SHOW UNITS" button is clicked
+                if (e.target.classList.contains('btn-show-units')) return;
+                toggleAccordion(subject);
+            });
+        }
+
+        const showUnitsBtn = document.querySelector(`#${subject}Accordion .btn-show-units`);
+        if (showUnitsBtn) {
+            showUnitsBtn.addEventListener('click', () => toggleAccordion(subject));
+        }
+
+        // Accordion select all/none
+        document.querySelectorAll(`.btn-link-select[data-subject="${subject}"]`).forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.action;
+                setAccordionSelections(subject, action === 'all');
+            });
+        });
+    });
+
+    // Test Source selectors
+    document.querySelectorAll('.source-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.source-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            updateWizardSummary();
+        });
+    });
+
+    // Question count pills
+    document.querySelectorAll('.count-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('.count-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            updateWizardSummary();
+        });
+    });
+
+    // Test Duration adjusters
+    safeOn('btnDurationDec', 'click', () => adjustDuration(-5));
+    safeOn('btnDurationInc', 'click', () => adjustDuration(5));
+
+    // Year selection card selectors
+    document.querySelectorAll('.year-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.year-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            
+            // Hide custom years panel if not selected
+            const customYearsPanel = document.getElementById('customYearsPanel');
+            if (customYearsPanel) customYearsPanel.style.display = 'none';
+            updateWizardSummary();
+        });
+    });
+
+    // Custom years panel toggle
+    safeOn('btnCustomYears', 'click', () => {
+        document.querySelectorAll('.year-card').forEach(c => c.classList.remove('active'));
+        const panel = document.getElementById('customYearsPanel');
+        if (panel) {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+        updateWizardSummary();
+    });
+
+    // Start Test button
+    safeOn('btnStartCustomTest', 'click', startCustomTest);
+
+    // Fullscreen exit blocker resume button
+    safeOn('btnResumeFullscreen', 'click', enterFullscreenMode);
+
+    // Exam navigations
+    safeOn('btnExamClear', 'click', handleExamClear);
+    safeOn('btnExamMarkReview', 'click', handleExamMarkReview);
+    safeOn('btnExamPrev', 'click', handleExamPrev);
+    safeOn('btnExamSaveNext', 'click', handleExamSaveNext);
+    safeOn('btnSubmitExam', 'click', () => {
+        if (confirm("Are you sure you want to submit the test?")) {
+            submitCustomExam('manual');
+        }
+    });
+
+    // Bookmark active question inside test
+    safeOn('btnBookmarkActiveQuestion', 'click', handleExamBookmarkActive);
+
+    // Fullscreen listeners
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    // Tab switch listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Results Tab listener
+    document.querySelectorAll('.results-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.results-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const selectedTab = btn.dataset.tab;
+            document.getElementById('tabContent-ai-review').style.display = selectedTab === 'ai-review' ? 'block' : 'none';
+            document.getElementById('tabContent-questions-review').style.display = selectedTab === 'questions-review' ? 'block' : 'none';
+        });
+    });
+}
+
+// --- BOOKMARKS ---
+
+async function toggleQuestionBookmark(btnEl, questionId) {
+    if (!currentUser) return;
+    const isActive = btnEl.classList.contains('active');
+    try {
+        if (isActive) {
+            await database.ref(`bookmarks/${currentUser.uid}/${questionId}`).remove();
+            btnEl.classList.remove('active');
+            currentUserBookmarks[questionId] = null;
+        } else {
+            await database.ref(`bookmarks/${currentUser.uid}/${questionId}`).set(true);
+            btnEl.classList.add('active');
+            currentUserBookmarks[questionId] = true;
+        }
+        alert(isActive ? 'Removed from bookmarks' : 'Added to bookmarks!');
+    } catch (error) {
+        console.error('Error toggling bookmark:', error);
+    }
+}
+
+// --- CUSTOM TEST WIZARD ---
+
+async function loadCustomTestWizard() {
+    showLoading();
+    wizardSelectedChapters = { physics: [], chemistry: [], mathematics: [] };
+    
+    // Clear selections
+    ['physics', 'chemistry', 'mathematics'].forEach(sub => {
+        const grid = document.getElementById(`${sub}ChaptersGrid`);
+        if (grid) grid.innerHTML = '';
+        const countLabel = document.getElementById(`${sub}SelectedCount`);
+        if (countLabel) countLabel.textContent = '0 Chapters Selected';
+        
+        const content = document.getElementById(`${sub}AccordionContent`);
+        if (content) content.style.display = 'none';
+    });
+
+    // Populate Custom Years list
+    const yearsGrid = document.getElementById('customYearsGrid');
+    if (yearsGrid) {
+        yearsGrid.innerHTML = WIZARD_AVAILABLE_YEARS.map(yr => `
+            <label class="year-checkbox-label">
+                <input type="checkbox" class="wizard-year-checkbox" value="${yr}" checked>
+                <span>${yr}</span>
+            </label>
+        `).join('');
+        
+        document.querySelectorAll('.wizard-year-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateWizardSummary);
+        });
+    }
+
+    try {
+        // Fetch chapters for all subjects
+        const subjects = ['physics', 'chemistry', 'mathematics'];
+        for (const sub of subjects) {
+            const snapshot = await database.ref('chapters/' + sub).orderByChild('order').once('value');
+            const chapters = [];
+            snapshot.forEach(snap => {
+                chapters.push({ id: snap.key, ...snap.val() });
+            });
+            
+            const grid = document.getElementById(`${sub}ChaptersGrid`);
+            if (grid) {
+                if (chapters.length === 0) {
+                    grid.innerHTML = '<p class="no-data">No chapters available</p>';
+                } else {
+                    grid.innerHTML = chapters.map(ch => `
+                        <label class="chapter-checkbox-label">
+                            <input type="checkbox" class="wizard-chapter-checkbox" data-subject="${sub}" value="${ch.id}">
+                            <span>${ch.name}</span>
+                        </label>
+                    `).join('');
+                }
+            }
+        }
+
+        // Set change listener on checkboxes
+        document.querySelectorAll('.wizard-chapter-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const sub = this.dataset.subject;
+                const chId = this.value;
+                if (this.checked) {
+                    if (!wizardSelectedChapters[sub].includes(chId)) wizardSelectedChapters[sub].push(chId);
+                } else {
+                    wizardSelectedChapters[sub] = wizardSelectedChapters[sub].filter(id => id !== chId);
+                }
+                
+                // Update count label
+                const countLabel = document.getElementById(`${sub}SelectedCount`);
+                if (countLabel) {
+                    countLabel.textContent = `${wizardSelectedChapters[sub].length} Chapters Selected`;
+                }
+                updateWizardSummary();
+            });
+        });
+
+        // Toggle first accordion by default
+        toggleAccordion('physics');
+        updateWizardSummary();
+        showPage('customTestWizard');
+
+    } catch (e) {
+        console.error("Error launching custom test creator:", e);
+        alert("Failed to load chapters for custom test configuration.");
+    } finally {
+        hideLoading();
+    }
+}
+
+function toggleAccordion(subject) {
+    ['physics', 'chemistry', 'mathematics'].forEach(sub => {
+        const content = document.getElementById(`${sub}AccordionContent`);
+        if (content) {
+            content.style.display = (sub === subject && content.style.display === 'none') ? 'block' : 'none';
+        }
+    });
+}
+
+function setAccordionSelections(subject, selectAll) {
+    document.querySelectorAll(`.wizard-chapter-checkbox[data-subject="${subject}"]`).forEach(cb => {
+        cb.checked = selectAll;
+        // Trigger manual change event to sync array
+        cb.dispatchEvent(new Event('change'));
+    });
+}
+
+function adjustDuration(minutes) {
+    const el = document.getElementById('durationValue');
+    if (!el) return;
+    let val = parseInt(el.textContent) + minutes;
+    if (val < 5) val = 5;
+    if (val > 300) val = 300;
+    el.textContent = val;
+}
+
+function updateWizardSummary() {
+    // Count active subjects
+    let activeSubjects = 0;
+    let totalChapters = 0;
+    ['physics', 'chemistry', 'mathematics'].forEach(sub => {
+        if (wizardSelectedChapters[sub].length > 0) {
+            activeSubjects++;
+            totalChapters += wizardSelectedChapters[sub].length;
+        }
+    });
+
+    const activeCountPill = document.querySelector('.count-pill.active');
+    const qsPerSubject = activeCountPill ? parseInt(activeCountPill.dataset.count) : 30;
+    const totalQs = activeSubjects * qsPerSubject;
+
+    const totalQsSummary = document.getElementById('wizardTotalQsSummary');
+    if (totalQsSummary) {
+        totalQsSummary.textContent = `Total Questions: ${totalQs} (${qsPerSubject} Qs x ${activeSubjects} Subject${activeSubjects !== 1 ? 's' : ''})`;
+    }
+
+    const recTime = totalQs * 2; // Recommended is 2 minutes per question
+    const recLabel = document.getElementById('wizardDurationRecommendation');
+    if (recLabel) {
+        recLabel.textContent = `Recommended Time: ${recTime} min`;
+    }
+
+    // Auto update selected value in UI on load
+    const durationVal = document.getElementById('durationValue');
+    if (durationVal && (durationVal.textContent === '180' || durationVal.dataset.autoSync === 'true')) {
+        durationVal.textContent = recTime > 0 ? recTime : 60;
+        durationVal.dataset.autoSync = 'true';
+    }
+}
+
+// --- BALANCING & GENERATING TEST ---
+
+async function startCustomTest() {
+    let selectedSubjects = [];
+    let selectedChaptersList = {};
+    let totalSelectedChapters = 0;
+
+    ['physics', 'chemistry', 'mathematics'].forEach(sub => {
+        if (wizardSelectedChapters[sub].length > 0) {
+            selectedSubjects.push(sub);
+            selectedChaptersList[sub] = wizardSelectedChapters[sub];
+            totalSelectedChapters += wizardSelectedChapters[sub].length;
+        }
+    });
+
+    if (selectedSubjects.length === 0) {
+        alert("Please select at least one subject and check chapters to start the test.");
+        return;
+    }
+
+    showLoading();
+
+    try {
+        // Fetch attempt history and bookmarks
+        let attemptHistory = {};
+        if (currentUser) {
+            const historySnapshot = await database.ref(`results/${currentUser.uid}/questions`).once('value');
+            historySnapshot.forEach(snap => {
+                const val = snap.val();
+                if (val.questionId) {
+                    attemptHistory[val.questionId] = val;
+                }
+            });
+        }
+
+        let bookmarkedMap = {};
+        if (currentUser) {
+            const bookmarksSnapshot = await database.ref(`bookmarks/${currentUser.uid}`).once('value');
+            bookmarkedMap = bookmarksSnapshot.val() || {};
+        }
+
+        const syllabusFilter = document.getElementById('wizardSyllabusToggle').checked;
+        
+        // Determine selected years filter
+        let yearsFilter = [];
+        const activeYearCard = document.querySelector('.year-card.active');
+        if (activeYearCard) {
+            const yrOption = activeYearCard.dataset.years;
+            if (yrOption !== 'all') {
+                const currentYear = new Date().getFullYear();
+                const limit = parseInt(yrOption);
+                for (let i = 0; i < limit; i++) {
+                    yearsFilter.push(String(currentYear - i));
+                }
+            }
+        } else {
+            // Read checkboxes from custom years
+            document.querySelectorAll('.wizard-year-checkbox:checked').forEach(cb => {
+                yearsFilter.push(cb.value);
+            });
+        }
+
+        // Test source option
+        const activeSourceCard = document.querySelector('.source-card.active');
+        const testSource = activeSourceCard ? activeSourceCard.dataset.source : 'all';
+
+        // Get count per subject
+        const activeCountPill = document.querySelector('.count-pill.active');
+        const questionsNeededPerSubject = activeCountPill ? parseInt(activeCountPill.dataset.count) : 30;
+
+        currentExamQuestions = [];
+
+        // Fetch and process questions for each subject
+        for (const sub of selectedSubjects) {
+            let allSubjectQuestions = [];
+
+            for (const chId of selectedChaptersList[sub]) {
+                const snapshot = await database.ref(`questions/${sub}/${chId}`).once('value');
+                snapshot.forEach(snap => {
+                    allSubjectQuestions.push({
+                        id: snap.key,
+                        subject: sub,
+                        chapterId: chId,
+                        ...snap.val()
+                    });
+                });
+            }
+
+            // Apply filters
+            let filteredQuestions = allSubjectQuestions.filter(q => {
+                // Out of syllabus filter
+                if (syllabusFilter && (q.outOfSyllabus === true || q.syllabus === "out")) return false;
+                
+                // Years filter
+                if (yearsFilter.length > 0 && q.year && !yearsFilter.includes(String(q.year))) return false;
+
+                // Source filters
+                if (testSource === 'incorrect') {
+                    // Question must have been attempted and last attempt incorrect
+                    return attemptHistory[q.id] && attemptHistory[q.id].correct === false;
+                } else if (testSource === 'unattempted') {
+                    // Question must never have been attempted
+                    return !attemptHistory[q.id];
+                } else if (testSource === 'bookmarked') {
+                    // Question must be bookmarked
+                    return bookmarkedMap[q.id] === true;
+                }
+                
+                return true;
+            });
+
+            if (filteredQuestions.length === 0) {
+                continue;
+            }
+
+            // Balancing Algorithm: Select balanced mix of difficulties for medium paper (30% Easy, 50% Medium, 20% Hard)
+            let easyQs = filteredQuestions.filter(q => (q.difficulty || '').toLowerCase() === 'easy');
+            let mediumQs = filteredQuestions.filter(q => (q.difficulty || '').toLowerCase() === 'medium' || !q.difficulty);
+            let hardQs = filteredQuestions.filter(q => (q.difficulty || '').toLowerCase() === 'hard');
+
+            // Target counts
+            const targetEasy = Math.round(questionsNeededPerSubject * 0.3);
+            const targetMedium = Math.round(questionsNeededPerSubject * 0.5);
+            const targetHard = questionsNeededPerSubject - targetEasy - targetMedium;
+
+            let selectedQs = [];
+
+            // Random draw helper
+            const drawRandom = (arr, count) => {
+                let shuffled = [...arr].sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, count);
+            };
+
+            let drawnEasy = drawRandom(easyQs, targetEasy);
+            let drawnMedium = drawRandom(mediumQs, targetMedium);
+            let drawnHard = drawRandom(hardQs, targetHard);
+
+            selectedQs = [...drawnEasy, ...drawnMedium, ...drawnHard];
+
+            // If we don't have enough balanced questions, fill up with any available filtered questions from the subject
+            if (selectedQs.length < questionsNeededPerSubject && filteredQuestions.length > selectedQs.length) {
+                const selectedIds = new Set(selectedQs.map(q => q.id));
+                const remainingPool = filteredQuestions.filter(q => !selectedIds.has(q.id));
+                const extraNeeded = questionsNeededPerSubject - selectedQs.length;
+                const extraDrawn = drawRandom(remainingPool, extraNeeded);
+                selectedQs = [...selectedQs, ...extraDrawn];
+            }
+
+            // Shuffle final selected list for this subject so order is mixed
+            selectedQs.sort(() => 0.5 - Math.random());
+            currentExamQuestions = [...currentExamQuestions, ...selectedQs];
+        }
+
+        if (currentExamQuestions.length === 0) {
+            alert("No questions found matching your filter criteria. Try selecting more chapters or widening your year range.");
+            hideLoading();
+            return;
+        }
+
+        // Initialize exam state
+        currentExamQuestionIndex = 0;
+        examAnswers = new Array(currentExamQuestions.length).fill(null);
+        examQuestionStatuses = new Array(currentExamQuestions.length).fill('notvisited');
+        examQuestionStatuses[0] = 'unanswered'; // First question is visited but not answered
+        examQuestionTimes = new Array(currentExamQuestions.length).fill(0);
+        examTabSwitchCount = 0;
+        
+        // Start timers
+        const durationDisplay = document.getElementById('durationValue');
+        examSecondsRemaining = (durationDisplay ? parseInt(durationDisplay.textContent) : 180) * 60;
+        
+        // Set info badges
+        const subBadgeText = selectedSubjects.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(" + ");
+        document.getElementById('examSubjectBadge').textContent = subBadgeText;
+        
+        const tabWarning = document.getElementById('examTabSwitchWarning');
+        if (tabWarning) {
+            tabWarning.style.display = 'none';
+            tabWarning.textContent = 'Tab Switch Warning: 0/3';
+        }
+
+        // Start exam
+        isExamActive = true;
+        activeQuestionStartTime = Date.now();
+        
+        startExamTimer();
+        renderExamQuestion();
+        renderExamPalette();
+        
+        // Launch into fullscreen
+        navigateToUrl('/custom-test/exam');
+        enterFullscreenMode();
+
+    } catch (e) {
+        console.error("Error creating custom test:", e);
+        alert("An error occurred during test setup. Please check the database.");
+    } finally {
+        hideLoading();
+    }
+}
+
+// --- EXAM WORKSPACE CONTROLLER ---
+
+function startExamTimer() {
+    if (examTimerInterval) clearInterval(examTimerInterval);
+    
+    updateTimerDisplay();
+    
+    examTimerInterval = setInterval(() => {
+        examSecondsRemaining--;
+        updateTimerDisplay();
+        
+        if (examSecondsRemaining <= 0) {
+            clearInterval(examTimerInterval);
+            alert("Time's up! Your answers are being submitted.");
+            submitCustomExam('timeout');
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const el = document.getElementById('examTimer');
+    if (!el) return;
+    
+    const h = Math.floor(examSecondsRemaining / 3600);
+    const m = Math.floor((examSecondsRemaining % 3600) / 60);
+    const s = examSecondsRemaining % 60;
+    
+    let timeStr = "";
+    if (h > 0) {
+        timeStr += `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    } else {
+        timeStr += `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+    el.textContent = timeStr;
+}
+
+function renderExamQuestion() {
+    if (!currentExamQuestions || currentExamQuestions.length === 0) return;
+    
+    const question = currentExamQuestions[currentExamQuestionIndex];
+    
+    // Update labels
+    document.getElementById('examQuestionNumber').textContent = `Question ${currentExamQuestionIndex + 1}`;
+    
+    const diffTag = document.getElementById('examQuestionDifficulty');
+    if (diffTag) {
+        diffTag.textContent = question.difficulty || 'Medium';
+        diffTag.className = `difficulty-tag ${(question.difficulty || 'Medium').toLowerCase()}`;
+    }
+    
+    const subTag = document.getElementById('examQuestionSubject');
+    if (subTag) {
+        subTag.textContent = (question.subject || 'Physics').toUpperCase();
+    }
+    
+    // Update Bookmark active state
+    const bookmarkBtn = document.getElementById('btnBookmarkActiveQuestion');
+    if (bookmarkBtn) {
+        const isBookmarked = currentUserBookmarks[question.id] === true;
+        if (isBookmarked) {
+            bookmarkBtn.classList.add('active');
+        } else {
+            bookmarkBtn.classList.remove('active');
+        }
+    }
+
+    // Question body
+    document.getElementById('examQuestionText').textContent = question.question;
+
+    // Options container
+    const optionsContainer = document.getElementById('examOptionsContainer');
+    const selectedAns = examAnswers[currentExamQuestionIndex];
+    
+    optionsContainer.innerHTML = question.options.map((opt, idx) => {
+        const isSelected = selectedAns === idx;
+        return `
+            <button class="option-btn-exam ${isSelected ? 'selected' : ''}" data-idx="${idx}">
+                <div class="option-letter-box">${String.fromCharCode(65 + idx)}</div>
+                <span>${opt}</span>
+            </button>
+        `;
+    }).join('');
+
+    // Bind option click listeners
+    document.querySelectorAll('.option-btn-exam').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const idx = parseInt(this.dataset.idx);
+            selectExamOption(idx);
+        });
+    });
+
+    // Save visited start time
+    activeQuestionStartTime = Date.now();
+}
+
+function selectExamOption(idx) {
+    examAnswers[currentExamQuestionIndex] = idx;
+    
+    // Rerender question options quickly
+    document.querySelectorAll('.option-btn-exam').forEach((btn, buttonIdx) => {
+        if (buttonIdx === idx) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+
+    // Update status if it was not review
+    if (examQuestionStatuses[currentExamQuestionIndex] !== 'review') {
+        examQuestionStatuses[currentExamQuestionIndex] = 'answered';
+    }
+    renderExamPalette();
+}
+
+function renderExamPalette() {
+    const grid = document.getElementById('examPaletteGrid');
+    if (!grid) return;
+
+    grid.innerHTML = currentExamQuestions.map((_, idx) => {
+        const status = examQuestionStatuses[idx];
+        const isActive = idx === currentExamQuestionIndex;
+        return `
+            <button class="palette-btn ${status} ${isActive ? 'active' : ''}" data-idx="${idx}">
+                ${idx + 1}
+            </button>
+        `;
+    }).join('');
+
+    // Palette listeners
+    document.querySelectorAll('.palette-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const idx = parseInt(this.dataset.idx);
+            navigateQuestion(idx);
+        });
+    });
+}
+
+function navigateQuestion(targetIndex) {
+    if (targetIndex < 0 || targetIndex >= currentExamQuestions.length) return;
+
+    // Save time spent on current question
+    if (activeQuestionStartTime) {
+        const elapsed = Math.round((Date.now() - activeQuestionStartTime) / 1000);
+        examQuestionTimes[currentExamQuestionIndex] += elapsed;
+    }
+
+    currentExamQuestionIndex = targetIndex;
+
+    // Mark target as visited if not visited yet
+    if (examQuestionStatuses[currentExamQuestionIndex] === 'notvisited') {
+        examQuestionStatuses[currentExamQuestionIndex] = 'unanswered';
+    }
+
+    renderExamQuestion();
+    renderExamPalette();
+}
+
+function handleExamClear() {
+    examAnswers[currentExamQuestionIndex] = null;
+    examQuestionStatuses[currentExamQuestionIndex] = 'unanswered';
+    
+    // Unselect options
+    document.querySelectorAll('.option-btn-exam').forEach(btn => btn.classList.remove('selected'));
+    renderExamPalette();
+}
+
+function handleExamMarkReview() {
+    examQuestionStatuses[currentExamQuestionIndex] = 'review';
+    renderExamPalette();
+    handleExamSaveNext();
+}
+
+function handleExamPrev() {
+    if (currentExamQuestionIndex > 0) {
+        navigateQuestion(currentExamQuestionIndex - 1);
+    }
+}
+
+function handleExamSaveNext() {
+    if (examAnswers[currentExamQuestionIndex] !== null && examQuestionStatuses[currentExamQuestionIndex] !== 'review') {
+        examQuestionStatuses[currentExamQuestionIndex] = 'answered';
+    }
+    
+    if (currentExamQuestionIndex < currentExamQuestions.length - 1) {
+        navigateQuestion(currentExamQuestionIndex + 1);
+    } else {
+        // Highlight last question time spent
+        if (activeQuestionStartTime) {
+            const elapsed = Math.round((Date.now() - activeQuestionStartTime) / 1000);
+            examQuestionTimes[currentExamQuestionIndex] += elapsed;
+            activeQuestionStartTime = Date.now();
+        }
+        renderExamPalette();
+    }
+}
+
+function handleExamBookmarkActive() {
+    if (!currentExamQuestions || currentExamQuestions.length === 0) return;
+    const question = currentExamQuestions[currentExamQuestionIndex];
+    toggleQuestionBookmark(this, question.id);
+}
+
+// --- FULLSCREEN CONTROLS ---
+
+function enterFullscreenMode() {
+    const docEl = document.documentElement;
+    if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(err => console.log(err));
+    } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen().catch(err => console.log(err));
+    } else if (docEl.mozRequestFullScreen) {
+        docEl.mozRequestFullScreen().catch(err => console.log(err));
+    } else if (docEl.msRequestFullscreen) {
+        docEl.msRequestFullscreen().catch(err => console.log(err));
+    }
+}
+
+function handleFullscreenChange() {
+    if (!isExamActive) return;
+
+    const isFullscreen = document.fullscreenElement || 
+                         document.webkitFullscreenElement || 
+                         document.mozFullScreenElement || 
+                         document.msFullscreenElement;
+
+    const blocker = document.getElementById('fullscreenBlocker');
+    if (!isFullscreen) {
+        // Paused visual state, block screen
+        if (blocker) blocker.style.display = 'flex';
+        // Pause timer temporarily
+        if (examTimerInterval) clearInterval(examTimerInterval);
+    } else {
+        if (blocker) blocker.style.display = 'none';
+        // Resume timer
+        startExamTimer();
+    }
+}
+
+// --- TAB SWITCH CHEATING RESTRICTION ---
+
+function handleVisibilityChange() {
+    if (!isExamActive) return;
+
+    if (document.visibilityState === 'hidden') {
+        examTabSwitchCount++;
+        
+        const tabWarning = document.getElementById('examTabSwitchWarning');
+        if (tabWarning) {
+            tabWarning.style.display = 'inline-block';
+            tabWarning.textContent = `Tab Switch Warning: ${examTabSwitchCount}/3`;
+        }
+
+        alert(`WARNING: You have switched tabs or minimized the window. (Attempt ${examTabSwitchCount}/3). The test will submit automatically on the 3rd switch.`);
+
+        if (examTabSwitchCount >= 3) {
+            alert("Maximum tab switches reached. Your test is being submitted immediately.");
+            submitCustomExam('tab_switch');
+        }
+    }
+}
+
+// --- SUBMIT CUSTOM TEST & RESULTS ---
+
+async function submitCustomExam(reason) {
+    isExamActive = false;
+    if (examTimerInterval) clearInterval(examTimerInterval);
+
+    // Save final elapsed time
+    if (activeQuestionStartTime) {
+        const elapsed = Math.round((Date.now() - activeQuestionStartTime) / 1000);
+        examQuestionTimes[currentExamQuestionIndex] += elapsed;
+    }
+
+    // Exit fullscreen
+    if (document.exitFullscreen) {
+        document.exitFullscreen().catch(e => {});
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen().catch(e => {});
+    }
+
+    // Hide blocker overlay
+    const blocker = document.getElementById('fullscreenBlocker');
+    if (blocker) blocker.style.display = 'none';
+
+    showLoading();
+
+    // Calculations
+    let score = 0;
+    let correctCount = 0;
+    let incorrectCount = 0;
+    let unattemptedCount = 0;
+    let totalTimeTaken = 0;
+
+    let questionDetails = [];
+
+    currentExamQuestions.forEach((q, idx) => {
+        const userAns = examAnswers[idx];
+        const isCorrect = userAns === q.correctAnswer;
+        const timeSpent = examQuestionTimes[idx] || 0;
+        totalTimeTaken += timeSpent;
+
+        if (userAns === null) {
+            unattemptedCount++;
+            score += 0;
+        } else if (isCorrect) {
+            correctCount++;
+            score += 4;
+        } else {
+            incorrectCount++;
+            score -= 1;
+        }
+
+        questionDetails.push({
+            id: q.id,
+            subject: q.subject,
+            chapterId: q.chapterId,
+            difficulty: q.difficulty || 'Medium',
+            correctOption: q.correctAnswer,
+            userOption: userAns !== null ? userAns : -1,
+            timeSpent: timeSpent,
+            questionText: q.question,
+            options: q.options,
+            detailedAnswer: q.detailedAnswer || ''
+        });
+    });
+
+    const accuracy = correctCount + incorrectCount > 0 
+        ? Math.round((correctCount / (correctCount + incorrectCount)) * 100) 
+        : 0;
+
+    // Display basic metrics
+    document.getElementById('resScore').textContent = score;
+    document.getElementById('resAccuracy').textContent = `${accuracy}%`;
+    document.getElementById('resCorrect').textContent = correctCount;
+    document.getElementById('resIncorrect').textContent = incorrectCount;
+    document.getElementById('resUnattempted').textContent = unattemptedCount;
+
+    let testSubtitle = "JEE Mains Custom Test Completed";
+    if (reason === 'timeout') testSubtitle += " (Time Out)";
+    else if (reason === 'tab_switch') testSubtitle += " (Terminated due to tab switching)";
+    document.getElementById('resultsTestSubtitle').textContent = testSubtitle;
+
+    // Generate AI Review from Sarvam AI
+    const aiReviewContainer = document.getElementById('resAiReviewContent');
+    if (aiReviewContainer) aiReviewContainer.textContent = "Analyzing attempt patterns and generating AI review...";
+
+    let aiReviewText = "Failed to generate AI review. Please check your internet connection.";
+
+    try {
+        const systemPrompt = `You are an expert academic coach and test analyst for JEE Mains. Your job is to analyze a student's custom exam performance and give a detailed review. Focus on time taken per question relative to its difficulty (Easy, Medium, Hard). Identify questions where they wasted time, qualitative insights on their preparation, and clear, actionable steps for improvement. Use markdown format.`;
+        
+        const userPrompt = `
+Analyze the following student test attempt:
+Student Name: ${document.getElementById('userName').textContent}
+Score: ${score} (JEE Format: +4 for correct, -1 for incorrect)
+Correct Answers: ${correctCount}
+Incorrect Answers: ${incorrectCount}
+Unattempted Questions: ${unattemptedCount}
+Accuracy: ${accuracy}%
+Total Time Taken: ${formatPodcastTimestamp(totalTimeTaken)}
+Exam Termination Reason: ${reason} (manual/timeout/tab_switch)
+
+Question Breakdown Details:
+${questionDetails.map((q, idx) => `
+Q${idx+1}: Subject: ${q.subject}, Difficulty: ${q.difficulty}
+User Answer: ${q.userOption === -1 ? 'Unattempted' : String.fromCharCode(65 + q.userOption)}, Correct Answer: ${String.fromCharCode(65 + q.correctOption)}
+Result: ${q.userOption === -1 ? 'Unattempted' : (q.userOption === q.correctOption ? 'Correct' : 'Incorrect')}
+Time Spent: ${q.timeSpent} seconds
+`).join('')}
+
+Provide:
+1. Difficulty-to-Time Analysis: Focus on whether the student spent too much time on Easy or Medium questions vs Hard questions, and if it cost them score.
+2. Strengths and Weaknesses: Highlight subjects and difficulties they succeeded in and where they struggled.
+3. Time Management Review: Point out any specific questions where they spent an excessive amount of time (e.g. over 150 seconds).
+4. Actionable Steps: Specific recommendations for their next custom test attempt.
+`;
+
+        const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SARVAM_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "sarvam-30b",
+                messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+                temperature: 0.5,
+                max_tokens: 2048,
+                reasoning_effort: null,
+                stream: false
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            aiReviewText = data?.choices?.[0]?.message?.content || aiReviewText;
+        } else {
+            console.error("Sarvam completions returned error status:", response.status);
+        }
+    } catch (err) {
+        console.error("Sarvam AI completions fetch error:", err);
+    }
+
+    if (aiReviewContainer) {
+        aiReviewContainer.textContent = aiReviewText;
+    }
+
+    // Save performance to Firebase Database
+    const performanceData = {
+        timestamp: new Date().toISOString(),
+        score: score,
+        accuracy: accuracy,
+        correct: correctCount,
+        incorrect: incorrectCount,
+        unattempted: unattemptedCount,
+        totalTime: totalTimeTaken,
+        terminationReason: reason,
+        tabSwitches: examTabSwitchCount,
+        aiReview: aiReviewText,
+        questions: questionDetails.map(q => ({
+            id: q.id,
+            subject: q.subject,
+            chapterId: q.chapterId,
+            difficulty: q.difficulty,
+            correctOption: q.correctOption,
+            userOption: q.userOption,
+            timeSpent: q.timeSpent
+        }))
+    };
+
+    if (currentUser) {
+        try {
+            await database.ref(`testPerformances/${currentUser.uid}`).push(performanceData);
+            console.log("Saved test performance successfully!");
+        } catch (e) {
+            console.error("Error saving performance:", e);
+        }
+    }
+
+    // Render Solutions list
+    renderExamSolutions(questionDetails);
+
+    hideLoading();
+    navigateToUrl('/custom-test/results');
+}
+
+function renderExamSolutions(questionDetails) {
+    const list = document.getElementById('resSolutionsList');
+    if (!list) return;
+
+    const renderList = (filteredQs) => {
+        if (filteredQs.length === 0) {
+            list.innerHTML = '<p class="no-data">No questions in this category</p>';
+            return;
+        }
+
+        list.innerHTML = filteredQs.map((q, idx) => {
+            const isUnattempted = q.userOption === -1;
+            const isCorrect = !isUnattempted && q.userOption === q.correctOption;
+            
+            let statusClass = 'unattempted';
+            let userAnsText = "Unattempted";
+            if (!isUnattempted) {
+                if (isCorrect) {
+                    statusClass = 'correct';
+                    userAnsText = `Your Answer: Option ${String.fromCharCode(65 + q.userOption)} (Correct)`;
+                } else {
+                    statusClass = 'incorrect';
+                    userAnsText = `Your Answer: Option ${String.fromCharCode(65 + q.userOption)} (Incorrect)`;
+                }
+            }
+
+            return `
+                <div class="solution-card ${statusClass}">
+                    <div class="solution-card-header">
+                        <span class="subject">${(q.subject || 'physics').toUpperCase()} | Difficulty: ${q.difficulty}</span>
+                        <span class="timing">Time Spent: ${q.timeSpent}s</span>
+                    </div>
+                    <div class="solution-text">${q.questionText}</div>
+                    
+                    <div class="solution-answers">
+                        <span class="${isCorrect ? 'user-ans-correct' : (isUnattempted ? '' : 'user-ans-wrong')}">${userAnsText}</span>
+                        <span>Correct Answer: Option ${String.fromCharCode(65 + q.correctOption)}</span>
+                    </div>
+
+                    ${q.detailedAnswer ? `
+                        <div class="solution-explanation">
+                            <strong>Detailed Explanation:</strong>
+                            <p style="margin-top: 4px; white-space: pre-line;">${q.detailedAnswer}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    };
+
+    // Initial render: All Qs
+    renderList(questionDetails);
+
+    // Bind solutions filter listeners
+    document.querySelectorAll('.solutions-filter-bar .filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.solutions-filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const filterValue = this.dataset.filter;
+            let filtered = [...questionDetails];
+            if (filterValue === 'correct') {
+                filtered = questionDetails.filter(q => q.userOption !== -1 && q.userOption === q.correctOption);
+            } else if (filterValue === 'incorrect') {
+                filtered = questionDetails.filter(q => q.userOption !== -1 && q.userOption !== q.correctOption);
+            } else if (filterValue === 'unattempted') {
+                filtered = questionDetails.filter(q => q.userOption === -1);
+            }
+            renderList(filtered);
+        });
+    });
+}
+
+// --- PODCAST PLAY HISTORY ---
+
+async function loadPodcastHistory() {
+    const list = document.getElementById('podcastHistoryList');
+    if (!list) return;
+
+    if (!currentUser) {
+        list.innerHTML = '<p class="no-history">Log in to view your podcast history</p>';
+        return;
+    }
+
+    try {
+        const snapshot = await database.ref(`podcastHistory/${currentUser.uid}`).orderByChild('timestamp').limitToLast(10).once('value');
+        const history = [];
+        snapshot.forEach(snap => {
+            history.push({
+                id: snap.key,
+                ...snap.val()
+            });
+        });
+
+        if (history.length === 0) {
+            list.innerHTML = '<p class="no-history">No past podcast requests found</p>';
+            return;
+        }
+
+        // Show newest first
+        history.reverse();
+
+        list.innerHTML = history.map(item => `
+            <div class="podcast-history-item" data-id="${item.id}">
+                <div class="history-item-content">
+                    <h4>${item.topic}</h4>
+                    <span>Requested: ${formatDate(item.timestamp)}</span>
+                </div>
+                <div class="history-play-icon">▶ Play</div>
+            </div>
+        `).join('');
+
+        // Bind history click listeners
+        document.querySelectorAll('.podcast-history-item').forEach(el => {
+            el.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const selectedItem = history.find(h => h.id === id);
+                if (selectedItem && selectedItem.script) {
+                    loadPodcastHistoryItem(selectedItem.script, selectedItem.topic);
+                }
+            });
+        });
+
+    } catch (e) {
+        console.error("Error loading podcast history:", e);
+        list.innerHTML = '<p class="no-history">Failed to load podcast history</p>';
+    }
+}
+
+function loadPodcastHistoryItem(script, topic) {
+    resetPodcastPlayer();
+    
+    document.getElementById('podcastTopic').value = topic;
+    podcastScriptArray = script;
+    renderPodcastScript(podcastScriptArray);
+
+    podcastTotalDuration = 0;
+    podcastLineDurations = [];
+    podcastScriptArray.forEach(line => {
+        let duration = line.type === 'direction' ? 0 : Math.max(3.0, line.text.length * 0.085);
+        podcastLineDurations.push(duration);
+        podcastTotalDuration += duration;
+    });
+
+    document.getElementById('podcastTotalTime').textContent = formatPodcastTimestamp(podcastTotalDuration);
+    document.getElementById('podcastScrubber').max = Math.floor(podcastTotalDuration);
+
+    document.getElementById('podcastPlayerPanel').style.display = 'flex';
+    
+    // Play line 0
+    playPodcastLine(0, 0);
+}
+
+// ==================== SINGLE QUESTION DETAIL & ROUTING ENGINE ====================
+
+let questionTimerInterval = null;
+let questionSecondsElapsed = 0;
+let questionTimerState = 'idle'; // 'idle', 'running', 'paused'
+
+function startQuestionTimer() {
+    const btn = document.getElementById('btnQuestionTimer');
+    if (!btn) return;
+    
+    questionTimerState = 'running';
+    btn.classList.add('timer-running');
+    btn.classList.remove('timer-paused');
+    btn.innerHTML = `⏱️ ${formatSeconds(questionSecondsElapsed)}`;
+    
+    if (questionTimerInterval) clearInterval(questionTimerInterval);
+    questionTimerInterval = setInterval(() => {
+        questionSecondsElapsed++;
+        btn.innerHTML = `⏱️ ${formatSeconds(questionSecondsElapsed)}`;
+    }, 1000);
+}
+
+function pauseQuestionTimer() {
+    const btn = document.getElementById('btnQuestionTimer');
+    if (!btn) return;
+    
+    questionTimerState = 'paused';
+    btn.classList.add('timer-paused');
+    btn.classList.remove('timer-running');
+    btn.innerHTML = `⏱️ Paused (${formatSeconds(questionSecondsElapsed)})`;
+    
+    if (questionTimerInterval) {
+        clearInterval(questionTimerInterval);
+        questionTimerInterval = null;
+    }
+}
+
+function resetQuestionTimer() {
+    if (questionTimerInterval) {
+        clearInterval(questionTimerInterval);
+        questionTimerInterval = null;
+    }
+    questionSecondsElapsed = 0;
+    questionTimerState = 'idle';
+    const btn = document.getElementById('btnQuestionTimer');
+    if (btn) {
+        btn.classList.remove('timer-running', 'timer-paused');
+        btn.textContent = '⏱️ Start Timer';
+    }
+}
+
+function formatSeconds(totalSecs) {
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+async function resolveQuestionPath(questionId) {
+    // 1. Check if localStorage has subject & chapterId
+    let subject = localStorage.getItem('lastSubject');
+    let chapterId = localStorage.getItem('lastChapterId');
+    if (subject && chapterId) {
+        // Verify it exists there
+        const snap = await database.ref(`questions/${subject}/${chapterId}/${questionId}`).once('value');
+        if (snap.exists()) {
+            return { subject, chapterId, question: { id: questionId, ...snap.val() } };
+        }
+    }
+    
+    // 2. If not found, search all subjects and chapters
+    const subjects = ['physics', 'chemistry', 'mathematics'];
+    for (const sub of subjects) {
+        const chaptersSnap = await database.ref(`chapters/${sub}`).once('value');
+        if (chaptersSnap.exists()) {
+            const chaptersObj = chaptersSnap.val();
+            for (const chapId of Object.keys(chaptersObj)) {
+                const qSnap = await database.ref(`questions/${sub}/${chapId}/${questionId}`).once('value');
+                if (qSnap.exists()) {
+                    // Cache it
+                    localStorage.setItem('lastSubject', sub);
+                    localStorage.setItem('lastChapterId', chapId);
+                    return { subject: sub, chapterId: chapId, question: { id: questionId, ...qSnap.val() } };
+                }
+            }
+        }
+    }
+    return null;
+}
+
+async function loadQuestionDetailPage(questionId) {
+    showLoading();
+    try {
+        resetQuestionTimer();
+        
+        // Resolve subject, chapterId and question data
+        const resolved = await resolveQuestionPath(questionId);
+        if (!resolved) {
+            alert('Question not found.');
+            navigateToUrl('/practice');
+            return;
+        }
+        
+        const { subject, chapterId, question } = resolved;
+        currentSubject = subject;
+        currentChapterId = chapterId;
+        
+        // Fetch/load the full list of questions for this chapter if not already loaded (for Next/Prev navigation)
+        if (quizQuestions.length === 0 || quizQuestions.every(q => q.id !== questionId)) {
+            // Load all questions from this chapter to enable prev/next navigation
+            const snapshot = await database.ref(`questions/${subject}/${chapterId}`).once('value');
+            quizQuestions = [];
+            snapshot.forEach(childSnapshot => {
+                quizQuestions.push({
+                    id: childSnapshot.key,
+                    subject: subject,
+                    ...childSnapshot.val()
+                });
+            });
+            
+            if (userAnswers.length !== quizQuestions.length) {
+                userAnswers = new Array(quizQuestions.length).fill(null);
+            }
+            
+            // Also load user bookmarks (safely wrapped in try-catch)
+            if (currentUser) {
+                try {
+                    const bookmarksSnapshot = await database.ref(`bookmarks/${currentUser.uid}`).once('value');
+                    currentUserBookmarks = bookmarksSnapshot.val() || {};
+                } catch (bookmarkErr) {
+                    console.error("Error loading bookmarks in detail page:", bookmarkErr);
+                    currentUserBookmarks = currentUserBookmarks || {};
+                }
+            }
+        }
+        
+        // Find index of current question in the list
+        const qIndex = quizQuestions.findIndex(q => q.id === questionId);
+        if (qIndex === -1) {
+            alert('Question not found in the chapter.');
+            navigateToUrl('/practice');
+            return;
+        }
+        
+        currentQuestionIndex = qIndex;
+        
+        // Render the single question details
+        renderQuestionDetail(question, qIndex);
+        
+        // Auto-start timer if setting is enabled
+        if (localStorage.getItem('autoStartTimer') !== 'false') {
+            startQuestionTimer();
+        }
+        
+        // Show page
+        showPage('questionDetail');
+    } catch (e) {
+        console.error('Error loading question detail:', e);
+        alert('Error loading question. Please try again.');
+    } finally {
+        hideLoading();
+    }
+}
+
+let selectedDetailOption = null;
+
+function renderQuestionDetail(question, qIndex) {
+    selectedDetailOption = null; // reset selection
+    
+    // Set question number and metadata
+    document.getElementById('detailQuestionNumber').textContent = `Q ${qIndex + 1}`;
+    
+    let metaText = `JEE Main`;
+    if (question.year) metaText += ` ${question.year}`;
+    if (question.shift) metaText += ` (${question.shift})`;
+    if (question.difficulty) metaText += ` - ${question.difficulty}`;
+    document.getElementById('detailQuestionMeta').textContent = metaText;
+    
+    // Set question text
+    document.getElementById('detailQuestionText').innerHTML = question.question;
+    
+    // Set bookmark button state
+    const isBookmarked = currentUserBookmarks[question.id] === true;
+    const bookmarkBtn = document.getElementById('btnBookmarkDetailQuestion');
+    if (bookmarkBtn) {
+        if (isBookmarked) {
+            bookmarkBtn.classList.add('active');
+            bookmarkBtn.style.color = 'var(--ig-primary)';
+        } else {
+            bookmarkBtn.classList.remove('active');
+            bookmarkBtn.style.color = 'var(--ig-text-secondary)';
+        }
+        // Update click listener
+        bookmarkBtn.onclick = async (e) => {
+            e.stopPropagation();
+            await toggleQuestionBookmark(bookmarkBtn, question.id);
+            if (currentUserBookmarks[question.id] === true) {
+                bookmarkBtn.style.color = 'var(--ig-primary)';
+            } else {
+                bookmarkBtn.style.color = 'var(--ig-text-secondary)';
+            }
+        };
+    }
+    
+    // Set Back to List button link
+    const backBtn = document.getElementById('btnBackToQuestionList');
+    if (backBtn) {
+        backBtn.onclick = () => {
+            navigateToUrl(`/practice/${currentSubject}/${currentChapterId}`);
+        };
+    }
+    
+    // Render options in 2x2 grid
+    const optionsContainer = document.getElementById('detailOptionsContainer');
+    const explanationContainer = document.getElementById('detailExplanationContainer');
+    const checkBtn = document.getElementById('btnDetailCheckAnswer');
+    
+    explanationContainer.style.display = 'none';
+    
+    const userAnswer = userAnswers[qIndex];
+    const isAttempted = userAnswer !== null;
+    
+    optionsContainer.innerHTML = question.options.map((option, optIdx) => {
+        const letter = String.fromCharCode(65 + optIdx);
+        let cardClass = 'option-card-detail';
+        
+        if (isAttempted) {
+            const isCorrectOption = question.correctAnswer === optIdx;
+            const isSelectedOption = userAnswer === optIdx;
+            if (isCorrectOption) {
+                cardClass += ' option-correct';
+            } else if (isSelectedOption && !isCorrectOption) {
+                cardClass += ' option-incorrect';
+            }
+        } else {
+            // Check if we already clicked this option but haven't submitted yet
+            if (selectedDetailOption === optIdx) {
+                cardClass += ' option-selected';
+            }
+        }
+        
+        return `
+            <button class="${cardClass}" data-option-idx="${optIdx}" ${isAttempted ? 'disabled' : ''}>
+                <div class="option-letter-box">${letter}</div>
+                <div class="option-text">${option}</div>
+            </button>
+        `;
+    }).join('');
+    
+    // Enable/disable Check Answer button
+    if (isAttempted) {
+        checkBtn.disabled = true;
+        checkBtn.textContent = 'Submitted';
+        
+        // Show explanation if present
+        if (question.detailedAnswer) {
+            explanationContainer.style.display = 'block';
+            document.getElementById('detailExplanationContent').innerHTML = question.detailedAnswer;
+        }
+    } else {
+        checkBtn.disabled = true;
+        checkBtn.textContent = 'Check Answer';
+        
+        // Click handlers for selecting option
+        optionsContainer.querySelectorAll('.option-card-detail').forEach(btn => {
+            btn.onclick = () => {
+                const optIdx = parseInt(btn.dataset.optionIdx);
+                selectedDetailOption = optIdx;
+                
+                // Toggle active classes
+                optionsContainer.querySelectorAll('.option-card-detail').forEach((b, idx) => {
+                    if (idx === optIdx) {
+                        b.classList.add('option-selected');
+                    } else {
+                        b.classList.remove('option-selected');
+                    }
+                });
+                
+                checkBtn.disabled = false;
+            };
+        });
+    }
+    
+    // Next/Prev navigation buttons
+    const prevBtn = document.getElementById('btnDetailPrev');
+    const nextBtn = document.getElementById('btnDetailNext');
+    
+    prevBtn.disabled = qIndex === 0;
+    nextBtn.disabled = qIndex === quizQuestions.length - 1;
+    
+    prevBtn.onclick = () => {
+        if (qIndex > 0) {
+            const prevQ = quizQuestions[qIndex - 1];
+            navigateToUrl(`/question/${prevQ.id}`);
+        }
+    };
+    
+    nextBtn.onclick = () => {
+        if (qIndex < quizQuestions.length - 1) {
+            const nextQ = quizQuestions[qIndex + 1];
+            navigateToUrl(`/question/${nextQ.id}`);
+        }
+    };
+}
+
+async function submitDetailAnswer() {
+    if (selectedDetailOption === null) return;
+    
+    const qIndex = currentQuestionIndex;
+    const question = quizQuestions[qIndex];
+    
+    // Save answer in local state
+    userAnswers[qIndex] = selectedDetailOption;
+    
+    const isCorrect = selectedDetailOption === question.correctAnswer;
+    
+    // Save result to Firebase
+    saveQuestionResult(qIndex, isCorrect);
+    
+    // Re-render to show correct/incorrect state
+    renderQuestionDetail(question, qIndex);
+    
+    // Pause timer
+    pauseQuestionTimer();
+}
+
+function navigateToUrl(path, pushState = true) {
+    if (pushState) {
+        window.history.pushState(null, '', path);
+    }
+    routeCurrentUrl();
+}
+
+async function routeCurrentUrl() {
+    if (typeof auth === 'undefined') return;
+    
+    let path = window.location.pathname;
+    
+    // Normalize path
+    if (path.startsWith('/')) path = path.slice(1);
+    if (path.endsWith('/')) path = path.slice(0, -1);
+    
+    // Split into parts
+    const parts = path.split('/');
+    const rootPath = parts[0] || 'home';
+    
+    // Route guard: if not logged in and not on auth, go to auth
+    if (!currentUser && rootPath !== 'auth') {
+        window.history.replaceState(null, '', '/auth');
+        showPage('auth');
+        return;
+    }
+    
+    // Route guard: if logged in and on auth, go to home
+    if (currentUser && rootPath === 'auth') {
+        window.history.replaceState(null, '', '/home');
+        showPage('home');
+        return;
+    }
+    
+    switch (rootPath) {
+        case 'home':
+            showPage('home');
+            break;
+            
+        case 'profile':
+            showPage('profile');
+            break;
+            
+        case 'practice':
+            if (parts.length === 1) {
+                showPage('pyqSubject');
+            } else if (parts.length === 2) {
+                const subject = parts[1];
+                loadChapters(subject);
+            } else if (parts.length === 3) {
+                const subject = parts[1];
+                const chapterId = parts[2];
+                showLoading();
+                try {
+                    const snap = await database.ref(`chapters/${subject}/${chapterId}/name`).once('value');
+                    const chapterName = snap.val() || 'Chapter';
+                    loadPracticeMode(subject, chapterName, chapterId);
+                } catch (e) {
+                    console.error('Error fetching chapter name for routing:', e);
+                    loadPracticeMode(subject, 'Chapter', chapterId);
+                } finally {
+                    hideLoading();
+                }
+            } else {
+                navigateToUrl('/practice');
+            }
+            break;
+            
+        case 'question':
+            if (parts.length === 2) {
+                const questionId = parts[1];
+                loadQuestionDetailPage(questionId);
+            } else {
+                navigateToUrl('/practice');
+            }
+            break;
+            
+        case 'upcoming':
+            loadUpcomingExams();
+            showPage('upcoming');
+            break;
+            
+        case 'admin':
+            if (isAdmin(currentUser.email)) {
+                loadAdminData();
+                showPage('admin');
+            } else {
+                navigateToUrl('/home');
+            }
+            break;
+            
+        case 'podcast':
+            loadPodcastHistory();
+            showPage('podcast');
+            break;
+            
+        case 'community':
+            loadCommunityChat();
+            showPage('community');
+            break;
+            
+        case 'custom-test':
+            if (parts.length === 1) {
+                loadCustomTestWizard();
+                showPage('customTestWizard');
+            } else if (parts.length === 2 && parts[1] === 'exam') {
+                if (currentExamQuestions && currentExamQuestions.length > 0) {
+                    showPage('customTestExam');
+                } else {
+                    navigateToUrl('/custom-test');
+                }
+            } else if (parts.length === 2 && parts[1] === 'results') {
+                showPage('customTestResults');
+            } else {
+                navigateToUrl('/custom-test');
+            }
+            break;
+            
+        case 'auth':
+            showPage('auth');
+            break;
+            
+        default:
+            window.history.replaceState(null, '', '/home');
+            showPage('home');
+            break;
+    }
+}
+
+// Window popstate event listener for browser back/forward buttons
+window.addEventListener('popstate', () => {
+    routeCurrentUrl();
+});
+
+// ==================== THEME MANAGEMENT ====================
+function applySavedTheme() {
+    const savedTheme = localStorage.getItem('themePreference') || 'instagram';
+    setTheme(savedTheme);
+}
+
+function setTheme(theme) {
+    const instagramIcon = document.getElementById('themeIconInstagram');
+    const whatsappIcon = document.getElementById('themeIconWhatsapp');
+    const switchLabel = document.getElementById('themeSwitchLabel');
+    
+    if (theme === 'whatsapp') {
+        document.documentElement.setAttribute('data-theme', 'whatsapp');
+        document.body.setAttribute('data-theme', 'whatsapp');
+        
+        if (switchLabel) switchLabel.textContent = 'Instagram Theme';
+        if (instagramIcon) instagramIcon.style.display = 'block';
+        if (whatsappIcon) whatsappIcon.style.display = 'none';
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+        document.body.removeAttribute('data-theme');
+        
+        if (switchLabel) switchLabel.textContent = 'WhatsApp Theme';
+        if (instagramIcon) instagramIcon.style.display = 'none';
+        if (whatsappIcon) whatsappIcon.style.display = 'block';
+    }
+}
+
+function handleThemeSwitch() {
+    const currentTheme = localStorage.getItem('themePreference') || 'instagram';
+    const newTheme = currentTheme === 'instagram' ? 'whatsapp' : 'instagram';
+    localStorage.setItem('themePreference', newTheme);
+    setTheme(newTheme);
+    
+    // Dynamically re-render chat wallpaper / formatting if user toggles theme on community page
+    if (pages.community && pages.community.style.display !== 'none') {
+        selectChatChannel(currentChatChannel);
+    }
+}
+
+// ==================== COMMUNITY CHAT LOGIC ====================
+let currentChatChannel = 'general';
+let chatMessagesRef = null;
+
+function loadCommunityChat() {
+    const testsChannelBtn = document.getElementById('channelTestsBtn');
+    if (testsChannelBtn) {
+        const userIsAdmin = currentUser ? isAdmin(currentUser.email) : false;
+        testsChannelBtn.style.display = userIsAdmin ? 'flex' : 'none';
+    }
+    selectChatChannel(currentChatChannel || 'general');
+    setupChatEventListeners();
+}
+
+function setupChatEventListeners() {
+    // Setup channel togglers
+    const channelItems = document.querySelectorAll('.channel-item');
+    channelItems.forEach(item => {
+        item.replaceWith(item.cloneNode(true));
+    });
+    
+    const newChannelItems = document.querySelectorAll('.channel-item');
+    newChannelItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const channelId = item.dataset.channel;
+            selectChatChannel(channelId);
+        });
+    });
+    
+    // Chat Message Form submit
+    const chatForm = document.getElementById('chatMessageForm');
+    if (chatForm) {
+        chatForm.replaceWith(chatForm.cloneNode(true));
+    }
+    const newChatForm = document.getElementById('chatMessageForm');
+    if (newChatForm) {
+        newChatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendCommunityMessage();
+        });
+    }
+    
+    // Click outside reaction popover to dismiss
+    document.addEventListener('click', (e) => {
+        const popover = document.getElementById('emojiReactionPopover');
+        if (popover && popover.style.display !== 'none') {
+            if (!popover.contains(e.target) && !e.target.closest('.message-bubble') && !e.target.closest('.reaction-badge')) {
+                popover.style.display = 'none';
+            }
+        }
+    });
+}
+
+async function selectChatChannel(channelId) {
+    const userIsAdmin = currentUser ? isAdmin(currentUser.email) : false;
+    if (channelId === 'tests' && !userIsAdmin) {
+        selectChatChannel('general');
+        return;
+    }
+
+    currentChatChannel = channelId;
+    
+    document.querySelectorAll('.channel-item').forEach(item => {
+        if (item.dataset.channel === channelId) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+    
+    const titleEl = document.getElementById('activeChannelHeaderTitle');
+    const descEl = document.getElementById('activeChannelHeaderSubtitle');
+    const inputForm = document.getElementById('chatMessageForm');
+    const readOnlyBanner = document.getElementById('chatUpdatesReadOnlyBanner');
+    
+    if (channelId === 'general') {
+        if (titleEl) titleEl.textContent = '# general';
+        if (descEl) descEl.textContent = 'Public discussions for all students';
+        if (inputForm) inputForm.style.display = 'flex';
+        if (readOnlyBanner) readOnlyBanner.style.display = 'none';
+    } else if (channelId === 'updates') {
+        if (titleEl) titleEl.textContent = '📢 updates';
+        if (descEl) descEl.textContent = 'Official updates from Learnser AI admins';
+        
+        const userIsAdmin = currentUser ? isAdmin(currentUser.email) : false;
+        if (userIsAdmin) {
+            if (inputForm) inputForm.style.display = 'flex';
+            if (readOnlyBanner) readOnlyBanner.style.display = 'none';
+        } else {
+            if (inputForm) inputForm.style.display = 'none';
+            if (readOnlyBanner) readOnlyBanner.style.display = 'block';
+        }
+    } else if (channelId === 'tests') {
+        if (titleEl) titleEl.textContent = '🧪 tests';
+        if (descEl) descEl.textContent = 'Private channel for admin testing';
+        if (inputForm) inputForm.style.display = 'flex';
+        if (readOnlyBanner) readOnlyBanner.style.display = 'none';
+    }
+    
+    syncChannelMessages(channelId);
+}
+
+function syncChannelMessages(channelId) {
+    const listContainer = document.getElementById('chatMessagesList');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '';
+    if (chatMessagesRef) {
+        chatMessagesRef.off();
+    }
+    
+    chatMessagesRef = database.ref(`communityMessages/${channelId}`).limitToLast(100);
+    
+    chatMessagesRef.on('value', async (snapshot) => {
+        const messagesData = snapshot.val();
+        if (!messagesData) {
+            listContainer.innerHTML = '<p class="no-data" style="margin: auto; color: var(--ig-text-secondary);">No messages yet</p>';
+            return;
+        }
+        
+        // Fetch all user profiles for latest usernames
+        let usersData = {};
+        try {
+            const usersSnapshot = await database.ref('users').once('value');
+            usersData = usersSnapshot.val() || {};
+        } catch (err) {
+            console.error('Error fetching users for chat:', err);
+        }
+        
+        // Clear container and append all elements synchronously to prevent race conditions
+        listContainer.innerHTML = '';
+        
+        const sortedMsgIds = Object.keys(messagesData).sort((a, b) => {
+            const tA = messagesData[a].timestamp || Date.now();
+            const tB = messagesData[b].timestamp || Date.now();
+            return tA - tB;
+        });
+        
+        sortedMsgIds.forEach(msgId => {
+            const msg = messagesData[msgId];
+            const isMe = msg.senderId === currentUser.uid;
+            
+            const senderProfile = usersData[msg.senderId] || {};
+            const displayUsername = senderProfile.communityUsername || msg.senderUsername || `@student_${msg.senderId.slice(0, 5)}`;
+            const senderDisplayName = senderProfile.name || 'Student';
+            
+            const row = document.createElement('div');
+            row.className = `chat-message-row ${isMe ? 'sent-by-me' : 'sent-by-other'}`;
+            row.dataset.messageId = msgId;
+            
+            let avatarHtml = '';
+            if (!isMe) {
+                const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderDisplayName)}&background=667eea&color=fff&size=50`;
+                avatarHtml = `<img class="message-avatar" src="${avatarUrl}" alt="Avatar">`;
+            }
+            
+            const date = new Date(msg.timestamp || Date.now());
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let reactionsHtml = '';
+            if (msg.reactions) {
+                reactionsHtml = `<div class="message-reactions">`;
+                Object.keys(msg.reactions).forEach(emoji => {
+                    const reacters = msg.reactions[emoji];
+                    const hasMyReact = reacters[currentUser.uid] === true;
+                    const count = Object.keys(reacters).length;
+                    reactionsHtml += `
+                        <div class="reaction-badge ${hasMyReact ? 'my-reaction' : ''}" data-emoji="${emoji}">
+                            <span>${emoji}</span>
+                            <span>${count}</span>
+                        </div>
+                    `;
+                });
+                reactionsHtml += `</div>`;
+            }
+            
+            row.innerHTML = `
+                ${avatarHtml}
+                <div class="message-bubble-wrapper">
+                    ${!isMe ? `<span class="message-sender-title">${displayUsername}</span>` : ''}
+                    <div class="message-bubble">
+                        <p class="message-text">${escapeHtml(msg.text)}</p>
+                        <div class="message-meta-footer">
+                            <span class="message-timestamp">${timeStr}</span>
+                            <span class="message-checkmark">✓</span>
+                        </div>
+                        ${reactionsHtml}
+                    </div>
+                </div>
+            `;
+            
+            const bubble = row.querySelector('.message-bubble');
+            if (bubble) {
+                bubble.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    toggleMessageReaction(channelId, msgId, '❤️');
+                });
+                
+                bubble.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showReactionPopover(e, channelId, msgId);
+                });
+            }
+            
+            row.querySelectorAll('.reaction-badge').forEach(badge => {
+                badge.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const emoji = badge.dataset.emoji;
+                    toggleMessageReaction(channelId, msgId, emoji);
+                });
+            });
+            
+            listContainer.appendChild(row);
+        });
+        
+        listContainer.scrollTop = listContainer.scrollHeight;
+    });
+}
+
+async function sendCommunityMessage() {
+    const input = document.getElementById('chatMessageInput');
+    if (!input) return;
+    
+    const text = input.value.trim();
+    if (!text) return;
+    
+    if (!currentUser) {
+        alert('You must be logged in to send messages.');
+        return;
+    }
+    
+    const channelId = currentChatChannel;
+    
+    if ((channelId === 'updates' || channelId === 'tests') && !isAdmin(currentUser.email)) {
+        alert(`Only admins can post in ${channelId} channel.`);
+        return;
+    }
+    
+    try {
+        const profileSnap = await database.ref(`users/${currentUser.uid}`).once('value');
+        const profile = profileSnap.val() || {};
+        const username = profile.communityUsername || `@student_${currentUser.uid.slice(0, 5)}`;
+        
+        const messageData = {
+            senderId: currentUser.uid,
+            senderUsername: username,
+            text: text,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+        
+        await database.ref(`communityMessages/${channelId}`).push(messageData);
+        input.value = '';
+    } catch (e) {
+        console.error('Error sending message:', e);
+        alert('Failed to send message. Please try again.');
+    }
+}
+
+function showReactionPopover(e, channelId, msgId) {
+    const popover = document.getElementById('emojiReactionPopover');
+    if (!popover) return;
+    
+    popover.style.display = 'flex';
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    
+    let top = rect.top - 45;
+    let left = rect.left + (rect.width / 2) - 100;
+    
+    if (top < 10) top = rect.bottom + 10;
+    if (left < 10) left = 10;
+    if (left + 220 > window.innerWidth) left = window.innerWidth - 230;
+    
+    popover.style.top = `${top + window.scrollY}px`;
+    popover.style.left = `${left + window.scrollX}px`;
+    
+    popover.querySelectorAll('.emoji-option').forEach(option => {
+        option.replaceWith(option.cloneNode(true));
+    });
+    
+    document.getElementById('emojiReactionPopover').querySelectorAll('.emoji-option').forEach(option => {
+        option.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const emoji = option.dataset.emoji;
+            toggleMessageReaction(channelId, msgId, emoji);
+            popover.style.display = 'none';
+        });
+    });
+}
+
+async function toggleMessageReaction(channelId, msgId, emoji) {
+    if (!currentUser) return;
+    
+    const reactionRef = database.ref(`communityMessages/${channelId}/${msgId}/reactions/${emoji}/${currentUser.uid}`);
+    
+    try {
+        const snap = await reactionRef.once('value');
+        if (snap.exists()) {
+            await reactionRef.remove();
+            
+            const parentRef = database.ref(`communityMessages/${channelId}/${msgId}/reactions/${emoji}`);
+            const parentSnap = await parentRef.once('value');
+            if (!parentSnap.exists()) {
+                await parentRef.remove();
+            }
+        } else {
+            await reactionRef.set(true);
+        }
+    } catch (e) {
+        console.error('Error toggling reaction:', e);
+    }
+}
+
+async function saveCommunityUsername() {
+    if (!currentUser) return;
+    const input = document.getElementById('profileCommunityUsername');
+    if (!input) return;
+    
+    let username = input.value.trim();
+    if (!username) {
+        alert('Please enter a valid username.');
+        return;
+    }
+    
+    if (!username.startsWith('@')) {
+        username = '@' + username;
+    }
+    
+    const usernameRegex = /^@[a-zA-Z0-9_-]+$/;
+    if (!usernameRegex.test(username)) {
+        alert('Username can only contain letters, numbers, underscores, and hyphens (no spaces).');
+        return;
+    }
+    
+    try {
+        showLoading();
+        await database.ref(`users/${currentUser.uid}/communityUsername`).set(username);
+        alert('Community Username updated successfully!');
+        input.value = username;
+        await loadUserProfile();
+    } catch (e) {
+        console.error('Error saving community username:', e);
+        alert('Failed to save community username. Please try again.');
+    } finally {
+        hideLoading();
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
 }
