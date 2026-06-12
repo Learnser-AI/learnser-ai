@@ -3734,13 +3734,16 @@ function setupChatEventListeners() {
         });
     }
     
-    // Click outside reaction popover to dismiss
+    // Click outside reaction popover or chat dropdown to dismiss
     document.addEventListener('click', (e) => {
         const popover = document.getElementById('emojiReactionPopover');
         if (popover && popover.style.display !== 'none') {
             if (!popover.contains(e.target) && !e.target.closest('.message-bubble') && !e.target.closest('.reaction-badge')) {
                 popover.style.display = 'none';
             }
+        }
+        if (!e.target.closest('.message-options-btn') && !e.target.closest('.chat-message-dropdown')) {
+            closeAllChatDropdowns();
         }
     });
 }
@@ -3821,6 +3824,15 @@ function syncChannelMessages(channelId) {
             console.error('Error fetching users for chat:', err);
         }
         
+        // Fetch current user's deleted messages map for this channel
+        let deletedMap = {};
+        try {
+            const deletedSnapshot = await database.ref(`users/${currentUser.uid}/deletedMessages/${channelId}`).once('value');
+            deletedMap = deletedSnapshot.val() || {};
+        } catch (err) {
+            console.error('Error fetching deleted messages:', err);
+        }
+        
         // Clear container and append all elements synchronously to prevent race conditions
         listContainer.innerHTML = '';
         
@@ -3831,6 +3843,10 @@ function syncChannelMessages(channelId) {
         });
         
         sortedMsgIds.forEach(msgId => {
+            if (deletedMap && deletedMap[msgId] === true) {
+                return; // Skip rendering deleted messages for this user
+            }
+            
             const msg = messagesData[msgId];
             const isMe = msg.senderId === currentUser.uid;
             
@@ -3879,6 +3895,11 @@ function syncChannelMessages(channelId) {
                             <span class="message-checkmark">✓</span>
                         </div>
                         ${reactionsHtml}
+                        <button class="message-options-btn" title="Message Options">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             `;
@@ -3904,11 +3925,93 @@ function syncChannelMessages(channelId) {
                 });
             });
             
+            const optionsBtn = row.querySelector('.message-options-btn');
+            if (optionsBtn) {
+                optionsBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showChatDropdownMenu(e, channelId, msgId);
+                });
+            }
+            
             listContainer.appendChild(row);
         });
         
         listContainer.scrollTop = listContainer.scrollHeight;
     });
+}
+
+function showChatDropdownMenu(e, channelId, msgId) {
+    closeAllChatDropdowns();
+    
+    const dropdown = document.createElement('div');
+    dropdown.className = 'chat-message-dropdown';
+    
+    const userIsAdmin = currentUser ? isAdmin(currentUser.email) : false;
+    
+    let deleteForMeHtml = `<div class="dropdown-item delete-for-me-item">Delete for me</div>`;
+    let deleteForEveryoneHtml = userIsAdmin ? `<div class="dropdown-item delete-for-everyone-item">Delete for everyone</div>` : '';
+    
+    dropdown.innerHTML = `
+        ${deleteForMeHtml}
+        ${deleteForEveryoneHtml}
+    `;
+    
+    document.body.appendChild(dropdown);
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    let top = rect.bottom + window.scrollY;
+    let left = rect.left + window.scrollX;
+    
+    const dropdownWidth = 160;
+    if (left + dropdownWidth > window.innerWidth) {
+        left = window.innerWidth - dropdownWidth - 10;
+    }
+    
+    dropdown.style.top = `${top}px`;
+    dropdown.style.left = `${left}px`;
+    
+    dropdown.querySelector('.delete-for-me-item').addEventListener('click', async () => {
+        await deleteMessageForMe(channelId, msgId);
+        closeAllChatDropdowns();
+    });
+    
+    if (userIsAdmin) {
+        dropdown.querySelector('.delete-for-everyone-item').addEventListener('click', async () => {
+            if (confirm('Are you sure you want to delete this message for everyone?')) {
+                await deleteMessageForEveryone(channelId, msgId);
+            }
+            closeAllChatDropdowns();
+        });
+    }
+}
+
+function closeAllChatDropdowns() {
+    const existing = document.querySelectorAll('.chat-message-dropdown');
+    existing.forEach(el => el.remove());
+}
+
+async function deleteMessageForMe(channelId, messageId) {
+    if (!currentUser) return;
+    try {
+        await database.ref(`users/${currentUser.uid}/deletedMessages/${channelId}/${messageId}`).set(true);
+        syncChannelMessages(channelId);
+    } catch (e) {
+        console.error('Error saving local delete status:', e);
+        alert('Failed to delete message for you. Please try again.');
+    }
+}
+
+async function deleteMessageForEveryone(channelId, messageId) {
+    if (!currentUser || !isAdmin(currentUser.email)) {
+        alert('Permission denied.');
+        return;
+    }
+    try {
+        await database.ref(`communityMessages/${channelId}/${messageId}`).remove();
+    } catch (e) {
+        console.error('Error deleting message globally:', e);
+        alert('Failed to delete message for everyone. Please try again.');
+    }
 }
 
 async function sendCommunityMessage() {

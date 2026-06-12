@@ -4096,3 +4096,85 @@ body[data-theme="whatsapp"] .chat-message-row.sent-by-other .message-checkmark {
         white-space: nowrap;
     }
 }
+
+/* Chat Message Options & Dropdown */
+.message-options-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: none;
+    border: none;
+    color: var(--ig-text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+    z-index: 5;
+}
+
+.message-bubble:hover .message-options-btn {
+    opacity: 1;
+}
+
+.message-options-btn:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: var(--ig-text-primary);
+}
+
+.message-options-btn svg {
+    display: block;
+    pointer-events: none;
+}
+
+.message-bubble {
+    padding-right: 28px !important;
+}
+
+.chat-message-dropdown {
+    position: absolute;
+    background-color: var(--ig-bg-tertiary);
+    border: 1px solid var(--ig-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    padding: 4px 0;
+    z-index: 1000;
+    min-width: 150px;
+    animation: fadeInDropdown 0.12s ease-out;
+}
+
+@keyframes fadeInDropdown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-message-dropdown .dropdown-item {
+    padding: 10px 16px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ig-text-primary);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.chat-message-dropdown .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.chat-message-dropdown .dropdown-item.delete-for-everyone-item {
+    color: #f56565;
+    border-top: 1px solid var(--ig-border);
+}
+
+.chat-message-dropdown .dropdown-item.delete-for-everyone-item:hover {
+    background-color: rgba(245, 101, 101, 0.1);
+}
