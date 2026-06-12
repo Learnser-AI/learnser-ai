@@ -4178,3 +4178,70 @@ body[data-theme="whatsapp"] .chat-message-row.sent-by-other .message-checkmark {
 .chat-message-dropdown .dropdown-item.delete-for-everyone-item:hover {
     background-color: rgba(245, 101, 101, 0.1);
 }
+
+/* Super Admin Panel Styling */
+.super-admin-panel .admins-table {
+    margin-top: 10px;
+}
+
+.admins-table th, .admins-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid var(--ig-border-light);
+    vertical-align: middle;
+}
+
+.admins-table tbody tr {
+    transition: background-color 0.15s;
+}
+
+.admins-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.btn-admin-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--ig-border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: var(--ig-text-primary);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-admin-toggle.enabled {
+    background-color: rgba(72, 187, 120, 0.1);
+    border-color: var(--success-color, #48bb78);
+    color: var(--success-color, #48bb78);
+}
+
+.btn-admin-toggle.disabled {
+    background-color: rgba(245, 101, 101, 0.1);
+    border-color: var(--danger-color, #f56565);
+    color: var(--danger-color, #f56565);
+}
+
+.btn-admin-toggle:not([disabled]):hover {
+    filter: brightness(1.15);
+}
+
+.btn-admin-remove {
+    background: none;
+    border: 1px solid #f56565;
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: #f56565;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-admin-remove:hover {
+    background-color: #f56565;
+    color: white;
+}

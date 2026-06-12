@@ -72,6 +72,16 @@
                     </svg></span>
                 <span class="sidebar-label">Admin Panel</span>
             </a>
+            <a href="#" class="sidebar-link" id="superAdminNavLink" style="display: none;">
+                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg></span>
+                <span class="sidebar-label">Super Admin</span>
+            </a>
         </div>
         <div class="sidebar-bottom">
             <button class="sidebar-link" id="themeSwitchBtn">
@@ -1180,6 +1190,47 @@
                         </button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Super Admin Panel -->
+    <div id="superAdminPage" class="container super-admin-panel" style="display: none;">
+        <h2 class="page-title">Super Admin Panel</h2>
+        <p class="page-subtitle">Add or remove admins, and manage their permissions</p>
+
+        <!-- Add Admin Card -->
+        <div class="admin-card">
+            <h3>Add New Admin</h3>
+            <form id="addAdminForm" class="admin-form">
+                <div class="form-row">
+                    <input type="email" id="newAdminEmail" placeholder="Enter admin email address" required style="flex-grow: 1; padding: 10px; border: 1px solid var(--ig-border); border-radius: 6px; background: var(--ig-bg-secondary); color: var(--ig-text-primary); font-size: 14px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="newAdminCommunityAccess" checked style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="newAdminCommunityAccess" style="color: var(--ig-text-primary); font-size: 13.5px; cursor: pointer; user-select: none;">Allow Community Access</label>
+                    </div>
+                    <button type="submit" class="btn-action-primary" style="padding: 10px 20px; font-size: 14px; font-weight: 600;">Add Admin</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Admins List Table -->
+        <div class="admin-card" style="margin-top: 24px;">
+            <h3>Current Admins</h3>
+            <div style="overflow-x: auto; margin-top: 16px;">
+                <table class="admins-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--ig-border); color: var(--ig-text-secondary); font-size: 13px; font-weight: 600; text-transform: uppercase;">
+                            <th style="padding: 12px 8px;">Email Address</th>
+                            <th style="padding: 12px 8px;">Role</th>
+                            <th style="padding: 12px 8px;">Community Access</th>
+                            <th style="padding: 12px 8px; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminsTableBody" style="color: var(--ig-text-primary); font-size: 14px;">
+                        <!-- Populate dynamically -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

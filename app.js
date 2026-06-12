@@ -15,6 +15,11 @@ let currentFilters = {
     subtopic: 'all'
 };
 
+// Global Admin & Super Admin States
+let isCurrentUserAdmin = false;
+let isCurrentUserSuperAdmin = false;
+let currentUserCommunityAccess = false;
+
 
 // DOM Elements
 const pages = {
@@ -32,7 +37,8 @@ const pages = {
     customTestExam: document.getElementById('customTestExamPage'),
     customTestResults: document.getElementById('customTestResultsPage'),
     questionDetail: document.getElementById('questionDetailPage'),
-    community: document.getElementById('communityChatPage')
+    community: document.getElementById('communityChatPage'),
+    superAdmin: document.getElementById('superAdminPage')
 };
 
 const sidebar = document.getElementById('sidebar');
@@ -388,31 +394,88 @@ function updateAppleLinkUI() {
     }
 }
 
+let adminStatusListener = null;
+
+function watchAdminStatus(user, callback) {
+    if (adminStatusListener) {
+        adminStatusListener.off();
+        adminStatusListener = null;
+    }
+
+    if (!user) {
+        isCurrentUserAdmin = false;
+        isCurrentUserSuperAdmin = false;
+        currentUserCommunityAccess = false;
+        if (callback) callback();
+        return;
+    }
+
+    // 1. Check if hardcoded Super Admin
+    if (typeof SUPER_ADMIN_EMAILS !== 'undefined' && SUPER_ADMIN_EMAILS.includes(user.email)) {
+        isCurrentUserAdmin = true;
+        isCurrentUserSuperAdmin = true;
+        currentUserCommunityAccess = true;
+        if (callback) callback();
+        return;
+    }
+
+    // 2. Check database admin list (by user UID)
+    isCurrentUserSuperAdmin = false;
+    adminStatusListener = database.ref(`admins/${user.uid}`);
+    adminStatusListener.on('value', (snapshot) => {
+        const adminData = snapshot.val();
+        if (adminData) {
+            isCurrentUserAdmin = true;
+            currentUserCommunityAccess = adminData.communityAccess !== false;
+        } else {
+            isCurrentUserAdmin = false;
+            currentUserCommunityAccess = false;
+        }
+        if (callback) callback();
+    }, (err) => {
+        console.error('Error watching admin status:', err);
+        isCurrentUserAdmin = false;
+        currentUserCommunityAccess = false;
+        if (callback) callback();
+    });
+}
+
+function updateAdminSidebarLinks() {
+    const adminLink = document.getElementById('adminNavLink');
+    const superAdminLink = document.getElementById('superAdminNavLink');
+    const podcastSettingsToggle = document.getElementById('podcastSettingsToggleContainer');
+    
+    if (adminLink) {
+        adminLink.style.display = isCurrentUserAdmin ? 'flex' : 'none';
+    }
+    if (superAdminLink) {
+        superAdminLink.style.display = isCurrentUserSuperAdmin ? 'flex' : 'none';
+    }
+    if (podcastSettingsToggle) {
+        podcastSettingsToggle.style.display = isCurrentUserAdmin ? 'flex' : 'none';
+    }
+}
+
 function checkAuthState() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             currentUser = user;
-            await loadUserProfile();
-            await loadExamToggles();
-            routeCurrentUrl();
-            sidebar.style.display = 'flex';
-            document.body.classList.add('sidebar-active');
-            loadPodcastHistory();
-
-            // Check if user is admin
-            if (isAdmin(user.email)) {
-                document.getElementById('adminNavLink').style.display = 'flex';
-                const podcastSettingsToggle = document.getElementById('podcastSettingsToggleContainer');
-                if (podcastSettingsToggle) podcastSettingsToggle.style.display = 'flex';
-            }
+            watchAdminStatus(user, async () => {
+                await loadUserProfile();
+                await loadExamToggles();
+                routeCurrentUrl();
+                sidebar.style.display = 'flex';
+                document.body.classList.add('sidebar-active');
+                loadPodcastHistory();
+                updateAdminSidebarLinks();
+            });
         } else {
             currentUser = null;
+            watchAdminStatus(null);
             navigateToUrl('/auth');
             sidebar.style.display = 'none';
             document.body.classList.remove('sidebar-active');
-            document.getElementById('adminNavLink').style.display = 'none';
-            const podcastSettingsToggle = document.getElementById('podcastSettingsToggleContainer');
-            if (podcastSettingsToggle) podcastSettingsToggle.style.display = 'none';
+            updateAdminSidebarLinks();
         }
         hideLoading();
     });
@@ -425,6 +488,20 @@ async function loadUserProfile() {
     }
 
     try {
+        // Transfer pending admin configuration to active admins if registered
+        const emailKey = sanitizeEmail(currentUser.email);
+        const pendingSnap = await database.ref(`pendingAdmins/${emailKey}`).once('value');
+        const pendingData = pendingSnap.val();
+        if (pendingData) {
+            await database.ref(`admins/${currentUser.uid}`).set({
+                email: pendingData.email,
+                emailKey: emailKey,
+                communityAccess: pendingData.communityAccess,
+                addedAt: pendingData.addedAt || firebase.database.ServerValue.TIMESTAMP
+            });
+            await database.ref(`pendingAdmins/${emailKey}`).remove();
+        }
+
         console.log('Loading profile for user:', currentUser.uid);
         const snapshot = await database.ref('users/' + currentUser.uid).once('value');
         const userData = snapshot.val();
@@ -490,7 +567,10 @@ async function loadUserProfile() {
 }
 
 function isAdmin(email) {
-    return ADMIN_EMAILS.includes(email);
+    if (typeof SUPER_ADMIN_EMAILS !== 'undefined' && SUPER_ADMIN_EMAILS.includes(email)) {
+        return true;
+    }
+    return isCurrentUserAdmin;
 }
 
 function getErrorMessage(errorCode) {
@@ -516,6 +596,7 @@ function initializeNavigationListeners() {
     safeOn('homeNavLink', 'click', (e) => { e.preventDefault(); navigateToUrl('/home'); });
     safeOn('sidebarLogo', 'click', (e) => { e.preventDefault(); navigateToUrl('/home'); });
     safeOn('adminNavLink', 'click', (e) => { e.preventDefault(); navigateToUrl('/admin'); });
+    safeOn('superAdminNavLink', 'click', (e) => { e.preventDefault(); navigateToUrl('/super-admin'); });
     safeOn('profilePreview', 'click', () => navigateToUrl('/profile'));
     safeOn('backToHomeBtn', 'click', () => navigateToUrl('/home'));
     safeOn('googleLinkBtn', 'click', handleGoogleLinkToggle);
@@ -3636,6 +3717,15 @@ async function routeCurrentUrl() {
             }
             break;
             
+        case 'super-admin':
+            if (isCurrentUserSuperAdmin) {
+                loadSuperAdminPage();
+                showPage('superAdmin');
+            } else {
+                navigateToUrl('/home');
+            }
+            break;
+            
         case 'auth':
             showPage('auth');
             break;
@@ -3699,7 +3789,7 @@ let chatMessagesRef = null;
 function loadCommunityChat() {
     const testsChannelBtn = document.getElementById('channelTestsBtn');
     if (testsChannelBtn) {
-        const userIsAdmin = currentUser ? isAdmin(currentUser.email) : false;
+        const userIsAdmin = currentUser ? (isCurrentUserSuperAdmin || (isCurrentUserAdmin && currentUserCommunityAccess)) : false;
         testsChannelBtn.style.display = userIsAdmin ? 'flex' : 'none';
     }
     selectChatChannel(currentChatChannel || 'general');
@@ -3749,7 +3839,7 @@ function setupChatEventListeners() {
 }
 
 async function selectChatChannel(channelId) {
-    const userIsAdmin = currentUser ? isAdmin(currentUser.email) : false;
+    const userIsAdmin = currentUser ? (isCurrentUserSuperAdmin || (isCurrentUserAdmin && currentUserCommunityAccess)) : false;
     if (channelId === 'tests' && !userIsAdmin) {
         selectChatChannel('general');
         return;
@@ -3779,7 +3869,7 @@ async function selectChatChannel(channelId) {
         if (titleEl) titleEl.textContent = '📢 updates';
         if (descEl) descEl.textContent = 'Official updates from Learnser AI admins';
         
-        const userIsAdmin = currentUser ? isAdmin(currentUser.email) : false;
+        const userIsAdmin = currentUser ? (isCurrentUserSuperAdmin || (isCurrentUserAdmin && currentUserCommunityAccess)) : false;
         if (userIsAdmin) {
             if (inputForm) inputForm.style.display = 'flex';
             if (readOnlyBanner) readOnlyBanner.style.display = 'none';
@@ -3946,7 +4036,7 @@ function showChatDropdownMenu(e, channelId, msgId) {
     const dropdown = document.createElement('div');
     dropdown.className = 'chat-message-dropdown';
     
-    const userIsAdmin = currentUser ? isAdmin(currentUser.email) : false;
+    const userIsAdmin = currentUser ? (isCurrentUserSuperAdmin || (isCurrentUserAdmin && currentUserCommunityAccess)) : false;
     
     let deleteForMeHtml = `<div class="dropdown-item delete-for-me-item">Delete for me</div>`;
     let deleteForEveryoneHtml = userIsAdmin ? `<div class="dropdown-item delete-for-everyone-item">Delete for everyone</div>` : '';
@@ -4002,7 +4092,8 @@ async function deleteMessageForMe(channelId, messageId) {
 }
 
 async function deleteMessageForEveryone(channelId, messageId) {
-    if (!currentUser || !isAdmin(currentUser.email)) {
+    const userIsAdmin = currentUser ? (isCurrentUserSuperAdmin || (isCurrentUserAdmin && currentUserCommunityAccess)) : false;
+    if (!currentUser || !userIsAdmin) {
         alert('Permission denied.');
         return;
     }
@@ -4028,7 +4119,8 @@ async function sendCommunityMessage() {
     
     const channelId = currentChatChannel;
     
-    if ((channelId === 'updates' || channelId === 'tests') && !isAdmin(currentUser.email)) {
+    const userIsAdmin = currentUser ? (isCurrentUserSuperAdmin || (isCurrentUserAdmin && currentUserCommunityAccess)) : false;
+    if ((channelId === 'updates' || channelId === 'tests') && !userIsAdmin) {
         alert(`Only admins can post in ${channelId} channel.`);
         return;
     }
@@ -4150,4 +4242,210 @@ function escapeHtml(str) {
               .replace(/>/g, "&gt;")
               .replace(/"/g, "&quot;")
               .replace(/'/g, "&#039;");
+}
+
+// ==================== SUPER ADMIN LOGIC ====================
+let superAdminPageInitialized = false;
+
+function initSuperAdminEventListeners() {
+    if (superAdminPageInitialized) return;
+    
+    const form = document.getElementById('addAdminForm');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const emailInput = document.getElementById('newAdminEmail');
+            const communityAccessInput = document.getElementById('newAdminCommunityAccess');
+            if (emailInput) {
+                const email = emailInput.value.trim();
+                const communityAccess = communityAccessInput ? communityAccessInput.checked : true;
+                await addAdmin(email, communityAccess);
+                emailInput.value = '';
+                if (communityAccessInput) communityAccessInput.checked = true;
+            }
+        });
+    }
+    superAdminPageInitialized = true;
+}
+
+async function loadSuperAdminPage() {
+    initSuperAdminEventListeners();
+    showLoading();
+    
+    const tbody = document.getElementById('adminsTableBody');
+    if (!tbody) {
+        hideLoading();
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    try {
+        // 1. Fetch active database admins
+        const adminsSnap = await database.ref('admins').once('value');
+        const admins = adminsSnap.val() || {};
+        
+        // 2. Fetch pending database admins
+        const pendingSnap = await database.ref('pendingAdmins').once('value');
+        const pendingAdmins = pendingSnap.val() || {};
+        
+        // Render hardcoded Super Admins first
+        if (typeof SUPER_ADMIN_EMAILS !== 'undefined') {
+            SUPER_ADMIN_EMAILS.forEach(email => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light); font-weight: 600;">${email}</td>
+                    <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light); color: var(--ig-primary); font-weight: 700;">Super Admin</td>
+                    <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light);">
+                        <button class="btn-admin-toggle enabled" disabled style="opacity: 0.8; cursor: not-allowed;">Allowed</button>
+                    </td>
+                    <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light); text-align: right; color: var(--ig-text-secondary); font-size: 12px; font-style: italic;">
+                        Root Account
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Render active database admins
+        Object.keys(admins).forEach(uid => {
+            const admin = admins[uid];
+            // Skip rendering if they are super admins to avoid duplication
+            if (typeof SUPER_ADMIN_EMAILS !== 'undefined' && SUPER_ADMIN_EMAILS.includes(admin.email)) {
+                return;
+            }
+            
+            const isCommunityAllowed = admin.communityAccess !== false;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light);">${admin.email}</td>
+                <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light); color: var(--success-color, #48bb78); font-weight: 600;">Admin</td>
+                <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light);">
+                    <button class="btn-admin-toggle ${isCommunityAllowed ? 'enabled' : 'disabled'}" data-uid="${uid}" data-access="${isCommunityAllowed}" data-pending="false">
+                        ${isCommunityAllowed ? 'Allowed' : 'Blocked'}
+                    </button>
+                </td>
+                <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light); text-align: right;">
+                    <button class="btn-admin-remove" data-uid="${uid}" data-pending="false">Remove</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        // Render pending database admins
+        Object.keys(pendingAdmins).forEach(emailKey => {
+            const admin = pendingAdmins[emailKey];
+            const isCommunityAllowed = admin.communityAccess !== false;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light); color: var(--ig-text-secondary);">${admin.email} <span style="font-size: 11px; font-style: italic; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Pending</span></td>
+                <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light); color: var(--ig-text-secondary); font-style: italic;">Admin (Pending)</td>
+                <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light);">
+                    <button class="btn-admin-toggle ${isCommunityAllowed ? 'enabled' : 'disabled'}" data-emailkey="${emailKey}" data-access="${isCommunityAllowed}" data-pending="true">
+                        ${isCommunityAllowed ? 'Allowed' : 'Blocked'}
+                    </button>
+                </td>
+                <td style="padding: 14px 10px; border-bottom: 1px solid var(--ig-border-light); text-align: right;">
+                    <button class="btn-admin-remove" data-emailkey="${emailKey}" data-pending="true">Remove</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        // Setup row button listeners
+        tbody.querySelectorAll('.btn-admin-toggle').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const isPending = btn.dataset.pending === 'true';
+                const currentAccess = btn.dataset.access === 'true';
+                const targetKey = isPending ? btn.dataset.emailkey : btn.dataset.uid;
+                await toggleCommunityAccess(targetKey, currentAccess, isPending);
+            });
+        });
+        
+        tbody.querySelectorAll('.btn-admin-remove').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const isPending = btn.dataset.pending === 'true';
+                const targetKey = isPending ? btn.dataset.emailkey : btn.dataset.uid;
+                if (confirm('Are you sure you want to remove this admin?')) {
+                    await removeAdmin(targetKey, isPending);
+                }
+            });
+        });
+        
+    } catch (e) {
+        console.error('Error loading super admin dashboard:', e);
+        alert('Failed to load admins list. Please try again.');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function addAdmin(email, communityAccess) {
+    const emailSearch = email.trim().toLowerCase();
+    
+    // Prevent adding super admins
+    if (typeof SUPER_ADMIN_EMAILS !== 'undefined' && SUPER_ADMIN_EMAILS.includes(emailSearch)) {
+        alert('This email is already a root Super Admin.');
+        return;
+    }
+    
+    showLoading();
+    try {
+        // Query users node by email to find UID
+        const snapshot = await database.ref('users').orderByChild('email').equalTo(emailSearch).once('value');
+        const users = snapshot.val();
+        
+        if (users) {
+            const uid = Object.keys(users)[0];
+            await database.ref(`admins/${uid}`).set({
+                email: emailSearch,
+                communityAccess: communityAccess,
+                addedAt: firebase.database.ServerValue.TIMESTAMP
+            });
+        } else {
+            // User does not exist yet, save to pendingAdmins by sanitized email
+            const emailKey = sanitizeEmail(emailSearch);
+            await database.ref(`pendingAdmins/${emailKey}`).set({
+                email: emailSearch,
+                communityAccess: communityAccess,
+                addedAt: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+        await loadSuperAdminPage();
+    } catch (e) {
+        console.error('Error adding admin:', e);
+        alert('Failed to add admin. Please try again.');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function removeAdmin(targetKey, isPending) {
+    showLoading();
+    try {
+        const path = isPending ? `pendingAdmins/${targetKey}` : `admins/${targetKey}`;
+        await database.ref(path).remove();
+        await loadSuperAdminPage();
+    } catch (e) {
+        console.error('Error removing admin:', e);
+        alert('Failed to remove admin. Please try again.');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function toggleCommunityAccess(targetKey, currentAccess, isPending) {
+    showLoading();
+    try {
+        const path = isPending ? `pendingAdmins/${targetKey}/communityAccess` : `admins/${targetKey}/communityAccess`;
+        await database.ref(path).set(!currentAccess);
+        await loadSuperAdminPage();
+    } catch (e) {
+        console.error('Error toggling community access:', e);
+        alert('Failed to update community access level.');
+    } finally {
+        hideLoading();
+    }
 }

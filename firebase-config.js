@@ -20,14 +20,13 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const database = firebase.database();
 
-// Admin email configuration
-// Add admin emails here - these users will have access to admin panel
-const ADMIN_EMAILS = [
-    'aryamansingh2w16@gmail.com',  // Replace with your admin email
+// Super Admin email configuration
+const SUPER_ADMIN_EMAILS = [
+    'aryamansingh2w16@gmail.com',
     'gk123ganubanu@gmail.com'
 ];
 
 // Export for use in other files
 window.auth = auth;
 window.database = database;
-window.ADMIN_EMAILS = ADMIN_EMAILS;
+window.SUPER_ADMIN_EMAILS = SUPER_ADMIN_EMAILS;

@@ -145,15 +145,15 @@ Edit `index.html`:
     },
     "questions": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || root.child('admins').child(auth.uid).exists())"
     },
     "chapters": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || root.child('admins').child(auth.uid).exists())"
     },
     "exams": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || root.child('admins').child(auth.uid).exists())"
     },
     "results": {
       "$uid": {
@@ -167,6 +167,19 @@ Edit `index.html`:
         ".write": "$uid === auth.uid"
       }
     },
+    "admins": {
+      ".read": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com')",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || (auth.uid === $uid && root.child('pendingAdmins').child(newData.child('emailKey').val()).child('email').val() === auth.token.email))"
+      }
+    },
+    "pendingAdmins": {
+      ".read": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com')",
+      "$emailKey": {
+        ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || (newData.val() === null && data.child('email').val() === auth.token.email))"
+      }
+    },
     "communityMessages": {
       "general": {
         ".read": "auth != null",
@@ -174,11 +187,11 @@ Edit `index.html`:
       },
       "updates": {
         ".read": "auth != null",
-        ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'aryamansingh2w16@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'gk123ganubanu@gmail.com')"
+        ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || (root.child('admins').child(auth.uid).exists() && root.child('admins').child(auth.uid).child('communityAccess').val() !== false))"
       },
       "tests": {
-        ".read": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'aryamansingh2w16@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'gk123ganubanu@gmail.com')",
-        ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'aryamansingh2w16@gmail.com' || root.child('users').child(auth.uid).child('email').val() === 'gk123ganubanu@gmail.com')"
+        ".read": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || (root.child('admins').child(auth.uid).exists() && root.child('admins').child(auth.uid).child('communityAccess').val() !== false))",
+        ".write": "auth != null && (auth.token.email === 'aryamansingh2w16@gmail.com' || auth.token.email === 'gk123ganubanu@gmail.com' || (root.child('admins').child(auth.uid).exists() && root.child('admins').child(auth.uid).child('communityAccess').val() !== false))"
       }
     }
   }
