@@ -713,6 +713,39 @@
                 </form>
             </div>
 
+            <!-- Bulk Upload Questions -->
+            <div class="admin-card">
+                <h3 class="admin-card-title">Bulk Upload Questions</h3>
+                <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 16px; line-height: 1.5;">
+                    Upload a JSON file containing an array of question objects to add them to this chapter in bulk. 
+                    <a href="#" onclick="downloadBulkSampleJSON(); return false;" style="color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed var(--accent);">Download Sample Template JSON</a>
+                </p>
+                <form id="bulkUploadForm" onsubmit="handleBulkUpload(event)" style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="bulkSubject">Subject *</label>
+                            <select id="bulkSubject" class="admin-select" onchange="onSubjectChange('bulkSubject', 'bulkChapter')" required>
+                                <option value="">Select Subject</option>
+                                <option value="physics">Physics</option>
+                                <option value="chemistry">Chemistry</option>
+                                <option value="mathematics">Mathematics</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bulkChapter">Chapter *</label>
+                            <select id="bulkChapter" class="admin-select" disabled required>
+                                <option value="">Select Subject First</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bulkFile">JSON File *</label>
+                            <input type="file" id="bulkFile" class="admin-input" accept=".json" required style="padding: 6px 12px;">
+                        </div>
+                    </div>
+                    <button type="submit" id="bulkUploadBtn" class="btn-generate" style="margin-top: 10px;">Upload Questions</button>
+                </form>
+            </div>
+
             <!-- Existing Questions Filter and Manager -->
             <div class="admin-card">
                 <h3 class="admin-card-title">Manage Existing Questions</h3>
@@ -1209,6 +1242,142 @@
                 document.getElementById('addQuestionBtn').disabled = false;
                 document.getElementById('addQuestionBtn').textContent = 'Add Question';
             }
+        }
+
+        // Download Sample Template JSON for Bulk Upload
+        function downloadBulkSampleJSON() {
+            const sampleQuestions = [
+                {
+                    "question": "A particle of mass m is moving in a circular path of constant radius r such that its centripetal acceleration a_c is varying with time t as a_c = k^2 r t^2, where k is a constant. The power delivered to the particle by the forces acting on it is:",
+                    "options": [
+                        "2pi m k^2 r^2 t",
+                        "m k^2 r^2 t",
+                        "1/2 m k^2 r^2 t",
+                        "0"
+                    ],
+                    "correctAnswer": 1,
+                    "year": "2023",
+                    "shift": "Jan 25 Shift 1",
+                    "difficulty": "Medium",
+                    "subtopic": "Circular Motion",
+                    "detailedAnswer": "Centripetal acceleration a_c = v^2/r = k^2 r t^2. Therefore, v = k r t. Tangential acceleration a_t = dv/dt = k r. Force delivered by centripetal force is zero since F_c is perpendicular to v. Force delivered by tangential force F_t = m a_t = m k r. Power P = F_t * v = (m k r) * (k r t) = m k^2 r^2 t.",
+                    "questionImage": null,
+                    "optionAImage": null,
+                    "optionBImage": null,
+                    "optionCImage": null,
+                    "optionDImage": null,
+                    "detailedAnswerImage": null
+                },
+                {
+                    "question": "The de Broglie wavelength of an electron having kinetic energy E is lambda. If the kinetic energy is doubled, what will be the new de Broglie wavelength?",
+                    "options": [
+                        "lambda / 2",
+                        "lambda / sqrt(2)",
+                        "sqrt(2) lambda",
+                        "2 lambda"
+                    ],
+                    "correctAnswer": 1,
+                    "year": "2024",
+                    "shift": "April 8 Shift 2",
+                    "difficulty": "Easy",
+                    "subtopic": "Dual Nature of Matter",
+                    "detailedAnswer": "We know that de Broglie wavelength lambda = h / p = h / sqrt(2mE). Thus, lambda is inversely proportional to sqrt(E). If E becomes 2E, lambda' = lambda / sqrt(2).",
+                    "questionImage": null,
+                    "optionAImage": null,
+                    "optionBImage": null,
+                    "optionCImage": null,
+                    "optionDImage": null,
+                    "detailedAnswerImage": null
+                }
+            ];
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sampleQuestions, null, 4));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "learnser_bulk_questions_template.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // Handle Bulk Upload of Questions
+        async function handleBulkUpload(e) {
+            e.preventDefault();
+            const subject = document.getElementById('bulkSubject').value;
+            const chapterId = document.getElementById('bulkChapter').value;
+            const fileInput = document.getElementById('bulkFile');
+
+            if (!subject || !chapterId || !fileInput.files.length) {
+                alert('Please select a subject, chapter, and file.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            document.getElementById('bulkUploadBtn').disabled = true;
+            document.getElementById('bulkUploadBtn').textContent = 'Uploading...';
+
+            reader.onload = async function(evt) {
+                try {
+                    const questionsArray = JSON.parse(evt.target.result);
+                    if (!Array.isArray(questionsArray)) {
+                        throw new Error("JSON file must contain an array of questions.");
+                    }
+
+                    if (questionsArray.length === 0) {
+                        throw new Error("The questions array is empty.");
+                    }
+
+                    // Simple validation check
+                    for (let i = 0; i < questionsArray.length; i++) {
+                        const q = questionsArray[i];
+                        if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || typeof q.correctAnswer !== 'number') {
+                            throw new Error(`Question at index ${i} is missing required fields (question text, exactly 4 options, and correctAnswer index 0-3).`);
+                        }
+                    }
+
+                    // Push each question to database
+                    const ref = window.database.ref('questions/' + subject + '/' + chapterId);
+                    let successCount = 0;
+
+                    for (const q of questionsArray) {
+                        const questionData = {
+                            question: q.question,
+                            options: q.options,
+                            correctAnswer: q.correctAnswer,
+                            year: q.year || null,
+                            shift: q.shift || null,
+                            difficulty: q.difficulty || null,
+                            subtopic: q.subtopic || null,
+                            detailedAnswer: q.detailedAnswer || null,
+                            questionImage: q.questionImage || null,
+                            optionAImage: q.optionAImage || null,
+                            optionBImage: q.optionBImage || null,
+                            optionCImage: q.optionCImage || null,
+                            optionDImage: q.optionDImage || null,
+                            detailedAnswerImage: q.detailedAnswerImage || null,
+                            createdAt: new Date().toISOString()
+                        };
+                        await ref.push(questionData);
+                        successCount++;
+                    }
+
+                    alert(`Successfully uploaded ${successCount} questions in bulk!`);
+                    fileInput.value = '';
+                    document.getElementById('bulkSubject').value = '';
+                    document.getElementById('bulkChapter').disabled = true;
+                    document.getElementById('bulkChapter').innerHTML = '<option value="">Select Subject First</option>';
+                } catch (error) {
+                    console.error('Error parsing or uploading bulk JSON:', error);
+                    alert('Failed to parse or upload JSON: ' + error.message);
+                } finally {
+                    document.getElementById('bulkUploadBtn').disabled = false;
+                    document.getElementById('bulkUploadBtn').textContent = 'Upload Questions';
+                }
+            };
+
+            reader.readAsText(file);
         }
 
         // Questions filtering manager

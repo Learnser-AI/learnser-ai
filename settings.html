@@ -310,12 +310,32 @@
                             <button class="btn btn-outline">Upload New Image</button>
                         </div>
                         <div class="form-row">
-                            <div class="row-info"><h4>Display Name</h4><p>Visible to everyone</p></div>
+                            <div class="row-info"><h4>Student Name / Display Name</h4><p>Visible on the leaderboard</p></div>
                             <input type="text" id="setting-display-name" value="Loading...">
                         </div>
                         <div class="form-row">
                             <div class="row-info"><h4>Username</h4><p>Unique platform identifier</p></div>
-                            <input type="text" id="setting-username" value="@loading">
+                            <input type="text" id="setting-username" value="@loading" disabled style="opacity: 0.7; cursor: not-allowed;">
+                        </div>
+                        <div class="form-row">
+                            <div class="row-info"><h4>Class</h4><p>Select your class grade</p></div>
+                            <select id="setting-class" style="width: 220px;">
+                                <option value="">Select Class</option>
+                                <option value="Class 11">Class 11</option>
+                                <option value="Class 12">Class 12</option>
+                                <option value="Dropper">Dropper</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="row-info"><h4>Board of Examinations</h4><p>Select your educational board</p></div>
+                            <select id="setting-board" style="width: 220px;">
+                                <option value="">Select Board</option>
+                                <option value="CBSE">CBSE</option>
+                                <option value="ICSE/ISC">ICSE / ISC</option>
+                                <option value="State Board">State Board</option>
+                                <option value="Other">Other</option>
+                            </select>
                         </div>
                         <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 12px; align-items: center;">
                             <span id="save-status-msg" style="font-size: 0.85rem; margin-right: 8px;"></span>
@@ -347,11 +367,11 @@
                         <div class="card-desc">Connect accounts for easier login and integration.</div>
                         <div class="form-row">
                             <div class="row-info"><h4>Google</h4><p id="setting-google-email">Loading...</p></div>
-                            <button class="btn btn-outline" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">Disconnect</button>
+                            <button class="btn btn-outline" id="btn-link-google" style="transition: 0.2s;">Checking...</button>
                         </div>
                         <div class="form-row">
                             <div class="row-info"><h4>GitHub</h4><p>Not connected</p></div>
-                            <button class="btn btn-outline">Connect</button>
+                            <button class="btn btn-outline" style="opacity: 0.5; cursor: not-allowed;" disabled>Connect</button>
                         </div>
                     </div>
                 </div>
@@ -575,9 +595,16 @@
             spinner.style.display = 'inline-block';
             statusMsg.innerHTML = '<span style="color: var(--text-dim);">Saving...</span>';
 
+            const classInput = document.getElementById('setting-class') ? document.getElementById('setting-class').value : "";
+            const boardInput = document.getElementById('setting-board') ? document.getElementById('setting-board').value : "";
+
             try {
-                // 1. Update the database table 'users' display_name
-                await database.ref('users/' + userId + '/display_name').set(nameInput);
+                // 1. Update the database fields in a single transaction
+                await database.ref('users/' + userId).update({
+                    display_name: nameInput,
+                    student_class: classInput,
+                    board_of_examinations: boardInput
+                });
 
                 // 2. Sync profile display name in Firebase Auth user object
                 await currentUser.updateProfile({
@@ -607,6 +634,8 @@
                 if (profileStr) {
                     const profile = JSON.parse(profileStr);
                     profile.display_name = nameInput;
+                    profile.student_class = classInput;
+                    profile.board_of_examinations = boardInput;
                     localStorage.setItem('learnser_supabase_profile', JSON.stringify(profile));
                 }
 
@@ -631,6 +660,89 @@
                 statusMsg.innerHTML = '';
             }, 3000);
         }
+
+        // --- GOOGLE LINKING & UNLINKING MANAGEMENT ---
+        function updateLinkedAccountsUI() {
+            const auth = window.auth;
+            if (!auth) return;
+            const currentUser = auth.currentUser;
+            if (!currentUser) return;
+
+            const googleEmailEl = document.getElementById('setting-google-email');
+            const googleBtn = document.getElementById('btn-link-google');
+
+            if (!googleEmailEl || !googleBtn) return;
+
+            // Check if Google is in providerData
+            const googleProfile = currentUser.providerData.find(p => p.providerId === 'google.com');
+            const isGoogleLinked = !!googleProfile;
+
+            if (isGoogleLinked) {
+                googleEmailEl.innerText = googleProfile.email || currentUser.email || "Linked";
+                googleBtn.innerText = "Disconnect";
+                googleBtn.style.color = "var(--danger)";
+                googleBtn.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                googleBtn.onclick = handleGoogleLinkToggle;
+            } else {
+                googleEmailEl.innerText = "Not connected";
+                googleBtn.innerText = "Connect";
+                googleBtn.style.color = "var(--accent)";
+                googleBtn.style.borderColor = "var(--accent)";
+                googleBtn.onclick = handleGoogleLinkToggle;
+            }
+        }
+
+        async function handleGoogleLinkToggle() {
+            const auth = window.auth;
+            if (!auth || !auth.currentUser) return;
+
+            const currentUser = auth.currentUser;
+            const googleProfile = currentUser.providerData.find(p => p.providerId === 'google.com');
+            const isGoogleLinked = !!googleProfile;
+
+            const googleBtn = document.getElementById('btn-link-google');
+            googleBtn.disabled = true;
+            googleBtn.innerText = isGoogleLinked ? "Disconnecting..." : "Connecting...";
+
+            try {
+                if (isGoogleLinked) {
+                    // Check if they have another sign-in method
+                    const providersCount = currentUser.providerData.length;
+                    if (providersCount <= 1) {
+                        alert("You cannot disconnect Google because it is your only sign-in method.");
+                        return;
+                    }
+                    if (confirm("Are you sure you want to disconnect your Google account?")) {
+                        await currentUser.unlink('google.com');
+                        alert("Google account disconnected successfully.");
+                    }
+                } else {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    await currentUser.linkWithPopup(provider);
+                    alert("Google account connected successfully.");
+                }
+            } catch (err) {
+                console.error("Google account link error:", err);
+                alert(err.message || "An error occurred while linking/unlinking Google account.");
+            } finally {
+                googleBtn.disabled = false;
+                updateLinkedAccountsUI();
+            }
+        }
+
+        // Register profile ready event listener to populate UI
+        window.addEventListener('profileready', (e) => {
+            const profile = e.detail;
+            updateLinkedAccountsUI();
+
+            const classSelect = document.getElementById('setting-class');
+            const boardSelect = document.getElementById('setting-board');
+            if (classSelect) classSelect.value = profile.student_class || "";
+            if (boardSelect) boardSelect.value = profile.board_of_examinations || "";
+        });
+
+        // Initialize linking UI on load if user is already resolved
+        setTimeout(updateLinkedAccountsUI, 1000);
     </script>
 </body>
 </html>

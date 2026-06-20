@@ -232,9 +232,15 @@
             weekly_xp: 0,
             streak_days: 0,
             total_time_seconds: 0,
-            doubts_solved_count: 0
+            doubts_solved_count: 0,
+            student_class: "",
+            board_of_examinations: ""
           };
           await window.database.ref('users/' + user.uid).set(profile);
+        } else if (!profile.display_name && user.displayName) {
+          // Self-heal: Update database if it lacks a display_name but Firebase Auth has one
+          profile.display_name = user.displayName;
+          await window.database.ref('users/' + user.uid + '/display_name').set(user.displayName);
         }
 
         profile.id = user.uid;

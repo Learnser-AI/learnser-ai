@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learnser AI | Your Personal Study Command Center</title>
     <script src="theme.js?v=2.0"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
         :root {
@@ -461,7 +460,7 @@
     <nav>
         <div class="logo"><img src="logo.png" alt="Learnser Logo">LEARNSER <span>AI</span></div>
         <div class="nav-right">
-            <div id="google-signin-btn"></div>
+            <!-- Populated dynamically by auth-check.js -->
         </div>
     </nav>
 
@@ -681,32 +680,13 @@
             if (!state.active) btn.innerText = state.timeLeft === (state.mode === 'study' ? state.studyMin : state.breakMin) * 60 ? "START FLOW" : "RESUME FLOW";
         }
 
-        // --- AUTH ---
-        window.onload = () => {
-            google.accounts.id.initialize({
-                client_id: "952544160916-ldfaj5rb0q99dtc46i788mu2jdun7s69.apps.googleusercontent.com",
-                callback: handleCredentialResponse
-            });
-
-            google.accounts.id.renderButton(
-                document.getElementById("google-signin-btn"),
-                { theme: "filled_black", size: "large", shape: "pill" }
-            );
-        };
-
-        function handleCredentialResponse(response) {
-            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            localStorage.setItem('learnser_user', JSON.stringify({ given_name: payload.given_name, picture: payload.picture, email: payload.email }));
-
-            const formData = new FormData(); formData.append('Email', payload.email); formData.append('Name', payload.given_name);
-            fetch("https://script.google.com/macros/s/AKfycbzf9Y9CZlMfcQ4cXmVgOwJ6-iXKGzS4_gy8ZE-E8zATz6vqWjiov0mo7BnVibPVXjI/exec", { method: 'POST', body: formData, mode: 'no-cors' })
-                .then(() => { window.location.href = 'dashbord.html'; }).catch(() => { window.location.href = 'dashbord.html'; });
-        }
     </script>
-    <!-- Supabase Client & State Management -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="env.js"></script>
-    <script src="supabase-client.js"></script>
+    <!-- Firebase SDK & Configuration Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <script src="auth-check.js"></script>
 </body>
 
