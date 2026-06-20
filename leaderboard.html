@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View the Global Leaderboard for Learnser AI. Track top students, total XP rankings, and active learning streaks.">
+    <title>Global Leaderboard | Learnser AI</title>
+    
+    <script src="theme.js?v=2.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #818cf8; 
+            --primary-hover: #6366f1;
+            --accent: #2dd4bf; 
+            --danger: #ef4444;
+            --bg: #020617;      
+            --panel-bg: rgba(15, 23, 42, 0.6); 
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8; 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            
+            --sidebar-width: 320px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text-main);
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: 76px 1fr; 
+            transition: grid-template-columns 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body.collapsed { --sidebar-width: 90px; }
+
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(circle at 10% 10%, var(--bg-gradient-1, rgba(129, 140, 248, 0.05)) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 90%, var(--bg-gradient-2, rgba(45, 212, 191, 0.04)) 0%, transparent 40%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* --- TOP-LEFT CORNER --- */
+        .top-navbar-corner {
+            grid-column: 1 / 2; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); border-right: 1px solid var(--glass-border);
+            display: flex; align-items: center; padding: 0 16px; gap: 8px; overflow: hidden; 
+            transition: padding 0.3s, gap 0.3s;
+        }
+        body.collapsed .top-navbar-corner {
+            padding: 0 8px;
+            gap: 4px;
+        }
+
+        .hamburger-btn {
+            background: transparent; border: none; color: var(--text-main);
+            cursor: pointer; border-radius: 8px; padding: 8px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: background 0.2s, padding 0.3s;
+        }
+        .hamburger-btn:hover { background: color-mix(in srgb, var(--text-main) 10%, transparent); }
+        body.collapsed .hamburger-btn { padding: 6px; }
+
+        .user-profile {
+            display: flex; align-items: center;
+            padding: 6px 16px 6px 6px; border-radius: 12px;
+            transition: background 0.2s, padding 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            white-space: nowrap; overflow: hidden;
+        }
+        .user-profile:hover { background: color-mix(in srgb, var(--text-main) 5%, transparent); }
+        body.collapsed .user-profile { padding: 0; }
+
+        .pfp {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid var(--accent); object-fit: cover; background: var(--bg); 
+            flex-shrink: 0; margin-right: 16px; 
+            transition: margin-right 0.3s cubic-bezier(0.25, 1, 0.5, 1), width 0.3s, height 0.3s;
+        }
+        body.collapsed .pfp { 
+            margin-right: 0;
+            width: 30px; height: 30px; 
+        }
+
+        .user-details {
+            display: flex; flex-direction: column; justify-content: center; overflow: hidden;
+            width: 180px; transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s;
+        }
+        body.collapsed .user-details { width: 0; opacity: 0; pointer-events: none; }
+
+        .user-name { font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+        .user-email { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- TOP NAVBAR (MAIN) --- */
+        .top-navbar-main {
+            grid-column: 2 / 3; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; padding: 0 32px;
+        }
+
+        /* --- SIDEBAR NAVIGATION --- */
+        .sidebar {
+            grid-column: 1 / 2; grid-row: 2 / 3;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column;
+            overflow-y: auto; overflow-x: hidden; padding: 32px 20px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .sidebar::-webkit-scrollbar { display: none; }
+
+        .sidebar-menu { display: flex; flex-direction: column; gap: 32px; }
+        .menu-section { display: flex; flex-direction: column; gap: 6px; }
+
+        .section-title {
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-dim); margin-left: 14px; margin-bottom: 8px;
+            transition: opacity 0.2s, height 0.2s; white-space: nowrap;
+        }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 14px; border-radius: 12px; color: var(--text-dim);
+            text-decoration: none; font-weight: 600; font-size: 0.95rem;
+            transition: background 0.2s, color 0.2s, padding 0.3s; white-space: nowrap;
+        }
+        .menu-item:hover { background: color-mix(in srgb, var(--text-main) 5%, transparent); color: var(--text-main); }
+        .menu-item.active { background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); }
+
+        .menu-item svg { width: 22px; height: 22px; flex-shrink: 0; transition: color 0.2s; }
+        .menu-item.active svg { color: var(--primary); }
+        .menu-text { transition: opacity 0.2s, width 0.2s; }
+
+        body.collapsed .section-title { opacity: 0; height: 0; margin-bottom: 0; overflow: hidden; }
+        body.collapsed .menu-text { opacity: 0; width: 0; overflow: hidden; display: none; }
+        body.collapsed .menu-item { justify-content: center; padding-left: 0; padding-right: 0; }
+
+        /* --- MAIN CONTENT AREA --- */
+        .main-content {
+            grid-column: 2 / 3; grid-row: 2 / 3;
+            position: relative; overflow-y: auto; padding: 40px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-content::-webkit-scrollbar { display: none; }
+
+        /* Leaderboard Specific Styling */
+        .leaderboard-wrapper {
+            max-width: 1000px;
+            width: 100%;
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .leaderboard-container {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 16px;
+        }
+
+        .leaderboard-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Leaderboard Specific Layout using Flexbox */
+        .leaderboard-list-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .leaderboard-table-header {
+            display: flex;
+            padding: 12px 24px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .leaderboard-row {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .leaderboard-row:hover {
+            background: color-mix(in srgb, var(--primary) 6%, var(--card-bg));
+            border-color: color-mix(in srgb, var(--primary) 40%, var(--glass-border));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Column Alignments */
+        .rank-col {
+            width: 80px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .student-col {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        .streak-col {
+            width: 150px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            color: var(--danger);
+            gap: 6px;
+        }
+
+        .xp-col {
+            width: 120px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-weight: 800;
+            color: var(--accent);
+            font-size: 1.05rem;
+        }
+
+        /* Podium Spot Highlight Themes */
+        .podium-1 {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, var(--card-bg) 100%) !important;
+            border: 1.5px solid rgba(251, 191, 36, 0.4) !important;
+            box-shadow: 0 4px 20px -5px rgba(251, 191, 36, 0.15);
+        }
+        .podium-1:hover {
+            border-color: rgba(251, 191, 36, 0.6) !important;
+            box-shadow: 0 8px 25px -5px rgba(251, 191, 36, 0.25);
+        }
+
+        .podium-2 {
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, var(--card-bg) 100%) !important;
+            border: 1.5px solid rgba(148, 163, 184, 0.35) !important;
+        }
+        .podium-2:hover {
+            border-color: rgba(148, 163, 184, 0.5) !important;
+        }
+
+        .podium-3 {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, var(--card-bg) 100%) !important;
+            border: 1.5px solid rgba(245, 158, 11, 0.35) !important;
+        }
+        .podium-3:hover {
+            border-color: rgba(245, 158, 11, 0.5) !important;
+        }
+
+        /* Current User Highlight Row */
+        .leaderboard-row.current-user {
+            background: color-mix(in srgb, var(--primary) 12%, var(--card-bg)) !important;
+            border: 1.5px solid var(--primary) !important;
+            box-shadow: 0 4px 25px color-mix(in srgb, var(--primary) 20%, transparent);
+        }
+        .leaderboard-row.current-user:hover {
+            border-color: var(--accent) !important;
+            box-shadow: 0 8px 30px color-mix(in srgb, var(--primary) 30%, transparent);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        }
+        
+        .rank-badge.rank-1 { background: linear-gradient(135deg, #fbbf24, #d97706); color: #020617; font-weight: 800; }
+        .rank-badge.rank-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #020617; font-weight: 800; }
+        .rank-badge.rank-3 { background: linear-gradient(135deg, #f59e0b, #b45309); color: #020617; font-weight: 800; }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .user-display-name {
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-display-email {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Loading Skeleton */
+        .shimmer-sub {
+            background: color-mix(in srgb, var(--text-main) 8%, transparent) !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shimmer-sub::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                color-mix(in srgb, var(--text-main) 12%, transparent) 50%, 
+                transparent 100%);
+            background-size: 200% 100%;
+            transform: translateX(-100%);
+            animation: loading-shimmer 1.6s infinite;
+        }
+
+        @keyframes loading-shimmer {
+            100% { transform: translateX(100%); }
+        }
+
+        .skeleton-row {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-badge { width: 32px; height: 32px; border-radius: 50%; }
+        .skeleton-avatar { width: 36px; height: 36px; border-radius: 50%; }
+        .skeleton-text-group { display: flex; flex-direction: column; gap: 6px; }
+        .skeleton-text { height: 12px; border-radius: 4px; }
+        .skeleton-text.title { width: 140px; }
+        .skeleton-text.short { width: 40px; }
+        .skeleton-text.short.xp { width: 70px; margin-left: auto; }
+
+        /* --- THEME-SPECIFIC OVERRIDES --- */
+        
+        /* Sepia Parchment (Light Theme) */
+        [data-theme="sepia"] .leaderboard-container {
+            box-shadow: 0 8px 32px 0 rgba(142, 130, 110, 0.08);
+        }
+        [data-theme="sepia"] .leaderboard-row {
+            box-shadow: 0 2px 8px rgba(142, 130, 110, 0.04);
+        }
+        [data-theme="sepia"] .leaderboard-row:hover {
+            box-shadow: 0 8px 20px rgba(142, 130, 110, 0.1);
+        }
+        [data-theme="sepia"] .leaderboard-row.current-user {
+            box-shadow: 0 4px 20px color-mix(in srgb, var(--primary) 15%, transparent) !important;
+        }
+        [data-theme="sepia"] .leaderboard-row.current-user:hover {
+            box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 25%, transparent) !important;
+        }
+        [data-theme="sepia"] .podium-1 {
+            border-color: rgba(217, 119, 6, 0.6) !important;
+            box-shadow: 0 4px 20px -5px rgba(217, 119, 6, 0.12);
+        }
+        [data-theme="sepia"] .podium-1:hover {
+            border-color: rgba(217, 119, 6, 0.85) !important;
+            box-shadow: 0 8px 25px -5px rgba(217, 119, 6, 0.2);
+        }
+        [data-theme="sepia"] .podium-2 {
+            border-color: rgba(100, 116, 139, 0.5) !important;
+            box-shadow: 0 4px 20px -5px rgba(100, 116, 139, 0.10);
+        }
+        [data-theme="sepia"] .podium-2:hover {
+            border-color: rgba(100, 116, 139, 0.75) !important;
+        }
+        [data-theme="sepia"] .podium-3 {
+            border-color: rgba(180, 83, 9, 0.5) !important;
+            box-shadow: 0 4px 20px -5px rgba(180, 83, 9, 0.10);
+        }
+        [data-theme="sepia"] .podium-3:hover {
+            border-color: rgba(180, 83, 9, 0.75) !important;
+        }
+
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+        @media (max-width: 1024px) {
+            .main-content { padding: 30px; }
+            .leaderboard-wrapper { gap: 20px; }
+        }
+
+        @media (max-width: 768px) {
+            .main-content { padding: 24px; }
+            .leaderboard-container { padding: 20px; }
+            .leaderboard-row { padding: 14px 18px; margin-bottom: 10px; }
+            .rank-col { width: 60px; }
+            .streak-col { width: 110px; }
+            .xp-col { width: 100px; font-size: 0.95rem; }
+            .student-col { gap: 12px; }
+            .leaderboard-page-header h1 { font-size: 1.8rem; }
+        }
+
+        @media (max-width: 576px) {
+            .main-content { padding: 16px; }
+            .leaderboard-container { padding: 14px; border-radius: 18px; }
+            .leaderboard-row { padding: 10px 12px; margin-bottom: 8px; border-radius: 12px; }
+            .rank-col { width: 44px; }
+            .streak-col { width: 85px; font-size: 0.85rem; }
+            .xp-col { width: 80px; font-size: 0.85rem; }
+            .student-col { gap: 8px; }
+            .pfp { width: 34px; height: 34px; }
+            .rank-badge { width: 26px; height: 26px; font-size: 0.75rem; }
+            .leaderboard-page-header h1 { font-size: 1.5rem; }
+            .leaderboard-page-header p { font-size: 0.85rem; }
+            .leaderboard-title { font-size: 1.15rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP-LEFT CORNER PROFILE -->
+    <div class="top-navbar-corner">
+        <button class="hamburger-btn" id="sidebar-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="user-profile">
+            <img src="" id="user-pfp" alt="Profile" class="pfp">
+            <div class="user-details">
+                <span class="user-name" id="user-name">Loading...</span>
+                <span class="user-email" id="user-email">Syncing profile</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header class="top-navbar-main">
+        <div style="font-weight: 800; letter-spacing: 1px; font-size: 1.2rem;">LEARNSER <span style="color: var(--accent);">AI</span></div>
+    </header>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidebar">
+        <div class="sidebar-menu">
+            
+            <div class="menu-section">
+                <div class="section-title">OVERVIEW</div>
+                <a href="dashbord.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">LEARN</div>
+                <a href="ai_doubtsolver.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+                    <span class="menu-text">AI Doubt Solver</span>
+                </a>
+                <a href="chapternotes.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span class="menu-text">Chapter Notes</span>
+                </a>
+                <a href="plannedtt.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="menu-text">Smart Timetable</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">PRACTICE</div>
+                <a href="test/test.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    <span class="menu-text">AI Test Generator</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="14" r="1"></circle><path d="M12 11c1.5 0 2-1 2-2s-.5-2-2-2-2 1-2 2"></path></svg>
+                    <span class="menu-text">Previous Year Qs</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">PROGRESS</div>
+                <a href="analytics.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <span class="menu-text">Analytics</span>
+                </a>
+                <a href="rewardshop.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                    <span class="menu-text">Streak & Coins</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                    <span class="menu-text">Badges</span>
+                </a>
+                <a href="leaderboard.html" class="menu-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                    <span class="menu-text">Leaderboard</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">COMMUNITY</div>
+                <a href="podcast.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    <span class="menu-text">AI Podcast</span>
+                </a>
+                <a href="#" class="menu-item" style="opacity: 0.5; cursor: not-allowed;" onclick="alert('Community Chat is temporarily disabled.'); return false;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="menu-text">Community Chat <small style="font-size: 0.65rem; color: var(--text-dim);">(Disabled)</small></span>
+                </a>
+            </div>
+
+        </div>
+
+        <div style="flex-grow: 1;"></div>
+
+        <div class="menu-section" style="margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 24px;">
+            <a href="admin.html" id="adminNavLink" class="menu-item" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
+                <span class="menu-text">Admin Panel</span>
+            </a>
+            <a href="settings.html" class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span class="menu-text">Settings</span>
+            </a>
+            <a href="#" onclick="signOutUser(); return false;" class="menu-item" style="color: var(--danger);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span class="menu-text">Log Out</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <div class="leaderboard-page-header" style="margin-bottom: 24px;">
+            <h1 style="color: var(--text-main); font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px;">Global <span style="color: var(--accent);">Leaderboard</span></h1>
+            <p style="color: var(--text-dim); font-size: 0.95rem; margin-top: 4px;">Compete with students globally and reach the top spot by earning Total XP.</p>
+        </div>
+
+        <div class="leaderboard-wrapper">
+            <div class="leaderboard-container">
+                <div class="leaderboard-header">
+                    <h3 class="leaderboard-title">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                        All-Time Standings
+                    </h3>
+                    <span style="background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); padding: 6px 14px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);">Top 10 Global</span>
+                </div>
+                
+                <!-- Loader placeholder using Flexbox -->
+                <div id="leaderboard-loading">
+                    <div class="leaderboard-table-header">
+                        <div class="rank-col">Rank</div>
+                        <div class="student-col">Student</div>
+                        <div class="streak-col">Streak</div>
+                        <div class="xp-col" style="text-align: right;">Total XP</div>
+                    </div>
+                    <div class="skeleton-row">
+                        <div class="rank-col"><div class="shimmer-sub skeleton-badge"></div></div>
+                        <div class="student-col">
+                            <div class="shimmer-sub skeleton-avatar"></div>
+                            <div class="skeleton-text-group">
+                                <div class="shimmer-sub skeleton-text title"></div>
+                            </div>
+                        </div>
+                        <div class="streak-col"><div class="shimmer-sub skeleton-text short"></div></div>
+                        <div class="xp-col"><div class="shimmer-sub skeleton-text short xp"></div></div>
+                    </div>
+                    <div class="skeleton-row">
+                        <div class="rank-col"><div class="shimmer-sub skeleton-badge"></div></div>
+                        <div class="student-col">
+                            <div class="shimmer-sub skeleton-avatar"></div>
+                            <div class="skeleton-text-group">
+                                <div class="shimmer-sub skeleton-text title"></div>
+                            </div>
+                        </div>
+                        <div class="streak-col"><div class="shimmer-sub skeleton-text short"></div></div>
+                        <div class="xp-col"><div class="shimmer-sub skeleton-text short xp"></div></div>
+                    </div>
+                    <div class="skeleton-row">
+                        <div class="rank-col"><div class="shimmer-sub skeleton-badge"></div></div>
+                        <div class="student-col">
+                            <div class="shimmer-sub skeleton-avatar"></div>
+                            <div class="skeleton-text-group">
+                                <div class="shimmer-sub skeleton-text title"></div>
+                            </div>
+                        </div>
+                        <div class="streak-col"><div class="shimmer-sub skeleton-text short"></div></div>
+                        <div class="xp-col"><div class="shimmer-sub skeleton-text short xp"></div></div>
+                    </div>
+                    <div class="skeleton-row">
+                        <div class="rank-col"><div class="shimmer-sub skeleton-badge"></div></div>
+                        <div class="student-col">
+                            <div class="shimmer-sub skeleton-avatar"></div>
+                            <div class="skeleton-text-group">
+                                <div class="shimmer-sub skeleton-text title"></div>
+                            </div>
+                        </div>
+                        <div class="streak-col"><div class="shimmer-sub skeleton-text short"></div></div>
+                        <div class="xp-col"><div class="shimmer-sub skeleton-text short xp"></div></div>
+                    </div>
+                    <div class="skeleton-row">
+                        <div class="rank-col"><div class="shimmer-sub skeleton-badge"></div></div>
+                        <div class="student-col">
+                            <div class="shimmer-sub skeleton-avatar"></div>
+                            <div class="skeleton-text-group">
+                                <div class="shimmer-sub skeleton-text title"></div>
+                            </div>
+                        </div>
+                        <div class="streak-col"><div class="shimmer-sub skeleton-text short"></div></div>
+                        <div class="xp-col"><div class="shimmer-sub skeleton-text short xp"></div></div>
+                    </div>
+                </div>
+
+                <div id="leaderboard-error" style="display: none; text-align: center; padding: 32px; color: #f87171;">
+                    <p style="font-size: 0.95rem; font-weight: 600;">Failed to fetch rankings. Please check your Supabase network configuration.</p>
+                </div>
+
+                <div class="leaderboard-list-container" id="leaderboard-table" style="display: none;">
+                    <div class="leaderboard-table-header">
+                        <div class="rank-col">Rank</div>
+                        <div class="student-col">Student</div>
+                        <div class="streak-col">Streak</div>
+                        <div class="xp-col" style="text-align: right;">Total XP</div>
+                    </div>
+                    <div id="leaderboard-body">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDK & Configuration Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth-check.js"></script>
+
+    <script>
+        // Sidebar Toggle functionality
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('collapsed');
+        });
+
+        // Helper to extract clean hex color (without #) from theme variables
+        function getThemeHex(variableName, fallback) {
+            const rawVal = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+            if (rawVal.startsWith('#')) {
+                return rawVal.substring(1);
+            }
+            return fallback;
+        }
+
+        // Load leaderboard initially if cached profile exists to avoid race conditions
+        let loaded = false;
+        const cachedProfileStr = localStorage.getItem('learnser_supabase_profile');
+        if (cachedProfileStr) {
+            try {
+                const profile = JSON.parse(cachedProfileStr);
+                if (profile && profile.id) {
+                    loadGlobalLeaderboard(profile.id);
+                    loaded = true;
+                }
+            } catch(e) {
+                console.error("Cached profile parse error:", e);
+            }
+        }
+
+        // Listen for Supabase profile details from auth-check.js
+        window.addEventListener('profileready', (e) => {
+            const profile = e.detail;
+            if (!loaded) {
+                loadGlobalLeaderboard(profile.id);
+                loaded = true;
+            } else {
+                // Refresh to ensure we highlight the correct profile if details changed
+                loadGlobalLeaderboard(profile.id);
+            }
+        });
+
+        // Live redraw when theme changes in settings tab
+        window.addEventListener('themechanged', () => {
+            const cachedProfileStr = localStorage.getItem('learnser_supabase_profile');
+            if (cachedProfileStr) {
+                try {
+                    const profile = JSON.parse(cachedProfileStr);
+                    if (profile && profile.id) {
+                        loadGlobalLeaderboard(profile.id);
+                    }
+                } catch(e) {
+                    console.error("Themechange leaderboard reload error:", e);
+                }
+            }
+        });
+
+        // Cross-tab storage change sync redraw
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'app_theme') {
+                setTimeout(() => {
+                    const cachedProfileStr = localStorage.getItem('learnser_supabase_profile');
+                    if (cachedProfileStr) {
+                        try {
+                            const profile = JSON.parse(cachedProfileStr);
+                            if (profile && profile.id) {
+                                loadGlobalLeaderboard(profile.id);
+                            }
+                        } catch(err) {
+                            console.error(err);
+                        }
+                    }
+                }, 50);
+            }
+        });
+
+        // Async function to fetch top 10 profiles ordered by total_xp desc
+        async function loadGlobalLeaderboard(currentUserId) {
+            const loadingEl = document.getElementById('leaderboard-loading');
+            const errorEl = document.getElementById('leaderboard-error');
+            const tableEl = document.getElementById('leaderboard-table');
+            const bodyEl = document.getElementById('leaderboard-body');
+
+            const database = window.database;
+            if (!database) {
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const snapshot = await database.ref('users').orderByChild('total_xp').limitToLast(10).once('value');
+                const rawData = [];
+                snapshot.forEach(child => {
+                    rawData.push({ id: child.key, ...child.val() });
+                });
+                
+                // orderByChild returns in ascending order, so reverse for top ranks first
+                const data = rawData.reverse();
+
+                bodyEl.innerHTML = '';
+
+                // Extract theme variables for the UI-avatars API
+                const accentHex = getThemeHex('--accent', '2dd4bf');
+                const primaryHex = getThemeHex('--primary', '818cf8');
+                const bgHex = getThemeHex('--bg', '020617');
+
+                data.forEach((row, index) => {
+                    const rank = index + 1;
+                    const isCurrentUser = row.id === currentUserId;
+                    
+                    const rowDiv = document.createElement('div');
+                    
+                    // Base classes & podium spot detection
+                    let podiumClass = '';
+                    if (rank === 1) podiumClass = 'podium-1';
+                    else if (rank === 2) podiumClass = 'podium-2';
+                    else if (rank === 3) podiumClass = 'podium-3';
+
+                    rowDiv.className = `leaderboard-row ${podiumClass} ${isCurrentUser ? 'current-user' : ''}`;
+
+                    let rankHtml = '';
+                    if (rank <= 3) {
+                        rankHtml = `<span class="rank-badge rank-${rank}">#${rank}</span>`;
+                    } else {
+                        rankHtml = `<span style="padding-left: 10px; opacity: 0.7;">#${rank}</span>`;
+                    }
+
+                    // Setup Avatar utilizing UI Avatars API with theme-appropriate colors
+                    const avatarBg = isCurrentUser ? accentHex : primaryHex;
+                    const avatarColor = bgHex;
+                    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.display_name || 'S')}&background=${avatarBg}&color=${avatarColor}&rounded=true`;
+
+                    const streakHtml = row.streak_days && row.streak_days > 0 
+                        ? `🔥 ${row.streak_days} days` 
+                        : `<span style="opacity:0.4;">—</span>`;
+
+                    rowDiv.innerHTML = `
+                        <div class="rank-col">${rankHtml}</div>
+                        <div class="student-col">
+                            <img src="${avatarUrl}" style="width:36px; height:36px; border-radius:50%; border: 1.5px solid ${isCurrentUser ? 'var(--accent)' : 'var(--glass-border)'};" alt="avatar">
+                            <div class="user-info">
+                                <span class="user-display-name" style="font-weight: ${isCurrentUser ? '800' : '600'}; color: ${isCurrentUser ? 'var(--accent)' : 'var(--text-main)'};">
+                                    ${row.display_name || 'Anonymous Student'}
+                                    ${isCurrentUser ? ' <small style="opacity:0.85; font-weight:700; color:var(--primary); font-size: 0.75rem;">(You)</small>' : ''}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="streak-col">${streakHtml}</div>
+                        <div class="xp-col">${parseInt(row.total_xp || 0).toLocaleString()} XP</div>
+                    `;
+                    bodyEl.appendChild(rowDiv);
+                });
+
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'none';
+                tableEl.style.display = 'flex';
+
+            } catch (err) {
+                console.error("Global Leaderboard fetch error:", err);
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                tableEl.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

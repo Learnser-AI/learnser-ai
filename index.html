@@ -4,1283 +4,710 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learnser AI - JEE Mains PYQ Practice</title>
-    <meta name="description" content="Learnser AI - Practice JEE Mains Previous Year Questions">
-    <meta name="keywords" content="Learnser AI, JEE Mains, PYQ, Previous Year Questions">
-    <meta name="author" content="Learnser AI">
-    <link rel="stylesheet" href="styles.css">
+    <title>Learnser AI | Your Personal Study Command Center</title>
+    <script src="theme.js?v=2.0"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        :root {
+            --primary: #818cf8;
+            --accent: #2dd4bf;
+            --bg: #020617;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 0% 0%, var(--bg-gradient-1, rgba(129, 140, 248, 0.08)) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, var(--bg-gradient-2, rgba(45, 212, 191, 0.05)) 0%, transparent 40%);
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 5% 0.8rem 8%;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 10000;
+            background: var(--panel-bg, rgba(2, 6, 23, 0.8));
+            height: 70px;
+            /* Fixed height for better calculation */
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .logo img {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .nav-right {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .custom-signin-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        /* FIXED: Hero uses viewport height to stay perfectly contained */
+        .hero {
+            min-height: calc(100vh - 70px);
+            padding: 2rem 10%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            background: linear-gradient(to bottom right, var(--text-main) 50%, var(--text-dim));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            max-width: 600px;
+        }
+
+        .preview-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 10px;
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(5px);
+        }
+
+        /* FIXED: Mockup adjusted to fit within viewport */
+        .mockup {
+            background: var(--card-bg, rgba(15, 23, 42, 0.8));
+            width: 100%;
+            min-height: 380px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- TIMER --- */
+        .dual-station {
+            display: flex;
+            width: 100%;
+            max-width: 800px;
+            gap: 20px;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timer-zone {
+            flex: 1;
+            padding: 25px 15px;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.01);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            opacity: 0.15;
+            transform: scale(0.9);
+        }
+
+        .timer-zone.active {
+            opacity: 1;
+            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px -10px rgba(129, 140, 248, 0.2);
+        }
+
+        .timer-zone.active.break-zone {
+            border-color: var(--accent);
+            box-shadow: 0 10px 40px -10px rgba(45, 212, 191, 0.2);
+        }
+
+        .timer-val {
+            font-size: 3.5rem;
+            font-weight: 200;
+            color: var(--text-main);
+            font-family: monospace;
+            margin: 10px 0;
+            letter-spacing: -2px;
+        }
+
+        .zone-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .station-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            min-width: 180px;
+        }
+
+        .main-timer-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-weight: 800;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .main-timer-btn.is-break {
+            background: var(--accent);
+            color: #020617;
+        }
+
+        .reset-btn {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--glass-border);
+            padding: 8px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        .input-mini {
+            background: var(--input-bg, rgba(255, 255, 255, 0.08));
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            width: 65px;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 1rem;
+            padding: 5px;
+            font-weight: 700;
+            outline: none;
+        }
+
+        .session-count {
+            font-size: 0.75rem;
+            color: var(--accent);
+            font-weight: 700;
+            margin-top: 10px;
+            background: rgba(45, 212, 191, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* =====================================================
+            FEATURES SECTION — ENHANCED
+        ===================================================== */
+
+        .features-section {
+            padding: 4rem 10% 6rem;
+        }
+
+        .features-divider {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 0 3.5rem;
+            position: relative;
+        }
+
+        .features-divider::before {
+            content: '';
+            display: block;
+            width: 100%;
+            max-width: 700px;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.10), transparent);
+            margin-bottom: 3.5rem;
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .features-header h2 {
+            font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(to bottom right, var(--text-main) 40%, var(--text-dim));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.9rem;
+        }
+
+        .features-header p {
+            font-size: 1rem;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+            opacity: 0.70;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 2.2rem;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            transition: 0.22s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(120, 160, 255, 0.35);
+            box-shadow: 0 16px 40px -12px rgba(129, 140, 248, 0.22);
+        }
+
+        .card.featured {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.06) 0%, rgba(15, 23, 42, 0.7) 60%);
+        }
+
+        .card.wide {
+            grid-column: span 2;
+        }
+
+        .icon-box {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .icon-box.indigo {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.22), rgba(99, 102, 241, 0.10));
+            color: #a5b4fc;
+        }
+
+        .icon-box.teal {
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.22), rgba(20, 184, 166, 0.10));
+            color: #5eead4;
+        }
+
+        .icon-box.pink {
+            background: linear-gradient(135deg, rgba(244, 114, 182, 0.22), rgba(236, 72, 153, 0.10));
+            color: #f9a8d4;
+        }
+
+        .icon-box.amber {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.22), rgba(245, 158, 11, 0.10));
+            color: #fcd34d;
+        }
+
+        .icon-box.violet {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(109, 40, 217, 0.10));
+            color: #c4b5fd;
+        }
+
+        .icon-box.blue {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.22), rgba(59, 130, 246, 0.10));
+            color: #93c5fd;
+        }
+
+        .icon-box.gold {
+            background: linear-gradient(135deg, rgba(250, 204, 21, 0.22), rgba(234, 179, 8, 0.10));
+            color: #fde047;
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.55rem;
+            color: var(--text-main);
+        }
+
+        .card p {
+            font-size: 0.92rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        @media (max-width: 960px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .card.featured {
+                grid-column: span 2;
+            }
+
+            .card.wide {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card.featured,
+            .card.wide {
+                grid-column: span 1;
+            }
+
+            .dual-station {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .hero {
+                padding: 2rem 5%;
+            }
+        }
+
+        footer {
+            padding: 4rem 10%;
+            text-align: center;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-dim);
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar" id="sidebar" style="display: none;">
-        <div class="sidebar-top">
-            <a href="#" class="sidebar-logo" id="sidebarLogo">
-                <span class="sidebar-logo-mark">LA</span>
-                <span class="sidebar-label sidebar-logo-text">Learnser AI</span>
-            </a>
-        </div>
-        <div class="sidebar-nav">
-            <a href="#" class="sidebar-link" id="homeNavLink">
-                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                        <polyline points="9 22 9 12 15 12 15 22" />
-                    </svg></span>
-                <span class="sidebar-label">Home</span>
-            </a>
-            <a href="#" class="sidebar-link" id="upcomingNavLink">
-                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg></span>
-                <span class="sidebar-label">Upcoming Exams</span>
-            </a>
-            <a href="#" class="sidebar-link" id="customTestNavLink">
-                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                    </svg></span>
-                <span class="sidebar-label">Custom Test</span>
-            </a>
-            <a href="#" class="sidebar-link" id="podcastNavLink">
-                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                        <line x1="12" y1="19" x2="12" y2="23" />
-                        <line x1="8" y1="23" x2="16" y2="23" />
-                    </svg></span>
-                <span class="sidebar-label">EduPod</span>
-            </a>
-            <a href="#" class="sidebar-link" id="communityNavLink">
-                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg></span>
-                <span class="sidebar-label">Community</span>
-            </a>
-            <a href="#" class="sidebar-link" id="adminNavLink" style="display: none;">
-                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                    </svg></span>
-                <span class="sidebar-label">Admin Panel</span>
-            </a>
-            <a href="#" class="sidebar-link" id="superAdminNavLink" style="display: none;">
-                <span class="sidebar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg></span>
-                <span class="sidebar-label">Super Admin</span>
-            </a>
-        </div>
-        <div class="sidebar-bottom">
-            <button class="sidebar-link" id="themeSwitchBtn">
-                <span class="sidebar-icon">
-                    <svg id="themeIconInstagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                    </svg>
-                    <svg id="themeIconWhatsapp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                    </svg>
-                </span>
-                <span class="sidebar-label" id="themeSwitchLabel">WhatsApp Theme</span>
-            </button>
-            <button class="sidebar-link sidebar-logout" id="logoutBtn">
-                <span class="sidebar-icon sidebar-logout-icon"><svg viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                        <polyline points="16 17 21 12 16 7" />
-                        <line x1="21" y1="12" x2="9" y2="12" />
-                    </svg></span>
-                <span class="sidebar-label">Logout</span>
-            </button>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <nav>
+        <div class="logo"><img src="logo.png" alt="Learnser Logo">LEARNSER <span>AI</span></div>
+        <div class="nav-right">
+            <div id="google-signin-btn"></div>
         </div>
     </nav>
 
-    <!-- Login/Signup Page -->
-    <div id="authPage" class="auth-container">
-        <div class="auth-box">
-            <h1 class="auth-heading">Learnser AI</h1>
-            <p class="auth-subheading">Your Intelligent Learning Companion</p>
-
-            <div class="auth-tabs">
-                <button class="tab-btn active" id="loginTab">Login</button>
-                <button class="tab-btn" id="signupTab">Sign Up</button>
-            </div>
-
-            <!-- Login Form -->
-            <form id="loginForm" class="auth-form">
-                <div class="form-group">
-                    <input type="email" id="loginEmail" placeholder="Email" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="loginPassword" placeholder="Password" required>
-                </div>
-                <button type="submit" class="btn-primary">Login</button>
-            </form>
-
-            <!-- Signup Form -->
-            <form id="signupForm" class="auth-form" style="display: none;">
-                <div class="form-group">
-                    <input type="text" id="signupName" placeholder="Full Name" required>
-                </div>
-                <div class="form-group">
-                    <input type="email" id="signupEmail" placeholder="Email" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" required>
-                </div>
-                <div class="form-group">
-                    <select id="signupClass" required>
-                        <option value="">Select Class</option>
-                        <option value="11">Class 11</option>
-                        <option value="12">Class 12</option>
-                        <option value="Dropper">Dropper</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select id="signupBoard" required>
-                        <option value="">Select Board</option>
-                        <option value="CBSE">CBSE</option>
-                        <option value="ICSE">ICSE</option>
-                        <option value="State Board">State Board</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-primary">Sign Up</button>
-            </form>
-
-            <div class="auth-divider">
-                <span>OR</span>
-            </div>
-
-            <button id="googleAuthBtn" class="btn-google">
-                <svg class="google-logo" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-                </svg>
-                <span>Continue with Google</span>
-            </button>
-
-            <!-- Commented out to remove Apple sign-in option for users, keeping base code in the file
-            <button id="appleAuthBtn" class="btn-apple">
-                <svg class="apple-logo" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-.96.04-2.13.64-2.82 1.45-.6.69-1.12 1.84-.98 2.94.1.08 2.15.48 2.81-1.33"/>
-                </svg>
-                <span>Continue with Apple</span>
-            </button>
-            -->
-
-            <p class="auth-message" id="authMessage"></p>
-        </div>
-    </div>
-
-    <!-- Home Page -->
-    <div id="homePage" class="container" style="display: none;">
-        <div class="profile-section" id="profilePreview">
-            <img id="profilePhoto" src="https://ui-avatars.com/api/?name=Student&background=667eea&color=fff&size=80"
-                alt="Profile" class="profile-img">
-            <div class="profile-info">
-                <h3 id="userName">Student Name</h3>
-                <p id="userClass" class="user-subtitle">Class 12</p>
-            </div>
-        </div>
-
-        <!-- Custom Test Banner -->
-        <div class="custom-test-banner" id="homeCustomTestBanner">
-            <div class="custom-test-banner-content">
-                <h3 class="custom-test-banner-title">Create Your Own Test &rsaquo;</h3>
-            </div>
-            <div class="custom-test-banner-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-            </div>
-        </div>
-
-        <div class="exam-cards-section">
-            <h2 class="section-heading">Select Your Exam</h2>
-            <div class="exam-cards-grid">
-                <!-- JEE Card (enabled by default) -->
-                <div class="exam-card exam-card-jee" id="examCard-jee" data-exam="jee">
-                    <div class="exam-card-badge enabled-badge">Active</div>
-                    <div class="exam-card-icon">⚛️</div>
-                    <h3 class="exam-card-title">JEE</h3>
-                    <p class="exam-card-sub">Joint Entrance Examination</p>
-                    <div class="exam-card-arrow">→</div>
-                </div>
-                <!-- BITSAT Card (disabled) -->
-                <div class="exam-card exam-card-disabled" id="examCard-bitsat" data-exam="bitsat">
-                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
-                    <div class="exam-card-icon">🎯</div>
-                    <h3 class="exam-card-title">BITSAT</h3>
-                    <p class="exam-card-sub">BITS Admission Test</p>
-                    <div class="exam-card-lock">🔒</div>
-                </div>
-                <!-- VITEEE Card (disabled) -->
-                <div class="exam-card exam-card-disabled" id="examCard-viteee" data-exam="viteee">
-                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
-                    <div class="exam-card-icon">🏛️</div>
-                    <h3 class="exam-card-title">VITEEE</h3>
-                    <p class="exam-card-sub">VIT Engineering Entrance</p>
-                    <div class="exam-card-lock">🔒</div>
-                </div>
-                <!-- MHTCET Card (disabled) -->
-                <div class="exam-card exam-card-disabled" id="examCard-mhtcet" data-exam="mhtcet">
-                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
-                    <div class="exam-card-icon">📐</div>
-                    <h3 class="exam-card-title">MHT CET</h3>
-                    <p class="exam-card-sub">Maharashtra CET</p>
-                    <div class="exam-card-lock">🔒</div>
-                </div>
-                <!-- MET Card (disabled) -->
-                <div class="exam-card exam-card-disabled" id="examCard-met" data-exam="met">
-                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
-                    <div class="exam-card-icon">🔬</div>
-                    <h3 class="exam-card-title">MET</h3>
-                    <p class="exam-card-sub">Manipal Entrance Test</p>
-                    <div class="exam-card-lock">🔒</div>
-                </div>
-                <!-- NDA Card (disabled) -->
-                <div class="exam-card exam-card-disabled" id="examCard-nda" data-exam="nda">
-                    <div class="exam-card-badge disabled-badge">Coming Soon</div>
-                    <div class="exam-card-icon">🎖️</div>
-                    <h3 class="exam-card-title">NDA</h3>
-                    <p class="exam-card-sub">National Defence Academy</p>
-                    <div class="exam-card-lock">🔒</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Profile Page -->
-    <div id="profilePage" class="container profile-page" style="display: none;">
-        <div class="profile-card">
-            <div class="profile-header-full">
-                <img id="profilePhotoFull"
-                    src="https://ui-avatars.com/api/?name=Student&background=667eea&color=fff&size=150" alt="Profile"
-                    class="profile-img-large">
-                <h2 id="profileNameFull">Student Name</h2>
-            </div>
-            <div class="profile-details">
-                <div class="profile-field">
-                    <label>📧 Email</label>
-                    <p id="profileEmail">-</p>
-                </div>
-                <div class="profile-field">
-                    <label>🎓 Class</label>
-                    <p id="profileClass">-</p>
-                </div>
-                <div class="profile-field">
-                    <label>📖 Board of Examination</label>
-                    <p id="profileBoard">-</p>
-                </div>
-                <div class="profile-field">
-                    <label>⏱️ Question Timer Setting</label>
-                    <div class="profile-link-row">
-                        <span style="font-size: 13.5px; color: var(--ig-text-secondary);">Auto-start timer when opening questions</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="profileAutoStartTimer" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-                <div class="profile-field">
-                    <label>💬 Community Username</label>
-                    <div class="profile-link-row">
-                        <input type="text" id="profileCommunityUsername" placeholder="e.g. @studious_jee" style="max-width: 200px; width: 100%;">
-                        <button id="saveCommunityUsernameBtn" class="btn-primary btn-sm" style="margin-top: 0;">Save</button>
-                    </div>
-                </div>
-                <div class="profile-field" id="googleLinkField">
-                    <label>🔗 Google Account</label>
-                    <div class="profile-link-row">
-                        <span id="googleLinkStatus" class="link-status">Checking...</span>
-                        <button id="googleLinkBtn" class="btn-secondary btn-sm">Link Account</button>
-                    </div>
-                </div>
-                <!-- Commented out to remove Apple account linking for users, keeping base code in the file
-                <div class="profile-field" id="appleLinkField">
-                    <label> Apple Account</label>
-                    <div class="profile-link-row">
-                        <span id="appleLinkStatus" class="link-status">Checking...</span>
-                        <button id="appleLinkBtn" class="btn-secondary btn-sm">Link Account</button>
-                    </div>
-                </div>
-                -->
-            </div>
-            <div class="profile-actions">
-                <button class="btn-secondary btn-full" id="backToHomeBtn">← Back to Home</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- PYQ Subject Selection Page -->
-    <div id="pyqSubjectPage" class="container" style="display: none;">
-        <h2 class="page-title">Select Subject</h2>
-        <p class="page-subtitle">Choose a subject to practice PYQs</p>
-
-        <div class="subject-grid">
-            <div class="subject-card" data-subject="physics">
-                <div class="subject-icon">⚛️</div>
-                <h3>Physics</h3>
-                <p>Practice Physics PYQs</p>
-            </div>
-            <div class="subject-card" data-subject="chemistry">
-                <div class="subject-icon">🧪</div>
-                <h3>Chemistry</h3>
-                <p>Practice Chemistry PYQs</p>
-            </div>
-            <div class="subject-card" data-subject="mathematics">
-                <div class="subject-icon">📐</div>
-                <h3>Mathematics</h3>
-                <p>Practice Mathematics PYQs</p>
-            </div>
-        </div>
-        <button class="btn-secondary btn-back" id="backFromSubjectBtn">← Back to Home</button>
-    </div>
-
-    <!-- Chapter Selection Page -->
-    <div id="chapterPage" class="container" style="display: none;">
-        <button class="btn-secondary btn-back btn-back-top" id="backFromChapterBtn">← <span id="backFromChapterText">Back to Subjects</span></button>
-        <h2 class="page-title" id="chapterPageTitle">Select Chapter</h2>
-        <p class="page-subtitle" id="chapterPageSubtitle">Choose a chapter to start practicing</p>
-
-        <div class="chapter-list" id="chapterList">
-            <!-- Chapters will be loaded dynamically -->
-        </div>
-    </div>
-
-    <!-- Practice Page (New - Replaces Quiz Page) -->
-    <div id="practicePage" class="container practice-container" style="display: none;">
-        <div class="practice-header">
-            <div class="practice-info-bar">
-                <h2 class="practice-title">
-                    <span id="practiceSubject">Physics</span> - <span id="practiceChapter">Chapter Name</span>
-                </h2>
-            </div>
-            <div class="practice-stats" id="practiceStats">
-                Showing 0 questions
-            </div>
-        </div>
-
-        <!-- Filters and Sort Section -->
-        <div class="filters-section">
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label>Year:</label>
-                    <select id="filterYear">
-                        <option value="all">All Years</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Shift:</label>
-                    <select id="filterShift">
-                        <option value="all">All Shifts</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Difficulty:</label>
-                    <select id="filterDifficulty">
-                        <option value="all">All Difficulties</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Subtopic:</label>
-                    <select id="filterSubtopic">
-                        <option value="all">All Subtopics</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Sort By:</label>
-                    <select id="sortBy">
-                        <option value="default">Default Order</option>
-                        <option value="year-desc">Year (Newest First)</option>
-                        <option value="year-asc">Year (Oldest First)</option>
-                        <option value="shift">Shift</option>
-                        <option value="difficulty">Difficulty</option>
-                        <option value="subtopic">Subtopic</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- Questions Container -->
-        <div class="questions-container" id="questionsContainer">
-            <!-- Questions will be loaded dynamically -->
-        </div>
-
-        <button class="btn-secondary btn-back" id="backFromPracticeBtn">← Back to Chapters</button>
-    </div>
-
-    <!-- Quiz Results Page -->
-    <div id="resultsPage" class="container results-container" style="display: none;">
-        <div class="results-card">
-            <div class="results-icon">🎉</div>
-            <h2>Practice Session Complete!</h2>
-            <div class="results-message">
-                <p>Great work! Review your answers and detailed solutions above.</p>
-            </div>
-            <div class="results-actions">
-                <button class="btn-primary" id="backToChaptersFromResultsBtn">Back to Chapters</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upcoming Exams Page -->
-    <div id="upcomingPage" class="container" style="display: none;">
-        <h2 class="page-title">Upcoming Entrance Exams</h2>
-        <p class="page-subtitle">Stay updated with important exam dates</p>
-
-        <div class="exam-list" id="examList">
-            <div class="loading">Loading exams...</div>
-        </div>
-        <button class="btn-secondary btn-back" id="backFromUpcomingBtn">← Back to Home</button>
-    </div>
-
-    <!-- AI Podcast Page -->
-    <div id="podcastPage" class="container podcast-page-container" style="display: none;">
-        <h2 class="page-title">🎙️ EduPod - AI Podcast</h2>
-        <p class="page-subtitle">Learn any topic through an AI-generated educational podcast</p>
-
-        <div class="podcast-config-card">
-            <div class="form-group">
-                <label for="podcastTopic">What topic do you want to learn today?</label>
-                <input type="text" id="podcastTopic"
-                    placeholder="e.g., Newton's three laws, Photosynthesis, Organic Chemistry">
-            </div>
-            <div class="podcast-settings-toggle-container" id="podcastSettingsToggleContainer" style="display: none;">
-                <button type="button" class="btn-settings-toggle" id="podcastSettingsToggleBtn">⚙️ Backend Settings</button>
-            </div>
-            <div class="podcast-settings-panel" id="podcastSettingsPanel" style="display: none; margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label for="podcastBackendUrl" style="font-size: 12px; margin-bottom: 6px;">TTS Backend Server URL:</label>
-                    <input type="text" id="podcastBackendUrl" placeholder="http://127.0.0.1:8080" style="padding: 8px 12px; font-size: 13px; width: 100%; box-sizing: border-box;">
-                    <p style="font-size: 11px; color: var(--ig-text-secondary); margin-top: 6px; line-height: 1.4;">
-                        Use local backend (<code>http://127.0.0.1:8080</code>) or a secure HTTPS tunnel/deploy URL (e.g. <code>https://your-tunnel.ngrok-free.app</code> or <code>https://your-backend.onrender.com</code>).
-                    </p>
-                </div>
-            </div>
-            <button class="btn-primary btn-full" id="generatePodcastBtn" style="margin-top: 16px;">🎙️ Generate Podcast</button>
-        </div>
-
-        <div id="podcastError" class="podcast-error" style="display: none;"></div>
-        <div id="podcastLoading" class="podcast-loading" style="display: none;">
-            <div class="podcast-loading-spinner"></div>
-            <p id="podcastLoadingText">Writing highly energetic, conversational script...</p>
-        </div>
-
-        <div id="podcastScriptDisplay" class="podcast-script-container" style="display: none;"></div>
-
-        <div class="podcast-history-card" id="podcastHistoryCard">
-            <h3>📜 Your Past Podcasts</h3>
-            <div id="podcastHistoryList" class="podcast-history-list">
-                <p class="no-history">No past podcast requests found</p>
-            </div>
-        </div>
-
-        <button class="btn-secondary btn-back" id="backFromPodcastBtn">← Back to Home</button>
-    </div>
-
-    <!-- Admin Panel -->
-    <div id="adminPage" class="container admin-panel" style="display: none;">
-        <h2 class="page-title">Admin Panel</h2>
-        <p class="page-subtitle">Manage questions, chapters, and exams</p>
-
-        <div class="admin-tabs">
-            <button class="admin-tab-btn active" data-tab="questions">📝 Questions</button>
-            <button class="admin-tab-btn" data-tab="chapters">📚 Chapters</button>
-            <button class="admin-tab-btn" data-tab="exams">📅 Exams</button>
-        </div>
-
-        <!-- Manage Questions Tab -->
-        <div id="adminQuestionsTab" class="admin-tab-content">
-            <div class="admin-card">
-                <h3>Add New Question</h3>
-                <form id="addQuestionForm" class="admin-form">
-                    <div class="form-row">
-                        <select id="adminSubject" required>
-                            <option value="">Select Subject</option>
-                            <option value="physics">Physics</option>
-                            <option value="chemistry">Chemistry</option>
-                            <option value="mathematics">Mathematics</option>
-                        </select>
-                        <select id="adminChapter" required disabled>
-                            <option value="">Select Chapter First</option>
-                        </select>
-                    </div>
-                    <textarea id="adminQuestion" placeholder="Enter question text" rows="3" required></textarea>
-                    <div class="options-input">
-                        <input type="text" id="adminOption1" placeholder="Option A" required>
-                        <input type="text" id="adminOption2" placeholder="Option B" required>
-                        <input type="text" id="adminOption3" placeholder="Option C" required>
-                        <input type="text" id="adminOption4" placeholder="Option D" required>
-                    </div>
-                    <div class="form-row">
-                        <select id="adminCorrectAnswer" required>
-                            <option value="">Select Correct Answer</option>
-                            <option value="0">Option A</option>
-                            <option value="1">Option B</option>
-                            <option value="2">Option C</option>
-                            <option value="3">Option D</option>
-                        </select>
-                        <input type="text" id="adminYear" placeholder="Year (e.g., 2024)" required>
-                    </div>
-
-                    <!-- New Metadata Fields -->
-                    <div class="form-row">
-                        <input type="text" id="adminShift" placeholder="Shift (e.g., Shift 1, Morning)">
-                        <input type="text" id="adminSubtopic" placeholder="Subtopic (optional)">
-                    </div>
-                    <div class="form-row">
-                        <select id="adminDifficulty">
-                            <option value="">Select Difficulty (optional)</option>
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
-                        </select>
-                    </div>
-
-                    <!-- Detailed Answer Field -->
-                    <div class="detailed-answer-section">
-                        <label for="adminDetailedAnswer">Detailed Solution (optional):</label>
-                        <textarea id="adminDetailedAnswer"
-                            placeholder="Enter detailed step-by-step solution, explanation, formulas, or any helpful notes for students..."
-                            rows="6"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn-primary">Add Question</button>
-                </form>
-            </div>
-
-            <div class="admin-card">
-                <h3>Existing Questions</h3>
-                <div class="filter-section">
-                    <select id="filterSubject">
-                        <option value="">All Subjects</option>
-                        <option value="physics">Physics</option>
-                        <option value="chemistry">Chemistry</option>
-                        <option value="mathematics">Mathematics</option>
-                    </select>
-                    <select id="filterChapter" disabled>
-                        <option value="">All Chapters</option>
-                    </select>
-                    <button class="btn-secondary" id="loadQuestionsBtn">Load Questions</button>
-                </div>
-                <div id="questionsList" class="admin-list">
-                    <p class="no-data">Select subject and chapter, then click 'Load Questions'</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Manage Chapters Tab -->
-        <div id="adminChaptersTab" class="admin-tab-content" style="display: none;">
-            <div class="admin-card">
-                <h3>Add New Chapter</h3>
-                <form id="addChapterForm" class="admin-form">
-                    <select id="chapterSubject" required>
-                        <option value="">Select Subject</option>
-                        <option value="physics">Physics</option>
-                        <option value="chemistry">Chemistry</option>
-                        <option value="mathematics">Mathematics</option>
-                    </select>
-                    <input type="text" id="chapterName" placeholder="Chapter Name" required>
-                    <input type="number" id="chapterOrder" placeholder="Display Order (e.g., 1, 2, 3)" required>
-                    <button type="submit" class="btn-primary">Add Chapter</button>
-                </form>
-            </div>
-
-            <div class="admin-card">
-                <h3>Existing Chapters</h3>
-                <div class="chapters-by-subject">
-                    <div class="subject-chapters">
-                        <h4>Physics</h4>
-                        <div id="physicsChaptersList" class="admin-list">
-                            <p class="no-data">No chapters added yet</p>
+    <header class="hero">
+        <h1>Empowering Minds with <br>Intelligent Learning</h1>
+        <p>Your seamless, infinite focus station. Set your pace and start your flow.</p>
+        <div class="preview-container">
+            <div class="mockup">
+                <div id="mockup-content" class="dual-station">
+                    <div id="study-zone" class="timer-zone active">
+                        <div class="zone-label">Study Phase</div>
+                        <div style="margin-top:10px">
+                            <input type="number" id="study-in" class="input-mini" value="25" min="1"
+                                onchange="updateSettings()">
+                            <div style="font-size:0.6rem; color:var(--text-dim); margin-top:5px">MINUTES</div>
                         </div>
                     </div>
-                    <div class="subject-chapters">
-                        <h4>Chemistry</h4>
-                        <div id="chemistryChaptersList" class="admin-list">
-                            <p class="no-data">No chapters added yet</p>
-                        </div>
+
+                    <div class="station-controls">
+                        <div id="timer-val" class="timer-val">25:00</div>
+                        <button id="action-btn" class="main-timer-btn" onclick="toggleProcess()">START FLOW</button>
+                        <button class="reset-btn" onclick="resetSession()">RESET CYCLE</button>
+                        <div id="session-badge" class="session-count">Sessions: 0</div>
                     </div>
-                    <div class="subject-chapters">
-                        <h4>Mathematics</h4>
-                        <div id="mathematicsChaptersList" class="admin-list">
-                            <p class="no-data">No chapters added yet</p>
+
+                    <div id="break-zone" class="timer-zone break-zone">
+                        <div class="zone-label">Break Phase</div>
+                        <div style="margin-top:10px">
+                            <input type="number" id="break-in" class="input-mini" value="5" min="1"
+                                onchange="updateSettings()">
+                            <div style="font-size:0.6rem; color:var(--text-dim); margin-top:5px">MINUTES</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </header>
 
-        <!-- Manage Exams Tab -->
-        <div id="adminExamsTab" class="admin-tab-content" style="display: none;">
-            <!-- NEW: Exam Toggles -->
-            <div class="admin-card">
-                <h3>🎛️ Exam Access Controls</h3>
-                <p style="color: var(--ig-text-secondary); font-size: 13px; margin-bottom: 16px;">Enable or disable
-                    exams on the home page. JEE is always active.</p>
-                <div class="exam-toggles-grid">
-                    <div class="exam-toggle-row">
-                        <div class="exam-toggle-info">
-                            <span class="exam-toggle-icon">⚛️</span>
-                            <div>
-                                <strong>JEE</strong>
-                                <p>Joint Entrance Examination</p>
-                            </div>
-                        </div>
-                        <div class="exam-toggle-control always-on">Always On</div>
-                    </div>
-                    <div class="exam-toggle-row" id="toggle-row-bitsat">
-                        <div class="exam-toggle-info">
-                            <span class="exam-toggle-icon">🎯</span>
-                            <div>
-                                <strong>BITSAT</strong>
-                                <p>BITS Admission Test</p>
-                            </div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="toggle-bitsat" data-exam="bitsat">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="exam-toggle-row" id="toggle-row-viteee">
-                        <div class="exam-toggle-info">
-                            <span class="exam-toggle-icon">🏛️</span>
-                            <div>
-                                <strong>VITEEE</strong>
-                                <p>VIT Engineering Entrance</p>
-                            </div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="toggle-viteee" data-exam="viteee">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="exam-toggle-row" id="toggle-row-mhtcet">
-                        <div class="exam-toggle-info">
-                            <span class="exam-toggle-icon">📐</span>
-                            <div>
-                                <strong>MHT CET</strong>
-                                <p>Maharashtra CET</p>
-                            </div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="toggle-mhtcet" data-exam="mhtcet">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="exam-toggle-row" id="toggle-row-met">
-                        <div class="exam-toggle-info">
-                            <span class="exam-toggle-icon">🔬</span>
-                            <div>
-                                <strong>MET</strong>
-                                <p>Manipal Entrance Test</p>
-                            </div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="toggle-met" data-exam="met">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="exam-toggle-row" id="toggle-row-nda">
-                        <div class="exam-toggle-info">
-                            <span class="exam-toggle-icon">🎖️</span>
-                            <div>
-                                <strong>NDA</strong>
-                                <p>National Defence Academy</p>
-                            </div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="toggle-nda" data-exam="nda">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="admin-card">
-                <h3>Add Upcoming Exam</h3>
-                <form id="addExamForm" class="admin-form">
-                    <input type="text" id="adminExamName" placeholder="Exam Name (e.g., JEE Mains 2024 Session 1)"
-                        required>
-                    <input type="date" id="adminExamDate" required>
-                    <textarea id="adminExamDetails" placeholder="Exam Details" rows="3" required></textarea>
-                    <input type="url" id="adminExamLink" placeholder="Registration/Information Link (optional)">
-                    <button type="submit" class="btn-primary">Add Exam</button>
-                </form>
-            </div>
-
-            <div class="admin-card">
-                <h3>Upcoming Exams</h3>
-                <div id="examListAdmin" class="admin-list">
-                    <p class="no-data">No exams added yet</p>
-                </div>
+    <section id="features" class="features-section">
+        <div class="features-divider">
+            <div class="features-header">
+                <h2>Your Complete AI Study Toolkit</h2>
+                <p>Focus, practice, analyze, and improve with AI-powered study tools.</p>
             </div>
         </div>
 
-        <button class="btn-secondary btn-back" id="backFromAdminBtn">← Back to Home</button>
-    </div>
-
-    <!-- Custom Test Wizard Page -->
-    <div id="customTestWizardPage" class="container" style="display: none;">
-        <h2 class="page-title">Create Your Own Test</h2>
-        <p class="page-subtitle">Configure your custom JEE Mains practice paper</p>
-
-        <div class="wizard-card">
-            <!-- Out of Syllabus Switch -->
-            <div class="wizard-row syllabus-toggle-row">
-                <div class="syllabus-toggle-info">
-                    <span class="wizard-crown-icon">👑</span>
-                    <span>Don't include out of syllabus Qs</span>
+        <div class="features-grid">
+            <div class="card featured">
+                <div class="icon-box indigo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
                 </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="wizardSyllabusToggle" checked>
-                    <span class="toggle-slider"></span>
-                </label>
+                <h3>Doubt Solver</h3>
+                <p>Instant step-by-step explanations for even the toughest problems.</p>
             </div>
 
-            <!-- Subject Accordions -->
-            <div class="wizard-section">
-                <h3>Select Subjects and Chapters</h3>
-                
-                <!-- Physics Accordion -->
-                <div class="subject-accordion" id="physicsAccordion">
-                    <div class="subject-accordion-header">
-                        <div class="subject-header-info">
-                            <span class="subject-dot dot-physics">⚛️</span>
-                            <span class="subject-title">Physics</span>
-                            <span class="subject-count" id="physicsSelectedCount">0 Chapters Selected</span>
-                        </div>
-                        <button class="btn-show-units" data-subject="physics">SHOW UNITS</button>
-                    </div>
-                    <div class="subject-accordion-content" id="physicsAccordionContent" style="display: none;">
-                        <div class="accordion-actions">
-                            <button class="btn-link-select" data-action="all" data-subject="physics">Select All</button>
-                            <button class="btn-link-select" data-action="none" data-subject="physics">Select None</button>
-                        </div>
-                        <div class="chapters-checkbox-grid" id="physicsChaptersGrid">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
+            <div class="card">
+                <div class="icon-box teal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                        <path d="M12 7v5l4 2"></path>
+                    </svg>
                 </div>
-
-                <!-- Chemistry Accordion -->
-                <div class="subject-accordion" id="chemistryAccordion">
-                    <div class="subject-accordion-header">
-                        <div class="subject-header-info">
-                            <span class="subject-dot dot-chemistry">🧪</span>
-                            <span class="subject-title">Chemistry</span>
-                            <span class="subject-count" id="chemistrySelectedCount">0 Chapters Selected</span>
-                        </div>
-                        <button class="btn-show-units" data-subject="chemistry">SHOW UNITS</button>
-                    </div>
-                    <div class="subject-accordion-content" id="chemistryAccordionContent" style="display: none;">
-                        <div class="accordion-actions">
-                            <button class="btn-link-select" data-action="all" data-subject="chemistry">Select All</button>
-                            <button class="btn-link-select" data-action="none" data-subject="chemistry">Select None</button>
-                        </div>
-                        <div class="chapters-checkbox-grid" id="chemistryChaptersGrid">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Mathematics Accordion -->
-                <div class="subject-accordion" id="mathematicsAccordion">
-                    <div class="subject-accordion-header">
-                        <div class="subject-header-info">
-                            <span class="subject-dot dot-math">📐</span>
-                            <span class="subject-title">Mathematics</span>
-                            <span class="subject-count" id="mathematicsSelectedCount">0 Chapters Selected</span>
-                        </div>
-                        <button class="btn-show-units" data-subject="mathematics">SHOW UNITS</button>
-                    </div>
-                    <div class="subject-accordion-content" id="mathematicsAccordionContent" style="display: none;">
-                        <div class="accordion-actions">
-                            <button class="btn-link-select" data-action="all" data-subject="mathematics">Select All</button>
-                            <button class="btn-link-select" data-action="none" data-subject="mathematics">Select None</button>
-                        </div>
-                        <div class="chapters-checkbox-grid" id="mathematicsChaptersGrid">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
-                </div>
+                <h3>Past Paper Trainer</h3>
+                <p>Practice and analyze 10+ years of previous exam questions.</p>
             </div>
 
-            <!-- Create Test From Section -->
-            <div class="wizard-section">
-                <h3>Create Test From</h3>
-                <div class="test-source-grid">
-                    <div class="source-card active" data-source="all">
-                        <div class="source-icon">📋</div>
-                        <h4>All Qs</h4>
-                        <p>The test will be created from All PYQs</p>
-                    </div>
-                    <div class="source-card" data-source="incorrect">
-                        <div class="source-icon">❌</div>
-                        <h4>Incorrect Qs</h4>
-                        <p>From your previously wrong attempts</p>
-                    </div>
-                    <div class="source-card" data-source="unattempted">
-                        <div class="source-icon">⚠️</div>
-                        <h4>Unattempted Qs</h4>
-                        <p>Questions you haven't tried yet</p>
-                    </div>
-                    <div class="source-card" data-source="bookmarked">
-                        <div class="source-icon">🔖</div>
-                        <h4>Bookmarked Qs</h4>
-                        <p>Questions saved to your bookmarks</p>
-                    </div>
+            <div class="card">
+                <div class="icon-box pink">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                        <polyline points="16 7 22 7 22 13"></polyline>
+                    </svg>
                 </div>
+                <h3>Weakness Analyzer</h3>
+                <p>AI identifies weak topics and helps you improve faster.</p>
             </div>
 
-            <!-- Question Count Section -->
-            <div class="wizard-section">
-                <h3>Number of Qs per subject</h3>
-                <div class="count-pills-grid">
-                    <div class="count-pill" data-count="5">5 Qs</div>
-                    <div class="count-pill" data-count="10">10 Qs</div>
-                    <div class="count-pill" data-count="15">15 Qs</div>
-                    <div class="count-pill" data-count="20">20 Qs</div>
-                    <div class="count-pill" data-count="25">25 Qs</div>
-                    <div class="count-pill active" data-count="30">30 Qs</div>
+            <div class="card">
+                <div class="icon-box amber">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m15 5 4 4"></path>
+                        <path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"></path>
+                        <path d="m8 6 2-2"></path>
+                        <path d="m2 22 5.5-1.5L21.17 6.83a2.82 2.82 0 0 0-4-4L3.5 16.5Z"></path>
+                        <path d="m18 16 2-2"></path>
+                        <path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17"></path>
+                    </svg>
                 </div>
-                <div class="wizard-summary-text" id="wizardTotalQsSummary">Total Questions: 0</div>
+                <h3>Smart Test Generator</h3>
+                <p>Create custom practice tests tailored to your exam.</p>
             </div>
 
-            <!-- Test Duration Section -->
-            <div class="wizard-section">
-                <h3>Test Duration</h3>
-                <div class="duration-control-container">
-                    <button class="duration-btn" id="btnDurationDec">- 5 m</button>
-                    <div class="duration-display">
-                        <span class="duration-value" id="durationValue">180</span>
-                        <span class="duration-unit">min</span>
-                    </div>
-                    <button class="duration-btn" id="btnDurationInc">+ 5 m</button>
+            <div class="card">
+                <div class="icon-box violet">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                        <path d="M4 22h16"></path>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                    </svg>
                 </div>
-                <div class="wizard-recommendation" id="wizardDurationRecommendation">Recommended Time: -- min</div>
+                <h3>Focus Streaks</h3>
+                <p>Build study streaks and stay motivated every day.</p>
             </div>
 
-            <!-- Year Selection Section -->
-            <div class="wizard-section">
-                <h3>Select Year of Paper You Want to Include</h3>
-                <div class="years-cards-grid">
-                    <div class="year-card active" data-years="all">
-                        <div class="year-card-checkmark">✓</div>
-                        <h4>All Years</h4>
-                    </div>
-                    <div class="year-card" data-years="3">
-                        <div class="year-card-number">3</div>
-                        <h4>Last 3 Years</h4>
-                    </div>
-                    <div class="year-card" data-years="5">
-                        <div class="year-card-number">5</div>
-                        <h4>Last 5 Years</h4>
-                    </div>
-                    <div class="year-card" data-years="10">
-                        <div class="year-card-number">10</div>
-                        <h4>Last 10 Years</h4>
-                    </div>
+            <div class="card">
+                <div class="icon-box gold">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                        <path d="M4 22h16"></path>
+                    </svg>
                 </div>
-                
-                <!-- Custom Years Selection -->
-                <button class="btn-custom-years" id="btnCustomYears">✏️ Select Custom Years</button>
-                <div class="custom-years-select-panel" id="customYearsPanel" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid var(--ig-border); border-radius: 8px; background: var(--ig-bg-secondary);">
-                    <div class="custom-years-checkbox-grid" id="customYearsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;">
-                        <!-- Populated dynamically -->
-                    </div>
-                </div>
+                <h3>Study Rewards</h3>
+                <p>Earn points, unlock achievements, and turn studying into a habit.</p>
             </div>
 
-            <!-- Action buttons -->
-            <div class="wizard-actions">
-                <button class="btn-primary btn-full" id="btnStartCustomTest">🚀 Start Test</button>
-                <button class="btn-secondary btn-full" id="btnCancelCustomTest" style="margin-top: 10px;">Cancel</button>
+            <div class="card wide">
+                <div class="icon-box blue">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <polyline points="16 11 18 13 22 9"></polyline>
+                    </svg>
+                </div>
+                <h3>Personal Mentor</h3>
+                <p>An AI mentor that adapts to your learning speed and goals.</p>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Custom Test Exam Page -->
-    <div id="customTestExamPage" class="container exam-mode-container" style="display: none;">
-        <div class="exam-header-bar">
-            <div class="exam-title-box">
-                <h2>JEE Mains Custom Test</h2>
-                <div class="exam-info-badges">
-                    <span class="exam-badge" id="examSubjectBadge">Physics + Chem + Math</span>
-                    <span class="exam-badge" id="examTabSwitchWarning" style="background-color: var(--ig-danger); color: white; display: none;">Tab Switch Warning: 0/3</span>
-                </div>
-            </div>
-            <div class="exam-timer-box">
-                <span class="timer-icon">⏰</span>
-                <span class="exam-timer" id="examTimer">180:00</span>
-            </div>
-        </div>
-
-        <div class="exam-workspace">
-            <!-- Left Panel: Question and Options -->
-            <div class="exam-question-panel">
-                <div class="exam-question-card">
-                    <div class="question-card-header">
-                        <span class="question-index-label" id="examQuestionNumber">Question 1</span>
-                        <div class="question-header-actions">
-                            <span class="difficulty-tag" id="examQuestionDifficulty">Medium</span>
-                            <span class="subject-tag" id="examQuestionSubject">Physics</span>
-                            <button class="btn-bookmark" id="btnBookmarkActiveQuestion" style="background: none; border: none; cursor: pointer; color: var(--ig-text-secondary); display: flex; align-items: center; justify-content: center; padding: 4px;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" class="bookmark-svg">
-                                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="question-text" id="examQuestionText">
-                        Question body text...
-                    </div>
-                    
-                    <div class="options-container-exam" id="examOptionsContainer">
-                        <!-- Populated dynamically -->
-                    </div>
-                </div>
-
-                <div class="exam-navigation-bar">
-                    <div class="nav-left">
-                        <button class="btn-exam-nav btn-danger-outline" id="btnExamClear">Clear Response</button>
-                        <button class="btn-exam-nav btn-warning-outline" id="btnExamMarkReview">Mark for Review</button>
-                    </div>
-                    <div class="nav-right">
-                        <button class="btn-exam-nav btn-secondary-outline" id="btnExamPrev">Previous</button>
-                        <button class="btn-exam-nav btn-primary" id="btnExamSaveNext">Save & Next</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel: Palette and Palette Navigation -->
-            <div class="exam-palette-panel">
-                <div class="palette-summary">
-                    <h3>Question Palette</h3>
-                    <div class="palette-grid" id="examPaletteGrid">
-                        <!-- Dynamic buttons 1 to N -->
-                    </div>
-                </div>
-                
-                <!-- Legend -->
-                <div class="palette-legend">
-                    <div class="legend-item"><span class="legend-color legend-answered"></span> Answered</div>
-                    <div class="legend-item"><span class="legend-color legend-unanswered"></span> Unanswered</div>
-                    <div class="legend-item"><span class="legend-color legend-notvisited"></span> Not Visited</div>
-                    <div class="legend-item"><span class="legend-color legend-review"></span> Marked for Review</div>
-                </div>
-
-                <div class="palette-actions">
-                    <button class="btn-primary btn-full" id="btnSubmitExam">Submit Test</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Test Results Page -->
-    <div id="customTestResultsPage" class="container" style="display: none;">
-        <h2 class="page-title">Test Performance Analysis</h2>
-        <p class="page-subtitle" id="resultsTestSubtitle">JEE Mains Custom Test Completed</p>
-
-        <!-- Metrics Grid -->
-        <div class="metrics-grid">
-            <div class="metric-card card-score">
-                <div class="metric-value" id="resScore">0</div>
-                <div class="metric-label">Score (JEE Mains)</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-value" id="resAccuracy">0%</div>
-                <div class="metric-label">Accuracy</div>
-            </div>
-            <div class="metric-card card-success">
-                <div class="metric-value" id="resCorrect">0</div>
-                <div class="metric-label">Correct</div>
-            </div>
-            <div class="metric-card card-danger">
-                <div class="metric-value" id="resIncorrect">0</div>
-                <div class="metric-label">Incorrect</div>
-            </div>
-            <div class="metric-card card-warning">
-                <div class="metric-value" id="resUnattempted">0</div>
-                <div class="metric-label">Unattempted</div>
-            </div>
-        </div>
-
-        <div class="results-tab-container">
-            <div class="results-tabs">
-                <button class="results-tab-btn active" data-tab="ai-review">🤖 Sarvam AI Review</button>
-                <button class="results-tab-btn" data-tab="questions-review">📝 Questions & Solutions</button>
-            </div>
-
-            <!-- Tab 1: AI Review -->
-            <div class="results-tab-content" id="tabContent-ai-review">
-                <div class="ai-review-card">
-                    <div class="ai-review-header">
-                        <span class="ai-sparkles-icon">✨</span>
-                        <h3>Detailed AI Assessment</h3>
-                    </div>
-                    <div class="ai-review-body" id="resAiReviewContent">
-                        Generating AI review of your performance...
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 2: Question & Solutions -->
-            <div class="results-tab-content" id="tabContent-questions-review" style="display: none;">
-                <div class="solutions-filter-bar">
-                    <button class="filter-btn active" data-filter="all">All Qs</button>
-                    <button class="filter-btn" data-filter="correct">Correct</button>
-                    <button class="filter-btn" data-filter="incorrect">Incorrect</button>
-                    <button class="filter-btn" data-filter="unattempted">Unattempted</button>
-                </div>
-                <div class="solutions-list" id="resSolutionsList">
-                    <!-- Loaded dynamically -->
-                </div>
-            </div>
-        </div>
-
-        <div class="results-actions-bar">
-            <button class="btn-primary" id="btnResultsBackHome">Back to Home</button>
-        </div>
-    </div>
-
-    <!-- Fullscreen Blocker Overlay -->
-    <div id="fullscreenBlocker" class="fullscreen-blocker-overlay" style="display: none;">
-        <div class="blocker-card">
-            <div class="blocker-icon">⚠️</div>
-            <h2>Fullscreen Required</h2>
-            <p>To maintain exam integrity, this test can only be attempted in fullscreen mode. Any attempt to exit fullscreen or resize the window is restricted.</p>
-            <button class="btn-primary" id="btnResumeFullscreen">Go Fullscreen & Resume</button>
-        </div>
-    </div>
-
-    <!-- Single Question Detail Page -->
-    <div id="questionDetailPage" class="container question-detail-container" style="display: none;">
-        <div class="question-detail-header">
-            <button class="btn-secondary btn-back btn-back-top" id="btnBackToQuestionList">← Back to List</button>
-            <div class="question-detail-info-bar">
-                <div class="q-detail-title-group">
-                    <span class="q-detail-num" id="detailQuestionNumber">Q 1</span>
-                    <span class="q-detail-meta" id="detailQuestionMeta">JEE Main 2026 (08 April Shift 2)</span>
-                </div>
-                
-                <div class="q-detail-controls">
-                    <button class="btn-timer-toggle" id="btnQuestionTimer">⏱️ Start Timer</button>
-                    
-                    <button class="btn-bookmark" id="btnBookmarkDetailQuestion" style="background: none; border: none; cursor: pointer; color: var(--ig-text-secondary); display: inline-flex; align-items: center; justify-content: center; padding: 4px;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" class="bookmark-svg">
-                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="question-detail-body">
-            <div class="question-detail-card">
-                <div class="question-detail-text" id="detailQuestionText">
-                    Question text...
-                </div>
-                
-                <div class="options-grid-2x2" id="detailOptionsContainer">
-                    <!-- Populated dynamically (2x2 grid) -->
-                </div>
-                
-                <div class="detailed-answer" id="detailExplanationContainer" style="display: none;">
-                    <div class="answer-header">
-                        <strong>📝 Detailed Solution:</strong>
-                    </div>
-                    <div class="answer-content" id="detailExplanationContent">
-                        Detailed explanation...
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="question-detail-footer">
-            <button class="btn-nav-arrow" id="btnDetailPrev">Previous</button>
-            <button class="btn-action-primary" id="btnDetailCheckAnswer">Check Answer</button>
-            <button class="btn-nav-arrow" id="btnDetailNext">Next</button>
-        </div>
-    </div>
-
-    <!-- Community Chat Page -->
-    <div id="communityChatPage" class="container community-chat-page" style="display: none;">
-        <div class="community-chat-layout">
-            <!-- Channels Sidebar (Left Column) -->
-            <div class="chat-channels-sidebar">
-                <div class="sidebar-channels-header">
-                    <h3>💬 Community</h3>
-                </div>
-                <div class="channels-list">
-                    <div class="channel-item active" id="channelGeneralBtn" data-channel="general">
-                        <span class="channel-hashtag">#</span>
-                        <div class="channel-details">
-                            <span class="channel-name">general</span>
-                            <span class="channel-desc">Public discussions</span>
-                        </div>
-                    </div>
-                    <div class="channel-item" id="channelUpdatesBtn" data-channel="updates">
-                        <span class="channel-hashtag">📢</span>
-                        <div class="channel-details">
-                            <span class="channel-name">updates</span>
-                            <span class="channel-desc">Admins only posts</span>
-                        </div>
-                    </div>
-                    <div class="channel-item" id="channelTestsBtn" data-channel="tests" style="display: none;">
-                        <span class="channel-hashtag">🧪</span>
-                        <div class="channel-details">
-                            <span class="channel-name">tests</span>
-                            <span class="channel-desc">Admin testing channel</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Chat Conversation Panel (Right Column) -->
-            <div class="chat-main-panel">
-                <div class="chat-panel-header">
-                    <div class="chat-header-info">
-                        <h4 id="activeChannelHeaderTitle"># general</h4>
-                        <p id="activeChannelHeaderSubtitle">Public channel for all students</p>
-                    </div>
-                </div>
-                
-                <!-- Messages container -->
-                <div class="chat-messages-container" id="chatMessagesList">
-                    <!-- Messages will be loaded here dynamically -->
-                </div>
-                
-                <!-- Chat Input Section -->
-                <div class="chat-input-wrapper">
-                    <!-- Updates read-only warning -->
-                    <div id="chatUpdatesReadOnlyBanner" class="chat-read-only-banner" style="display: none;">
-                        🔒 Only admins can post updates in this channel.
-                    </div>
-                    <!-- Send Message Form -->
-                    <form id="chatMessageForm" class="chat-message-form">
-                        <input type="text" id="chatMessageInput" placeholder="Type a message..." autocomplete="off">
-                        <button type="submit" class="chat-send-btn" id="chatSendBtn">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                            </svg>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Super Admin Panel -->
-    <div id="superAdminPage" class="container super-admin-panel" style="display: none;">
-        <h2 class="page-title">Super Admin Panel</h2>
-        <p class="page-subtitle">Add or remove admins, and manage their permissions</p>
-
-        <!-- Add Admin Card -->
-        <div class="admin-card">
-            <h3>Add New Admin</h3>
-            <form id="addAdminForm" class="admin-form">
-                <div class="form-row">
-                    <input type="email" id="newAdminEmail" placeholder="Enter admin email address" required style="flex-grow: 1; padding: 10px; border: 1px solid var(--ig-border); border-radius: 6px; background: var(--ig-bg-secondary); color: var(--ig-text-primary); font-size: 14px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" id="newAdminCommunityAccess" checked style="width: 18px; height: 18px; cursor: pointer;">
-                        <label for="newAdminCommunityAccess" style="color: var(--ig-text-primary); font-size: 13.5px; cursor: pointer; user-select: none;">Allow Community Access</label>
-                    </div>
-                    <button type="submit" class="btn-action-primary" style="padding: 10px 20px; font-size: 14px; font-weight: 600;">Add Admin</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Admins List Table -->
-        <div class="admin-card" style="margin-top: 24px;">
-            <h3>Current Admins</h3>
-            <div style="overflow-x: auto; margin-top: 16px;">
-                <table class="admins-table" style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead>
-                        <tr style="border-bottom: 2px solid var(--ig-border); color: var(--ig-text-secondary); font-size: 13px; font-weight: 600; text-transform: uppercase;">
-                            <th style="padding: 12px 8px;">Email Address</th>
-                            <th style="padding: 12px 8px;">Role</th>
-                            <th style="padding: 12px 8px;">Community Access</th>
-                            <th style="padding: 12px 8px; text-align: right;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminsTableBody" style="color: var(--ig-text-primary); font-size: 14px;">
-                        <!-- Populate dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Floating Emoji Reaction Popover -->
-    <div id="emojiReactionPopover" class="emoji-reaction-popover" style="display: none;">
-        <span class="emoji-option" data-emoji="👍">👍</span>
-        <span class="emoji-option" data-emoji="❤️">❤️</span>
-        <span class="emoji-option" data-emoji="😂">😂</span>
-        <span class="emoji-option" data-emoji="😮">😮</span>
-        <span class="emoji-option" data-emoji="😢">😢</span>
-        <span class="emoji-option" data-emoji="🙏">🙏</span>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="spinner"></div>
-        <p>Loading...</p>
-    </div>
-
-    <!-- Podcast Player Panel -->
-    <div id="podcastPlayerPanel" class="podcast-player-panel" style="display: none;">
-        <div class="podcast-player-layout">
-            <div class="podcast-controls-cluster">
-                <button class="podcast-control-btn" id="podcastSkipBack">-5s</button>
-                <button class="podcast-control-btn podcast-play-btn" id="podcastPlayPauseBtn">▶</button>
-                <button class="podcast-control-btn" id="podcastSkipForward">+5s</button>
-            </div>
-            <div class="podcast-timeline">
-                <span id="podcastCurrentTime" class="podcast-time-label">0:00</span>
-                <input type="range" id="podcastScrubber" class="podcast-scrubber" min="0" max="100" value="0">
-                <span id="podcastTotalTime" class="podcast-time-label">0:00</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2026 Learnser AI - Your Intelligent Learning Companion</p>
-        <p class="footer-tagline">Empowering JEE Aspirants with Smart Practice</p>
+    <footer>
+        <p>&copy; 2026 Learnser AI.</p>
     </footer>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+        // --- BACKGROUND ---
+        const canvas = document.getElementById('bg-canvas'), ctx = canvas.getContext('2d');
+        let dots = [], isFocusMode = false, spacing = 30, mouse = { x: -1000, y: -1000, radius: 150 };
+        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        function initBg() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            dots = [];
+            for (let x = spacing / 2; x < canvas.width; x += spacing)
+                for (let y = spacing / 2; y < canvas.height; y += spacing)
+                    dots.push({ x, y, baseX: x, baseY: y });
+        }
+        function animateBg(t) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const pulse = isFocusMode ? Math.sin(t / 800) * 0.08 : 0;
+            dots.forEach(d => {
+                const dx = mouse.x - d.baseX, dy = mouse.y - d.baseY, dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < mouse.radius) {
+                    const f = (mouse.radius - dist) / mouse.radius;
+                    d.x = d.baseX - dx * f * 0.3; d.y = d.baseY - dy * f * 0.3;
+                    ctx.fillStyle = `rgba(129, 140, 248, ${0.1 + f * 0.4 + pulse})`;
+                } else {
+                    d.x += (d.baseX - d.x) * 0.1; d.y += (d.baseY - d.y) * 0.1;
+                    ctx.fillStyle = `rgba(129, 140, 248, ${0.1 + pulse})`;
+                }
+                ctx.beginPath(); ctx.arc(d.x, d.y, 1.2, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(animateBg);
+        }
+        window.addEventListener('resize', initBg); initBg(); animateBg();
 
-    <!-- App Scripts -->
-    <script src="firebase-config.js"></script>
-    <script src="app.js"></script>
+        // --- INFINITE TIMER LOGIC ---
+        let state = { mode: 'study', studyMin: 25, breakMin: 5, timeLeft: 1500, active: false, timer: null, completedSessions: 0 };
+        window.updateSettings = function () {
+            state.studyMin = Math.max(1, parseInt(document.getElementById('study-in').value) || 25);
+            state.breakMin = Math.max(1, parseInt(document.getElementById('break-in').value) || 5);
+            if (!state.active) { state.timeLeft = (state.mode === 'study' ? state.studyMin : state.breakMin) * 60; renderTimer(); }
+        };
+        window.resetSession = function () {
+            if (state.timer) clearInterval(state.timer);
+            state.timer = null; state.active = false; isFocusMode = false;
+            state.mode = 'study'; state.timeLeft = state.studyMin * 60; renderTimer();
+        };
+        window.toggleProcess = function () {
+            const btn = document.getElementById('action-btn');
+            if (state.active) { clearInterval(state.timer); state.active = false; isFocusMode = false; btn.innerText = "RESUME FLOW"; }
+            else {
+                state.active = true; isFocusMode = (state.mode === 'study'); btn.innerText = "PAUSE";
+                state.timer = setInterval(() => {
+                    state.timeLeft = Math.max(0, state.timeLeft - 1);
+                    if (state.timeLeft <= 0) {
+                        if (state.mode === 'study') { state.completedSessions++; document.getElementById('session-badge').innerText = `Sessions: ${state.completedSessions}`; state.mode = 'break'; state.timeLeft = state.breakMin * 60; }
+                        else { state.mode = 'study'; state.timeLeft = state.studyMin * 60; }
+                        isFocusMode = (state.mode === 'study');
+                    }
+                    renderTimer();
+                }, 1000);
+            }
+        };
+        function renderTimer() {
+            const sZone = document.getElementById('study-zone'), bZone = document.getElementById('break-zone'), display = document.getElementById('timer-val'), btn = document.getElementById('action-btn');
+            const m = Math.floor(state.timeLeft / 60), s = state.timeLeft % 60;
+            display.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            sZone.className = `timer-zone ${state.mode === 'study' ? 'active' : ''}`;
+            bZone.className = `timer-zone break-zone ${state.mode === 'break' ? 'active' : ''}`;
+            btn.className = `main-timer-btn ${state.mode === 'break' ? 'is-break' : ''}`;
+            if (!state.active) btn.innerText = state.timeLeft === (state.mode === 'study' ? state.studyMin : state.breakMin) * 60 ? "START FLOW" : "RESUME FLOW";
+        }
+
+        // --- AUTH ---
+        window.onload = () => {
+            google.accounts.id.initialize({
+                client_id: "952544160916-ldfaj5rb0q99dtc46i788mu2jdun7s69.apps.googleusercontent.com",
+                callback: handleCredentialResponse
+            });
+
+            google.accounts.id.renderButton(
+                document.getElementById("google-signin-btn"),
+                { theme: "filled_black", size: "large", shape: "pill" }
+            );
+        };
+
+        function handleCredentialResponse(response) {
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            localStorage.setItem('learnser_user', JSON.stringify({ given_name: payload.given_name, picture: payload.picture, email: payload.email }));
+
+            const formData = new FormData(); formData.append('Email', payload.email); formData.append('Name', payload.given_name);
+            fetch("https://script.google.com/macros/s/AKfycbzf9Y9CZlMfcQ4cXmVgOwJ6-iXKGzS4_gy8ZE-E8zATz6vqWjiov0mo7BnVibPVXjI/exec", { method: 'POST', body: formData, mode: 'no-cors' })
+                .then(() => { window.location.href = 'dashbord.html'; }).catch(() => { window.location.href = 'dashbord.html'; });
+        }
+    </script>
+    <!-- Supabase Client & State Management -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="env.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="auth-check.js"></script>
 </body>
 
 </html>

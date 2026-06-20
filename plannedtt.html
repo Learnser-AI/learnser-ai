@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI Smart Timetable revision planner for JEE students. Conversational onboarding, adaptive calendar views, and custom exam priorities.">
+    <title>Smart Timetable | Learnser AI</title>
+    
+    <script src="theme.js?v=2.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #818cf8; 
+            --primary-hover: #6366f1;
+            --accent: #2dd4bf; 
+            --danger: #ef4444;
+            --bg: #020617;      
+            --panel-bg: rgba(15, 23, 42, 0.6); 
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --input-bg: rgba(15, 23, 42, 0.85);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8; 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            
+            --sidebar-width: 320px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text-main);
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: 76px 1fr; 
+            transition: grid-template-columns 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body.collapsed { --sidebar-width: 90px; }
+
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(circle at 10% 10%, var(--bg-gradient-1, rgba(129, 140, 248, 0.05)) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 90%, var(--bg-gradient-2, rgba(45, 212, 191, 0.04)) 0%, transparent 40%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* --- TOP-LEFT PROFILE CORNER --- */
+        .top-navbar-corner {
+            grid-column: 1 / 2; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); border-right: 1px solid var(--glass-border);
+            display: flex; align-items: center; padding: 0 16px; gap: 8px; overflow: hidden; 
+            transition: padding 0.3s, gap 0.3s; z-index: 15;
+        }
+        body.collapsed .top-navbar-corner { padding: 0 8px; gap: 4px; }
+
+        .hamburger-btn {
+            background: transparent; border: none; color: var(--text-main);
+            cursor: pointer; border-radius: 8px; padding: 8px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: background 0.2s, padding 0.3s;
+        }
+        .hamburger-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        body.collapsed .hamburger-btn { padding: 6px; }
+
+        .user-profile {
+            display: flex; align-items: center;
+            padding: 6px 16px 6px 6px; border-radius: 12px;
+            transition: background 0.2s, padding 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            white-space: nowrap; overflow: hidden;
+        }
+        .user-profile:hover { background: rgba(255, 255, 255, 0.05); }
+        body.collapsed .user-profile { padding: 0; }
+
+        .pfp {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid var(--accent); object-fit: cover; background: var(--bg); 
+            flex-shrink: 0; margin-right: 16px; 
+            transition: margin-right 0.3s cubic-bezier(0.25, 1, 0.5, 1), width 0.3s, height 0.3s;
+        }
+        body.collapsed .pfp { margin-right: 0; width: 30px; height: 30px; }
+
+        .user-details {
+            display: flex; flex-direction: column; justify-content: center; overflow: hidden;
+            width: 180px; transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s;
+        }
+        body.collapsed .user-details { width: 0; opacity: 0; pointer-events: none; }
+
+        .user-name { font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+        .user-email { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- TOP NAVBAR (MAIN) --- */
+        .top-navbar-main {
+            grid-column: 2 / 3; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; padding: 0 32px;
+            z-index: 10;
+        }
+
+        /* --- SIDEBAR NAVIGATION --- */
+        .sidebar {
+            grid-column: 1 / 2; grid-row: 2 / 3;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column;
+            overflow-y: auto; overflow-x: hidden; padding: 32px 20px;
+            scrollbar-width: none; -ms-overflow-style: none; z-index: 5;
+        }
+        .sidebar::-webkit-scrollbar { display: none; }
+
+        .sidebar-menu { display: flex; flex-direction: column; gap: 32px; }
+        .menu-section { display: flex; flex-direction: column; gap: 6px; }
+
+        .section-title {
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-dim); margin-left: 14px; margin-bottom: 8px;
+            transition: opacity 0.2s, height 0.2s; white-space: nowrap;
+        }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 14px; border-radius: 12px; color: var(--text-dim);
+            text-decoration: none; font-weight: 600; font-size: 0.95rem;
+            transition: background 0.2s, color 0.2s, padding 0.3s; white-space: nowrap;
+        }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+        .menu-item.active { background: rgba(129, 140, 248, 0.15); color: var(--primary); }
+
+        .menu-item svg { width: 22px; height: 22px; flex-shrink: 0; transition: color 0.2s; }
+        .menu-item.active svg { color: var(--primary); }
+        .menu-text { transition: opacity 0.2s, width 0.2s; }
+
+        body.collapsed .section-title { opacity: 0; height: 0; margin-bottom: 0; overflow: hidden; }
+        body.collapsed .menu-text { opacity: 0; width: 0; overflow: hidden; display: none; }
+        body.collapsed .menu-item { justify-content: center; padding-left: 0; padding-right: 0; }
+
+        /* --- MAIN CONTENT LAYOUT --- */
+        .main-content {
+            grid-column: 2 / 3; grid-row: 2 / 3;
+            overflow: hidden; display: grid;
+            grid-template-columns: 1fr 380px;
+            background: transparent;
+        }
+
+        .schedule-viewer {
+            display: flex; flex-direction: column; padding: 32px; overflow-y: auto; scrollbar-width: none;
+        }
+        .schedule-viewer::-webkit-scrollbar { display: none; }
+
+        /* View Toggle Bar */
+        .view-toggle-bar {
+            display: flex; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--glass-border);
+            border-radius: 14px; padding: 6px; width: fit-content; gap: 4px; margin-bottom: 24px;
+        }
+        .toggle-btn {
+            background: transparent; border: none; color: var(--text-dim); font-size: 0.85rem; font-weight: 700;
+            padding: 8px 18px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease;
+        }
+        .toggle-btn.active {
+            background: var(--card-bg); color: var(--primary); border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* --- SCHEDULE VIEW CONTAINERS --- */
+        .schedule-container { width: 100%; display: none; }
+        .schedule-container.active { display: block; }
+
+        /* Daily view: Timeline Cards */
+        .daily-timeline { display: flex; flex-direction: column; gap: 12px; }
+        .timeline-block {
+            border: 1px solid var(--glass-border); border-radius: 16px; padding: 14px 20px;
+            display: flex; gap: 20px; align-items: center; position: relative; overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); backdrop-filter: blur(8px);
+        }
+        .timeline-block::before {
+            content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+        }
+        .block-time { font-weight: 800; font-size: 0.9rem; min-width: 110px; flex-shrink: 0; color: var(--text-dim); }
+        .block-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+        .block-subject { font-weight: 700; font-size: 1rem; color: var(--text-main); margin-bottom: 2px; }
+        .block-task { font-size: 0.85rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Neon Cognitive Color Palettes */
+        .block-math { 
+            background: rgba(6, 182, 212, 0.03); 
+            border-color: rgba(6, 182, 212, 0.2); 
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.05);
+        }
+        .block-math::before { background: #06b6d4; box-shadow: 0 0 10px #06b6d4; }
+        .block-math .block-subject { color: #06b6d4; }
+
+        .block-physics { 
+            background: rgba(168, 85, 247, 0.03); 
+            border-color: rgba(168, 85, 247, 0.2); 
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.05);
+        }
+        .block-physics::before { background: #a855f7; box-shadow: 0 0 10px #a855f7; }
+        .block-physics .block-subject { color: #a855f7; }
+
+        .block-chemistry { 
+            background: rgba(16, 185, 129, 0.03); 
+            border-color: rgba(16, 185, 129, 0.2); 
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.05);
+        }
+        .block-chemistry::before { background: #10b981; box-shadow: 0 0 10px #10b981; }
+        .block-chemistry .block-subject { color: #10b981; }
+
+        .block-break { 
+            background: rgba(99, 102, 241, 0.03); 
+            border-color: rgba(99, 102, 241, 0.2); 
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.05);
+        }
+        .block-break::before { background: #6366f1; box-shadow: 0 0 10px #6366f1; }
+        .block-break .block-subject { color: #6366f1; }
+
+        /* Weekly View Grid */
+        .weekly-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+        .weekly-day-card {
+            background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 20px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .weekly-day-title { font-size: 1.1rem; font-weight: 800; color: var(--primary); padding-bottom: 8px; border-bottom: 1px solid var(--glass-border); }
+        .weekly-day-summary { display: flex; flex-direction: column; gap: 8px; }
+        .summary-item { font-size: 0.85rem; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--glass-border); display: flex; justify-content: space-between; }
+
+        /* Monthly View Grid */
+        .monthly-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+        .monthly-day-card {
+            background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 16px;
+            padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s ease;
+        }
+        .monthly-day-card:hover {
+            border-color: var(--primary); transform: scale(1.03); background: rgba(129, 140, 248, 0.05);
+        }
+        .monthly-day-num { font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+        .monthly-day-status { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+
+        /* --- CHATBOT SETUP WIZARD PANEL --- */
+        .chatbot-panel {
+            background: var(--panel-bg); border-left: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; overflow: hidden; backdrop-filter: blur(20px);
+        }
+        .chatbot-header {
+            padding: 24px; border-bottom: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 4px;
+        }
+        .chatbot-header h2 { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
+        .chatbot-header p { font-size: 0.75rem; color: var(--text-dim); }
+
+        .chat-bubbles-container {
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px;
+            scrollbar-width: none;
+        }
+        .chat-bubbles-container::-webkit-scrollbar { display: none; }
+
+        .chat-msg {
+            max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 0.88rem; line-height: 1.5;
+            animation: messagePop 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .chat-msg.ai {
+            background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-main);
+            align-self: flex-start; border-top-left-radius: 4px;
+        }
+        .chat-msg.user {
+            background: linear-gradient(135deg, var(--primary), #6366f1); color: white;
+            align-self: flex-end; border-top-right-radius: 4px;
+        }
+
+        .chat-options-box {
+            display: flex; flex-direction: column; gap: 8px; margin-top: 8px; width: 100%;
+        }
+        .chat-option-btn {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); color: var(--text-main);
+            padding: 10px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            text-align: left; transition: all 0.2s ease; width: 100%;
+        }
+        .chat-option-btn:hover {
+            background: rgba(129, 140, 248, 0.1); border-color: var(--primary);
+        }
+
+        .chatbot-input-wrapper {
+            padding: 20px; border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 12px;
+            background: rgba(15, 23, 42, 0.4);
+        }
+        .chatbot-input-box {
+            display: flex; gap: 8px; width: 100%;
+        }
+        .chatbot-input-box input {
+            flex: 1; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 12px;
+            padding: 12px 16px; color: var(--text-main); font-size: 0.88rem; outline: none; transition: border 0.2s;
+        }
+        .chatbot-input-box input:focus { border-color: var(--primary); }
+        
+        .chat-send-btn {
+            background: var(--primary); border: none; color: white; width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;
+        }
+        .chat-send-btn:hover { background: var(--primary-hover); }
+
+        .generation-counter-panel {
+            display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--text-dim);
+            padding: 4px 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 4px;
+        }
+        .dev-reset-btn {
+            background: none; border: none; color: var(--text-dim); cursor: pointer; opacity: 0.3; transition: opacity 0.2s;
+            display: flex; align-items: center;
+        }
+        .dev-reset-btn:hover { opacity: 0.8; color: var(--accent); }
+
+        @keyframes messagePop {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content { grid-template-columns: 1fr; }
+            .chatbot-panel { border-left: none; border-top: 1px solid var(--glass-border); height: 400px; }
+        }
+
+        @media (max-width: 768px) {
+            body { grid-template-columns: 0px 1fr; }
+            .sidebar { position: fixed; top: 76px; left: 0; bottom: 0; width: 280px; z-index: 99; transform: translateX(-100%); transition: transform 0.3s; }
+            body.collapsed .sidebar { transform: translateX(0); }
+            .schedule-viewer { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-navbar-corner">
+        <button class="hamburger-btn" id="sidebar-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="user-profile">
+            <img src="" id="user-pfp" alt="Profile" class="pfp">
+            <div class="user-details">
+                <span class="user-name" id="user-name">Loading...</span>
+                <span class="user-email" id="user-email">Syncing...</span>
+            </div>
+        </div>
+    </div>
+
+    <header class="top-navbar-main">
+        <div style="font-weight: 800; letter-spacing: 1px; font-size: 1.2rem;">LEARNSER <span style="color: var(--accent);">AI</span></div>
+    </header>
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">
+            <div class="menu-section">
+                <div class="section-title">OVERVIEW</div>
+                <a href="dashbord.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">LEARN</div>
+                <a href="ai_doubtsolver.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z" />
+                        <path d="m14 7 3 3" />
+                        <path d="M5 6v4" />
+                        <path d="M19 14v4" />
+                        <path d="M10 2v2" />
+                        <path d="M7 8H3" />
+                        <path d="M21 16h-4" />
+                        <path d="M11 3H9" />
+                    </svg>
+                    <span class="menu-text">AI Doubt Solver</span>
+                </a>
+                <a href="chapternotes.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    <span class="menu-text">Chapter Notes</span>
+                </a>
+                <a href="PlannedTT.html" class="menu-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="menu-text">Smart Timetable</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">PRACTICE</div>
+                <a href="test/test.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 11 12 14 22 4"></polyline>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                    <span class="menu-text">AI Test Generator</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <circle cx="12" cy="14" r="1"></circle>
+                        <path d="M12 11c1.5 0 2-1 2-2s-.5-2-2-2-2 1-2 2"></path>
+                    </svg>
+                    <span class="menu-text">Previous Year Qs</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">PROGRESS</div>
+                <a href="analytics.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                    <span class="menu-text">Analytics</span>
+                </a>
+                <a href="rewardshop.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+                    </svg>
+                    <span class="menu-text">Streak & Coins</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="7"></circle>
+                        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                    </svg>
+                    <span class="menu-text">Badges</span>
+                </a>
+                <a href="leaderboard.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                        <path d="M4 22h16"></path>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                    </svg>
+                    <span class="menu-text">Leaderboard</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">COMMUNITY</div>
+                <a href="podcast.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    <span class="menu-text">AI Podcast</span>
+                </a>
+                <a href="#" class="menu-item" style="opacity: 0.5; cursor: not-allowed;" onclick="alert('Community Chat is temporarily disabled.'); return false;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="menu-text">Community Chat <small style="font-size: 0.65rem; color: var(--text-dim);">(Disabled)</small></span>
+                </a>
+            </div>
+        </div>
+
+        <div style="flex-grow: 1;"></div>
+
+        <div class="menu-section" style="margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 24px;">
+            <a href="admin.html" id="adminNavLink" class="menu-item" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
+                <span class="menu-text">Admin Panel</span>
+            </a>
+            <a href="settings.html" class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                <span class="menu-text">Settings</span>
+            </a>
+            <a href="#" onclick="signOutUser(); return false;" class="menu-item" style="color: var(--danger);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span class="menu-text">Log Out</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <!-- LEFT: SCHEDULE VIEWER CONTAINER -->
+        <div class="schedule-viewer">
+            <div class="view-toggle-bar">
+                <button class="toggle-btn active" id="toggle-daily" onclick="switchView('daily')">Daily Routine</button>
+                <button class="toggle-btn" id="toggle-weekly" onclick="switchView('weekly')">Weekly View</button>
+                <button class="toggle-btn" id="toggle-monthly" onclick="switchView('monthly')">Monthly Calendar</button>
+            </div>
+
+            <!-- View 1: Daily Timeline -->
+            <div id="view-daily" class="schedule-container active">
+                <div class="daily-timeline" id="daily-timeline-list">
+                    <!-- Placeholder initial display -->
+                    <div style="text-align: center; padding: 40px; color: var(--text-dim);">
+                        <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">No study protocol loaded</p>
+                        <p style="font-size: 0.85rem;">Answer the AI wizard queries on the right to compile your smart schedule.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 2: Weekly View -->
+            <div id="view-weekly" class="schedule-container">
+                <div class="weekly-grid" id="weekly-grid-list">
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-dim);">
+                        <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">No study protocol loaded</p>
+                        <p style="font-size: 0.85rem;">Answer the AI wizard queries on the right to compile your smart schedule.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 3: Monthly View -->
+            <div id="view-monthly" class="schedule-container">
+                <div class="monthly-grid" id="monthly-grid-list">
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-dim);">
+                        <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">No study protocol loaded</p>
+                        <p style="font-size: 0.85rem;">Answer the AI wizard queries on the right to compile your smart schedule.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: CHATBOT SETUP PANEL -->
+        <div class="chatbot-panel">
+            <div class="chatbot-header">
+                <h2>Timetable Assistant</h2>
+                <p>Conversational protocol generation</p>
+            </div>
+
+            <div class="chat-bubbles-container" id="chat-scroller">
+                <!-- Initial Assistant bubble -->
+                <div class="chat-msg ai">
+                    Hello! I'm your Smart Timetable Assistant. Let's create your revision schedule. When is your target exam date? (e.g. June 30, 2026)
+                </div>
+            </div>
+
+            <div class="chatbot-input-wrapper">
+                <div class="chatbot-input-box">
+                    <input type="text" id="chat-input-field" placeholder="Type exam date here..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    <button class="chat-send-btn" onclick="sendChatMessage()" id="chatbot-submit-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+                <div class="generation-counter-panel">
+                    <span id="gen-limit-string">Generations Remaining This Month: 3 / 3</span>
+                    <button class="dev-reset-btn" onclick="resetGenLimit()" title="Developer: Reset Generation Limit">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDK & Configuration Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth-check.js"></script>
+
+    <script>
+        // --- TIMETABLE GENERATION LIMIT CONSTANTS ---
+        let localTtGenerationLimit = 3;
+        
+        try {
+            const limit = localStorage.getItem('local_tt_gen_limit');
+            if (limit !== null) {
+                localTtGenerationLimit = parseInt(limit);
+            } else {
+                localStorage.setItem('local_tt_gen_limit', '3');
+            }
+        } catch (e) {
+            console.warn("Storage limits unavailable:", e);
+        }
+
+        function updateLimitUI() {
+            const label = document.getElementById('gen-limit-string');
+            const submitBtn = document.getElementById('chatbot-submit-btn');
+            const inputField = document.getElementById('chat-input-field');
+
+            if (label) {
+                label.innerText = `Generations Remaining This Month: ${localTtGenerationLimit} / 3`;
+            }
+
+            // If limit <= 0, disable generation controls only if onboarding is complete
+            if (localTtGenerationLimit <= 0 && currentStep >= 9) {
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                }
+                if (inputField) {
+                    inputField.disabled = true;
+                    inputField.placeholder = "Generation limit reached.";
+                }
+            } else {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                }
+                if (inputField) {
+                    inputField.disabled = false;
+                }
+            }
+        }
+
+        function resetGenLimit() {
+            localTtGenerationLimit = 3;
+            try {
+                localStorage.setItem('local_tt_gen_limit', '3');
+            } catch (e) {}
+            updateLimitUI();
+            
+            // Re-render choices or check limits
+            const activeOptionsBtn = document.querySelector('.chat-options-box button');
+            if (activeOptionsBtn && (activeOptionsBtn.innerText === "COMPILE PROTOCOL 🚀" || activeOptionsBtn.innerText === "RECOMPILE PROTOCOL 🚀")) {
+                activeOptionsBtn.disabled = false;
+                activeOptionsBtn.style.opacity = '1';
+                activeOptionsBtn.style.cursor = 'pointer';
+            }
+            alert("Developer Mode: Generation limit reset to 3.");
+        }
+
+        // --- CONVERSATIONAL ONBOARDING SYSTEM ---
+        let currentStep = 1;
+        let onboardingData = {
+            examDate: "",
+            examTime: "",
+            weightage: { physics: "Medium", chemistry: "Medium", math: "Medium" },
+            chronotype: "",
+            blockout: "",
+            commitment: "",
+            startTimeAnchor: "",
+            syllabusScope: "",
+            customChapters: []
+        };
+
+        const scroller = document.getElementById('chat-scroller');
+        const chatInput = document.getElementById('chat-input-field');
+
+        function appendChatBubble(text, sender) {
+            const bubble = document.createElement('div');
+            bubble.className = `chat-msg ${sender}`;
+            bubble.innerText = text;
+            scroller.appendChild(bubble);
+            scroller.scrollTop = scroller.scrollHeight;
+        }
+
+        function sendChatMessage() {
+            const val = chatInput.value.trim();
+            if (!val) return;
+            chatInput.value = '';
+            
+            appendChatBubble(val, 'user');
+            processStep(val);
+        }
+
+        function handleOptionSelect(optionText, value) {
+            appendChatBubble(optionText, 'user');
+            
+            // Clear any active options boxes to keep conversation clean
+            const optionBox = document.querySelector('.chat-options-box');
+            if (optionBox) optionBox.remove();
+            
+            processStep(value);
+        }
+
+        function processStep(userInput) {
+            setTimeout(() => {
+                switch (currentStep) {
+                    case 1:
+                        onboardingData.examDate = userInput;
+                        currentStep = 2;
+                        appendChatBubble("Perfect! What is your target exam time window? (e.g. 2:00 PM - 5:00 PM)", "ai");
+                        chatInput.placeholder = "Type exam hours (e.g., 2 PM - 5 PM)...";
+                        break;
+                    case 2:
+                        onboardingData.examTime = userInput;
+                        currentStep = 3;
+                        
+                        // Subject Chapter Weightage selection UI
+                        appendChatBubble("Awesome. Choose chapter weight priorities for Math, Physics, and Chemistry:", "ai");
+                        
+                        const optionBox = document.createElement('div');
+                        optionBox.className = 'chat-options-box';
+                        optionBox.innerHTML = `
+                            <button class="chat-option-btn" onclick="handleOptionSelect('High Weightage Focused', 'High')">High weights (Physics/Math focus)</button>
+                            <button class="chat-option-btn" onclick="handleOptionSelect('Balanced Priority', 'Medium')">Balanced weight (Equally distributed)</button>
+                            <button class="chat-option-btn" onclick="handleOptionSelect('Low weight reviews', 'Low')">Low Weight (Quick reviews focus)</button>
+                        `;
+                        scroller.appendChild(optionBox);
+                        scroller.scrollTop = scroller.scrollHeight;
+                        chatInput.disabled = true;
+                        break;
+                    case 3:
+                        onboardingData.weightage.math = userInput;
+                        onboardingData.weightage.physics = userInput;
+                        onboardingData.weightage.chemistry = userInput;
+                        currentStep = 4;
+                        
+                        // Chronotype Profile Selector
+                        appendChatBubble("Understood. What is your chronotype profile?", "ai");
+                        
+                        const chronBox = document.createElement('div');
+                        chronBox.className = 'chat-options-box';
+                        chronBox.innerHTML = `
+                            <button class="chat-option-btn" onclick="handleOptionSelect('🌅 Early Bird', 'Early Bird')">🌅 Early Bird (Active morning study)</button>
+                            <button class="chat-option-btn" onclick="handleOptionSelect('🦉 Night Owl', 'Night Owl')">🦉 Night Owl (Active evening/night study)</button>
+                        `;
+                        scroller.appendChild(chronBox);
+                        scroller.scrollTop = scroller.scrollHeight;
+                        break;
+                    case 4:
+                        onboardingData.chronotype = userInput;
+                        currentStep = 5;
+                        
+                        // Custom blockouts
+                        chatInput.disabled = false;
+                        chatInput.placeholder = "e.g., Coaching 4 PM - 7 PM or none";
+                        appendChatBubble("Got it. Do you have any custom daily blockout hours? (Type time or click Skip)", "ai");
+                        
+                        const skipBox = document.createElement('div');
+                        skipBox.className = 'chat-options-box';
+                        skipBox.innerHTML = `
+                            <button class="chat-option-btn" onclick="handleOptionSelect('No blockout periods', 'none')">Skip blockouts</button>
+                        `;
+                        scroller.appendChild(skipBox);
+                        scroller.scrollTop = scroller.scrollHeight;
+                        break;
+                    case 5:
+                        onboardingData.blockout = userInput;
+                        currentStep = 6;
+                        
+                        // Commitment Selector (T-Shirt size)
+                        appendChatBubble("Almost done! Choose your daily study commitment (T-shirt sizing):", "ai");
+                        
+                        const commitBox = document.createElement('div');
+                        commitBox.className = 'chat-options-box';
+                        commitBox.innerHTML = `
+                            <button class="chat-option-btn" onclick="handleOptionSelect('Casual (3-4 hrs)', 'Casual')">Casual Mode (3-4 hours daily)</button>
+                            <button class="chat-option-btn" onclick="handleOptionSelect('Standard (6-8 hrs)', 'Standard')">Standard Mode (6-8 hours daily)</button>
+                            <button class="chat-option-btn" onclick="handleOptionSelect('Sprint (10+ hrs)', 'Sprint')">Sprint Mode (10+ hours intensive)</button>
+                        `;
+                        scroller.appendChild(commitBox);
+                        scroller.scrollTop = scroller.scrollHeight;
+                        chatInput.disabled = true;
+                        break;
+                    case 6:
+                        onboardingData.commitment = userInput;
+                        currentStep = 7;
+                        
+                        chatInput.disabled = false;
+                        chatInput.placeholder = "e.g., 6:00 AM, 9:00 AM, 10:00 PM...";
+                        appendChatBubble("What time do you want your study routine to officially begin every day? (e.g., 6:00 AM, 9:00 AM, 10:00 PM)", "ai");
+                        break;
+                    case 7:
+                        onboardingData.startTimeAnchor = userInput;
+                        currentStep = 8;
+                        
+                        appendChatBubble("Are we scheduling for your Entire Exam Syllabus, or do you want to input Custom Focus Chapters/Topics right now?", "ai");
+                        
+                        const scopeBox = document.createElement('div');
+                        scopeBox.className = 'chat-options-box';
+                        scopeBox.innerHTML = `
+                            <button class="chat-option-btn" onclick="handleOptionSelect('📚 Entire Exam Syllabus', 'Entire')">Entire Syllabus</button>
+                            <button class="chat-option-btn" onclick="handleOptionSelect('🎯 Custom Focus Chapters', 'Custom')">Custom Focus Chapters</button>
+                        `;
+                        scroller.appendChild(scopeBox);
+                        scroller.scrollTop = scroller.scrollHeight;
+                        chatInput.disabled = true;
+                        break;
+                    case 8:
+                        onboardingData.syllabusScope = userInput;
+                        if (userInput === "Entire") {
+                            currentStep = 9;
+                            appendChatBubble("Onboarding details completed! Ready to compile your customized revision protocol?", "ai");
+                            
+                            const runBox = document.createElement('div');
+                            runBox.className = 'chat-options-box';
+                            let isLimitHit = localTtGenerationLimit <= 0;
+                            runBox.innerHTML = `
+                                <button class="chat-option-btn" onclick="triggerTimetableGeneration()" ${isLimitHit ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} style="background: var(--accent); color: var(--bg); text-align: center; font-weight: 800;">COMPILE PROTOCOL 🚀</button>
+                            `;
+                            scroller.appendChild(runBox);
+                            scroller.scrollTop = scroller.scrollHeight;
+                            updateLimitUI();
+                        } else {
+                            currentStep = 9;
+                            chatInput.disabled = false;
+                            chatInput.placeholder = "e.g., Integration, Electrostatics, Bonding...";
+                            appendChatBubble("Please list the custom focus chapters or topics you want to prioritize (separated by commas):", "ai");
+                        }
+                        break;
+                    case 9:
+                        onboardingData.customChapters = userInput.split(',').map(x => x.trim()).filter(Boolean);
+                        currentStep = 10;
+                        chatInput.disabled = true;
+                        
+                        appendChatBubble("Onboarding details completed! Ready to compile your customized revision protocol?", "ai");
+                        
+                        const runBox2 = document.createElement('div');
+                        runBox2.className = 'chat-options-box';
+                        let isLimitHit2 = localTtGenerationLimit <= 0;
+                        runBox2.innerHTML = `
+                            <button class="chat-option-btn" onclick="triggerTimetableGeneration()" ${isLimitHit2 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} style="background: var(--accent); color: var(--bg); text-align: center; font-weight: 800;">COMPILE PROTOCOL 🚀</button>
+                        `;
+                        scroller.appendChild(runBox2);
+                        scroller.scrollTop = scroller.scrollHeight;
+                        updateLimitUI();
+                        break;
+                }
+            }, 600);
+        }
+
+        // --- TIMETABLE GENERATION PROCESSOR ---
+        const SARVAM_API_KEY = "sk_1km8d1xx_755YkVgKcYtrFGcmP6naIMAn";
+        let generatedProtocol = null;
+
+        async function generateTimetableWithAI(data) {
+            let syllabusText = "";
+            if (data.syllabusScope === "Entire") {
+                syllabusText = "- Syllabus Scope: Entire Exam Syllabus. Please map the national standardized exam syllabus matrix for JEE (Mathematics, Physics, Chemistry).";
+            } else if (data.syllabusScope === "Custom" && data.customChapters && data.customChapters.length > 0) {
+                syllabusText = `- Syllabus Scope: Custom Focus Chapters. Limit your recommendations and tasks strictly to the following user-specified chapters/topics: ${data.customChapters.join(', ')}.`;
+            } else {
+                syllabusText = "- Syllabus Scope: Entire Exam Syllabus.";
+            }
+
+            const prompt = `Generate a structured syllabus breakdown or set of daily revision/study topics for a student preparing for the "${data.examDate}" exam.
+The student has priorities:
+- Subject/Chapter weights: Physics (weight: ${data.weightage.physics}), Chemistry (weight: ${data.weightage.chemistry}), Math (weight: ${data.weightage.math}).
+- Chronotype: ${data.chronotype}
+- Custom daily blockout hours: ${data.blockout}
+- Commitment level: ${data.commitment}
+- Daily study routine start time anchor: ${data.startTimeAnchor || "08:00 AM"}
+${syllabusText}
+
+Please return a strict JSON array of objects representing study topics they should cover. Do not output markdown code blocks or any other explanation, only a raw JSON array.
+Each object must have the fields:
+"subject": string (one of "Mathematics", "Physics", or "Chemistry")
+"topic": string (the chapter/topic name, e.g. "Integration", "Electrostatics", "Chemical Kinetics")
+"task": string (specific task instructions, e.g. "Solve 30 PYQs on indefinite integrals", "Review formula sheet and practice mechanics problems")
+"weight": string (one of "High", "Medium", or "Low")
+
+Provide at least 12 detailed revision tasks, distributed across Math, Physics, and Chemistry. Maintain the following structure in your output:
+[
+  {"subject": "Mathematics", "topic": "Calculus", "task": "Review integration formulas and solve 20 practice questions.", "weight": "High"},
+  ...
+]`;
+
+            try {
+                const res = await fetch("https://api.sarvam.ai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "api-subscription-key": SARVAM_API_KEY
+                    },
+                    body: JSON.stringify({
+                        model: "sarvam-30b",
+                        messages: [
+                            { role: "system", content: "You are an expert JEE study planner. You respond only with strict JSON arrays containing study task details. No conversational filler or wrapping markers." },
+                            { role: "user", content: prompt }
+                        ],
+                        temperature: 0.2
+                    })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Sarvam AI returned error: ${res.status}`);
+                }
+
+                const responseData = await res.json();
+                if (responseData.error) {
+                    throw new Error(responseData.error.message || "API error occurred");
+                }
+                
+                let content = responseData.choices[0].message.content.trim();
+                
+                // Clean markdown code blocks if any
+                if (content.startsWith("```json")) {
+                    content = content.substring(7);
+                } else if (content.startsWith("```")) {
+                    content = content.substring(3);
+                }
+                if (content.endsWith("```")) {
+                    content = content.substring(0, content.length - 3);
+                }
+                content = content.trim();
+                
+                const parsed = JSON.parse(content);
+                if (Array.isArray(parsed)) {
+                    return parsed;
+                } else {
+                    throw new Error("API did not return a JSON array");
+                }
+            } catch (e) {
+                console.warn("Sarvam AI Timetable Generation failed, falling back to local dataset:", e);
+                // Fallback local dataset if API fails or times out
+                return [
+                    { subject: "Mathematics", topic: "Integration & Calculus", task: "Solve 20 JEE Advanced integration problems and review formulas", weight: "High" },
+                    { subject: "Physics", topic: "Electrostatics & Gauss Law", task: "Review electrostatic equations and solve PYQs", weight: "High" },
+                    { subject: "Chemistry", topic: "Organic Chemistry", task: "Practice reaction mechanisms and complete nomenclature sheets", weight: "Medium" },
+                    { subject: "Mathematics", topic: "Probability & Permutations", task: "Solve probability puzzles and permutations theorems", weight: "Medium" },
+                    { subject: "Physics", topic: "Rotational Dynamics", task: "Practice moment of inertia derivations and center of mass formulas", weight: "High" },
+                    { subject: "Chemistry", topic: "Chemical Bonding", task: "Review hybridization principles and molecular orbital theory diagrams", weight: "Medium" },
+                    { subject: "Mathematics", topic: "Matrices & Determinants", task: "Solve linear equations using Cramer's rule and practice properties", weight: "Medium" },
+                    { subject: "Physics", topic: "Optics & Wave Motion", task: "Draw ray diagrams for lenses and solve diffraction grating problems", weight: "Medium" },
+                    { subject: "Chemistry", topic: "Coordination Compounds", task: "Review isomerism rules and crystal field splitting theory values", weight: "Low" }
+                ];
+            }
+        }
+
+        async function triggerTimetableGeneration() {
+            if (localTtGenerationLimit <= 0) {
+                alert("Quota limit reached. Please reset your limits for testing.");
+                return;
+            }
+
+            // Clear option box
+            const optionBox = document.querySelector('.chat-options-box');
+            if (optionBox) optionBox.remove();
+
+            appendChatBubble("Calling Sarvam-30B AI to analyze syllabus and build revision tasks...", "ai");
+            
+            // Add typing indicator or loader
+            const loader = document.createElement('div');
+            loader.className = 'chat-msg ai';
+            loader.id = 'ai-loading-indicator';
+            loader.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 700;">Compiling study plan</span>
+                    <span style="display: flex; gap: 3px;">
+                        <span style="animation: bounce 0.6s infinite alternate; width: 6px; height: 6px; background: var(--text-main); border-radius: 50%;"></span>
+                        <span style="animation: bounce 0.6s infinite alternate 0.2s; width: 6px; height: 6px; background: var(--text-main); border-radius: 50%;"></span>
+                        <span style="animation: bounce 0.6s infinite alternate 0.4s; width: 6px; height: 6px; background: var(--text-main); border-radius: 50%;"></span>
+                    </span>
+                </div>
+                <style>
+                    @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-4px); } }
+                </style>
+            `;
+            scroller.appendChild(loader);
+            scroller.scrollTop = scroller.scrollHeight;
+
+            try {
+                // Call AI to get custom tasks list
+                const aiTasks = await generateTimetableWithAI(onboardingData);
+                
+                // Remove loader
+                const loadEl = document.getElementById('ai-loading-indicator');
+                if (loadEl) loadEl.remove();
+
+                // Build full revision protocol blocks
+                generatedProtocol = buildRevisionProtocol(onboardingData, aiTasks);
+                
+                // Decrement limit upon a successful run
+                localTtGenerationLimit--;
+                try {
+                    localStorage.setItem('local_tt_gen_limit', localTtGenerationLimit.toString());
+                } catch(e){}
+                updateLimitUI();
+
+                // Show protocol in views
+                renderDailyViewForDay(1);
+                renderWeeklyView(generatedProtocol.weekly);
+                renderMonthlyView(generatedProtocol.monthly);
+
+                appendChatBubble("Timetable compiled successfully! Check your schedule layout on the left. You can switch between Daily, Weekly, and Monthly views.", "ai");
+                
+                // Switch back onboarding step to let them regenerate
+                currentStep = 6;
+                const regenBox = document.createElement('div');
+                regenBox.className = 'chat-options-box';
+                let isLimitHit = localTtGenerationLimit <= 0;
+                regenBox.innerHTML = `
+                    <button class="chat-option-btn" onclick="triggerTimetableGeneration()" ${isLimitHit ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} style="background: var(--accent); color: var(--bg); text-align: center; font-weight: 800;">RECOMPILE PROTOCOL 🚀</button>
+                `;
+                scroller.appendChild(regenBox);
+                scroller.scrollTop = scroller.scrollHeight;
+            } catch (err) {
+                console.error("Timetable generation failed:", err);
+                const loadEl = document.getElementById('ai-loading-indicator');
+                if (loadEl) loadEl.remove();
+                appendChatBubble("An error occurred while communicating with the planning server. Please check your connection and try again.", "ai");
+                
+                // Restore button
+                currentStep = 6;
+                const runBox = document.createElement('div');
+                runBox.className = 'chat-options-box';
+                runBox.innerHTML = `
+                    <button class="chat-option-btn" onclick="triggerTimetableGeneration()" style="background: var(--accent); color: var(--bg); text-align: center; font-weight: 800;">RETRY COMPILATION 🚀</button>
+                `;
+                scroller.appendChild(runBox);
+                scroller.scrollTop = scroller.scrollHeight;
+            }
+        }
+
+        // --- TIME MATHEMATICS HELPERS ---
+        function parseTimeToDecimal(timeStr) {
+            if (!timeStr || typeof timeStr !== 'string') return 8.0;
+            let str = timeStr.trim().toUpperCase();
+            let isPM = str.includes('PM');
+            let isAM = str.includes('AM');
+            str = str.replace(/AM|PM/g, '').trim();
+            const match = str.match(/(\d+)(?::(\d+))?/);
+            if (!match) return 8.0;
+            let hours = parseInt(match[1], 10);
+            let minutes = match[2] ? parseInt(match[2], 10) : 0;
+            if (isPM && hours < 12) {
+                hours += 12;
+            } else if (isAM && hours === 12) {
+                hours = 0;
+            }
+            return hours + (minutes / 60.0);
+        }
+
+        function formatDecimalTime(decimalHour) {
+            let h = Math.floor(decimalHour) % 24;
+            if (h < 0) h += 24;
+            let m = Math.round((decimalHour % 1) * 60);
+            if (m === 60) {
+                h = (h + 1) % 24;
+                m = 0;
+            }
+            let hh = h.toString().padStart(2, '0');
+            let mm = m.toString().padStart(2, '0');
+            return `${hh}:${mm}`;
+        }
+
+        function parseBlockoutRange(blockoutStr) {
+            if (!blockoutStr || blockoutStr.toLowerCase() === 'none' || blockoutStr.toLowerCase() === 'skip blockouts' || blockoutStr.toLowerCase() === 'no blockout periods') {
+                return null;
+            }
+            let parts = blockoutStr.split(/-|to/i);
+            if (parts.length < 2) {
+                const numbers = blockoutStr.match(/\d+/g);
+                if (numbers && numbers.length >= 2) {
+                    let n1 = parseInt(numbers[0]);
+                    let n2 = parseInt(numbers[1]);
+                    let lower = blockoutStr.toLowerCase();
+                    let pms = [];
+                    let pos = lower.indexOf('pm');
+                    while (pos !== -1) {
+                        pms.push(pos);
+                        pos = lower.indexOf('pm', pos + 2);
+                    }
+                    let firstPM = pms.length > 0 && pms[0] < lower.length / 2;
+                    let secondPM = pms.length > 0 && pms[pms.length - 1] >= lower.length / 2;
+                    if (n1 < 12 && (firstPM || n1 >= 1 && n1 <= 8)) n1 += 12;
+                    if (n2 < 12 && (secondPM || n2 >= 2 && n2 <= 11)) n2 += 12;
+                    if (n1 < n2) return { start: n1, end: n2 };
+                }
+                return null;
+            }
+            let startDec = parseTimeToDecimal(parts[0]);
+            let endDec = parseTimeToDecimal(parts[1]);
+            if (startDec > endDec) {
+                let parts0Lower = parts[0].toLowerCase();
+                let parts1Lower = parts[1].toLowerCase();
+                if (parts1Lower.includes('pm') && !parts0Lower.includes('am') && !parts0Lower.includes('pm')) {
+                    let tempStart = startDec + 12;
+                    if (tempStart < endDec) {
+                        startDec = tempStart;
+                    }
+                }
+            }
+            if (startDec < endDec && startDec >= 0 && endDec <= 24) {
+                return { start: startDec, end: endDec };
+            }
+            return null;
+        }
+
+        function isPeakHour(decHour, chronotype) {
+            if (chronotype === "Early Bird") {
+                return (decHour >= 6.0 && decHour < 12.0) || (decHour >= 18.0 && decHour < 21.0);
+            } else {
+                return (decHour >= 15.0 && decHour < 18.0) || (decHour >= 20.0 && decHour < 24.0) || (decHour >= 0.0 && decHour < 2.0);
+            }
+        }
+
+        // --- STRATEGIC GENERATOR ENGINE ---
+        function buildRevisionProtocol(data, aiTasks) {
+            // Calculate days range
+            const currentDate = new Date("2026-06-18");
+            const targetDate = new Date(data.examDate);
+            const timeDiff = targetDate.getTime() - currentDate.getTime();
+            let daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            if (isNaN(daysUntil) || daysUntil <= 0) {
+                daysUntil = 30; // Default fallback
+            }
+
+            // DAYS-UNTIL-EXAM VELOCITY: Cap study time if far, force sprint if near
+            let actualCommitment = data.commitment;
+            if (daysUntil > 60) {
+                actualCommitment = "Casual";
+            } else if (daysUntil < 15) {
+                actualCommitment = "Sprint";
+            }
+
+            let commitmentHours = actualCommitment === "Casual" ? 4 : (actualCommitment === "Standard" ? 7 : 10);
+            let MathSubject = { name: "Mathematics", color: "math" };
+            let PhysicsSubject = { name: "Physics", color: "physics" };
+            let ChemSubject = { name: "Chemistry", color: "chemistry" };
+            let BreakSubject = { name: "Break / Rest", color: "break" };
+
+            // Parse exam simulation time window
+            let examStartHour = 14;
+            let examEndHour = 17;
+            if (data.examTime) {
+                const numbers = data.examTime.match(/\d+/g);
+                if (numbers && numbers.length >= 2) {
+                    let n1 = parseInt(numbers[0]);
+                    let n2 = parseInt(numbers[1]);
+                    if (n1 < 12 && (data.examTime.toLowerCase().includes('pm') || n1 >= 1 && n1 <= 8)) {
+                        n1 += 12;
+                    }
+                    if (n2 < 12 && (data.examTime.toLowerCase().includes('pm') || n2 >= 2 && n2 <= 11)) {
+                        n2 += 12;
+                    }
+                    if (n1 < n2 && n1 >= 0 && n2 <= 24) {
+                        examStartHour = n1;
+                        examEndHour = n2;
+                    }
+                }
+            }
+
+            // Filter tasks by subject
+            let mathTasks = aiTasks.filter(t => t.subject === "Mathematics");
+            let physicsTasks = aiTasks.filter(t => t.subject === "Physics");
+            let chemistryTasks = aiTasks.filter(t => t.subject === "Chemistry");
+
+            // WEIGHTED ALLOCATION: Sort high weightage first for peak slots
+            const weightOrder = { "High": 3, "Medium": 2, "Low": 1 };
+            mathTasks.sort((a, b) => (weightOrder[b.weight] || 2) - (weightOrder[a.weight] || 2));
+            physicsTasks.sort((a, b) => (weightOrder[b.weight] || 2) - (weightOrder[a.weight] || 2));
+            chemistryTasks.sort((a, b) => (weightOrder[b.weight] || 2) - (weightOrder[a.weight] || 2));
+
+            // Index rotation pointers
+            let mathIdx = 0, physIdx = 0, chemIdx = 0;
+            function getNextTask(subject) {
+                if (subject === "Mathematics") {
+                    if (mathTasks.length === 0) return { topic: "Math Revision", task: "Review math formulas and complete practice problems", weight: "Medium" };
+                    let t = mathTasks[mathIdx % mathTasks.length];
+                    mathIdx++;
+                    return t;
+                } else if (subject === "Physics") {
+                    if (physicsTasks.length === 0) return { topic: "Physics Revision", task: "Review physics formulas and practice questions", weight: "Medium" };
+                    let t = physicsTasks[physIdx % physicsTasks.length];
+                    physIdx++;
+                    return t;
+                } else {
+                    if (chemistryTasks.length === 0) return { topic: "Chemistry Revision", task: "Practice organic nomenclature and equations", weight: "Medium" };
+                    let t = chemistryTasks[chemIdx % chemistryTasks.length];
+                    chemIdx++;
+                    return t;
+                }
+            }
+
+            // Cap monthly display to 30 days
+            let totalCalendarDays = daysUntil;
+            if (totalCalendarDays > 30) totalCalendarDays = 30;
+
+            // BUFFER DAY MARGIN INJECTOR: Lock final 15%
+            let bufferDaysCount = Math.max(1, Math.round(totalCalendarDays * 0.15));
+            let firstBufferDayNum = totalCalendarDays - bufferDaysCount + 1;
+
+            let dailyProtocol = {};
+            let monthlyCalendar = [];
+            
+            let weeklyStats = {
+                Monday: { math: 0, phys: 0, chem: 0, rest: 0 },
+                Tuesday: { math: 0, phys: 0, chem: 0, rest: 0 },
+                Wednesday: { math: 0, phys: 0, chem: 0, rest: 0 },
+                Thursday: { math: 0, phys: 0, chem: 0, rest: 0 },
+                Friday: { math: 0, phys: 0, chem: 0, rest: 0 },
+                Saturday: { math: 0, phys: 0, chem: 0, rest: 0 },
+                Sunday: { math: 0, phys: 0, chem: 0, rest: 0 }
+            };
+
+            for (let dayNum = 1; dayNum <= totalCalendarDays; dayNum++) {
+                const dayDate = new Date(currentDate);
+                dayDate.setDate(currentDate.getDate() + (dayNum - 1));
+                const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                const dayName = daysOfWeek[dayDate.getDay()];
+                const isWeekend = (dayDate.getDay() === 0 || dayDate.getDay() === 6);
+
+                let dayBlocks = [];
+                let statusLabel = "STUDY";
+
+                if (dayNum >= firstBufferDayNum) {
+                    statusLabel = "BUFFER/REST";
+                    dayBlocks = [
+                        { start: "09:00", end: "12:00", duration: 180, subject: BreakSubject, task: "📝 Weak Areas Revision & Formula Sheet Review" },
+                        { start: "12:00", end: "13:00", duration: 60, subject: BreakSubject, task: "Buffer Rest / Hydration" },
+                        { start: "13:00", end: "16:00", duration: 180, subject: BreakSubject, task: "🔍 Simulated Full Mock Test Review & Self Analysis" }
+                    ];
+                    weeklyStats[dayName].rest += 7;
+                } else if (isWeekend) {
+                    statusLabel = "MOCK TEST";
+                    let duration = (examEndHour - examStartHour) * 60;
+                    
+                    dayBlocks = [
+                        { start: "09:00", end: "12:00", duration: 180, subject: MathSubject, task: "📝 Full syllabus formula revision & notes run" },
+                        { start: "12:00", end: `${examStartHour}:00`, duration: (examStartHour - 12) * 60, subject: BreakSubject, task: "Pre-Exam Lunch, relaxation, and mental prep" },
+                        { start: `${examStartHour}:00`, end: `${examEndHour}:00`, duration: duration, subject: PhysicsSubject, task: "📝 FULL-LENGTH MOCK EXAM (Simulated window)" },
+                        { start: `${examEndHour}:00`, end: `${examEndHour + 1}:00`, duration: 60, subject: BreakSubject, task: "Mock Exam analysis & check answers" }
+                    ];
+                    weeklyStats[dayName].math += 3;
+                    weeklyStats[dayName].phys += (examEndHour - examStartHour);
+                    weeklyStats[dayName].rest += (examStartHour - 12) + 1;
+                } else {
+                    // Standard Study Day: Dynamically generate Pomodoro slices (90-min study + 15-min break)
+                    let currentDec = parseTimeToDecimal(data.startTimeAnchor || "8:00 AM");
+                    let blockoutRange = parseBlockoutRange(data.blockout);
+                    
+                    // Count study hours target: Casual = 4 hrs, Standard = 7 hrs, Sprint = 10 hrs
+                    // (which corresponds to 3, 5, 7 study blocks respectively)
+                    let targetBlocksCount = commitmentHours === 4 ? 3 : (commitmentHours === 7 ? 5 : 7);
+                    
+                    let lastSubject = null;
+                    let subjectCounts = { "Mathematics": 0, "Physics": 0, "Chemistry": 0 };
+                    let studyBlocksCreated = 0;
+                    
+                    // Generate study and break blocks
+                    while (studyBlocksCreated < targetBlocksCount) {
+                        // --- STUDY BLOCK ---
+                        let studyDuration = 1.5; // 90 mins
+                        
+                        // Check blockout overlap
+                        if (blockoutRange && currentDec < blockoutRange.end && (currentDec + studyDuration) > blockoutRange.start) {
+                            currentDec = blockoutRange.end;
+                        }
+                        
+                        let blockStartStr = formatDecimalTime(currentDec);
+                        let blockEndStr = formatDecimalTime(currentDec + studyDuration);
+                        let durationMins = studyDuration * 60;
+                        
+                        // Determine subject
+                        let selectedSubject = "Mathematics";
+                        // Find candidate subjects (excluding lastSubject to enforce interleaving)
+                        const subjects = ["Mathematics", "Physics", "Chemistry"];
+                        let bestSubject = null;
+                        let bestScore = -Infinity;
+                        
+                        for (let s of subjects) {
+                            if (s === lastSubject) continue;
+                            let score = 0;
+                            if (isPeakHour(currentDec, data.chronotype)) {
+                                if (s === "Mathematics" || s === "Physics") {
+                                    score += 2;
+                                }
+                            } else {
+                                if (s === "Chemistry") {
+                                    score += 2;
+                                }
+                            }
+                            // Apply balancing penalty
+                            score -= (subjectCounts[s] || 0) * 3.0;
+                            
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestSubject = s;
+                            }
+                        }
+                        
+                        if (!bestSubject) {
+                            bestSubject = subjects.find(s => s !== lastSubject) || subjects[0];
+                        }
+                        
+                        selectedSubject = bestSubject;
+                        lastSubject = selectedSubject;
+                        subjectCounts[selectedSubject] = (subjectCounts[selectedSubject] || 0) + 1;
+                        
+                        let subObj = selectedSubject === "Mathematics" ? MathSubject :
+                                     (selectedSubject === "Physics" ? PhysicsSubject : ChemSubject);
+                        let taskObj = getNextTask(selectedSubject);
+                        
+                        dayBlocks.push({
+                            start: blockStartStr,
+                            end: blockEndStr,
+                            duration: durationMins,
+                            subject: subObj,
+                            task: `${taskObj.topic}: ${taskObj.task} [${taskObj.weight} weight]`
+                        });
+                        
+                        // Increment weekly stats
+                        if (selectedSubject === "Mathematics") weeklyStats[dayName].math += studyDuration;
+                        else if (selectedSubject === "Physics") weeklyStats[dayName].phys += studyDuration;
+                        else if (selectedSubject === "Chemistry") weeklyStats[dayName].chem += studyDuration;
+                        
+                        currentDec += studyDuration;
+                        studyBlocksCreated++;
+                        
+                        // --- BREAK BLOCK (only if we still need more study blocks) ---
+                        if (studyBlocksCreated < targetBlocksCount) {
+                            let breakDuration = 0.25; // 15 mins
+                            
+                            if (blockoutRange && currentDec < blockoutRange.end && (currentDec + breakDuration) > blockoutRange.start) {
+                                currentDec = blockoutRange.end;
+                            }
+                            
+                            let breakStartStr = formatDecimalTime(currentDec);
+                            let breakEndStr = formatDecimalTime(currentDec + breakDuration);
+                            
+                            dayBlocks.push({
+                                start: breakStartStr,
+                                end: breakEndStr,
+                                duration: breakDuration * 60,
+                                subject: BreakSubject,
+                                task: "☕ Hydration & Stretch"
+                            });
+                            
+                            weeklyStats[dayName].rest += breakDuration;
+                            currentDec += breakDuration;
+                        }
+                    }
+                    
+                    // Add the custom blockout period itself to the list if valid
+                    if (blockoutRange) {
+                        dayBlocks.push({
+                            start: formatDecimalTime(blockoutRange.start),
+                            end: formatDecimalTime(blockoutRange.end),
+                            duration: (blockoutRange.end - blockoutRange.start) * 60,
+                            subject: BreakSubject,
+                            task: `🔒 Custom Blockout: ${data.blockout}`
+                        });
+                        weeklyStats[dayName].rest += (blockoutRange.end - blockoutRange.start);
+                    }
+                    
+                    // Sort dayBlocks chronologically
+                    dayBlocks.sort((a, b) => {
+                        const [ah, am] = a.start.split(':').map(Number);
+                        const [bh, bm] = b.start.split(':').map(Number);
+                        return (ah * 60 + am) - (bh * 60 + bm);
+                    });
+                }
+
+                dailyProtocol[dayNum] = dayBlocks;
+                monthlyCalendar.push({ dayNum: dayNum, status: statusLabel });
+            }
+
+            let weeklySummary = Object.keys(weeklyStats).map(day => {
+                return {
+                    day: day,
+                    maths: weeklyStats[day].math.toFixed(1) + " hrs",
+                    physics: weeklyStats[day].phys.toFixed(1) + " hrs",
+                    chemistry: weeklyStats[day].chem.toFixed(1) + " hrs",
+                    rest: weeklyStats[day].rest.toFixed(1) + " hrs"
+                };
+            });
+
+            return { daily: dailyProtocol, weekly: weeklySummary, monthly: monthlyCalendar };
+        }
+
+        // --- RENDER UTILITIES ---
+        function renderDailyViewForDay(dayNum) {
+            const container = document.getElementById('daily-timeline-list');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div style="font-weight: 800; font-size: 1.1rem; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>Day ${dayNum} Study Protocol</span>
+                </div>
+            `;
+
+            if (!generatedProtocol || !generatedProtocol.daily[dayNum]) {
+                container.innerHTML += `
+                    <div style="text-align: center; padding: 40px; color: var(--text-dim);">
+                        <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;">No study protocol loaded</p>
+                        <p style="font-size: 0.85rem;">Answer the AI wizard queries on the right to compile your smart schedule.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const blocks = generatedProtocol.daily[dayNum];
+            blocks.forEach(block => {
+                const blockDiv = document.createElement('div');
+                let adaptiveHeight = Math.max(45, block.duration * 1.25);
+                blockDiv.className = `timeline-block block-${block.subject.color}`;
+                blockDiv.style.height = `${adaptiveHeight}px`;
+
+                blockDiv.innerHTML = `
+                    <div class="block-time">${block.start} - ${block.end} (${block.duration} mins)</div>
+                    <div class="block-info">
+                        <div class="block-subject">${block.subject.name}</div>
+                        <div class="block-task">${block.task}</div>
+                    </div>
+                `;
+                container.appendChild(blockDiv);
+            });
+        }
+
+        function renderWeeklyView(weeklyData) {
+            const container = document.getElementById('weekly-grid-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            weeklyData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'weekly-day-card';
+                card.innerHTML = `
+                    <div class="weekly-day-title">${item.day}</div>
+                    <div class="weekly-day-summary">
+                        <div class="summary-item" style="border-left: 3px solid #06b6d4;"><span>Maths</span><strong>${item.maths}</strong></div>
+                        <div class="summary-item" style="border-left: 3px solid #a855f7;"><span>Physics</span><strong>${item.physics}</strong></div>
+                        <div class="summary-item" style="border-left: 3px solid #10b981;"><span>Chemistry</span><strong>${item.chemistry}</strong></div>
+                        <div class="summary-item" style="border-left: 3px solid #6366f1;"><span>Breaks/Rest</span><strong>${item.rest}</strong></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderMonthlyView(monthlyData) {
+            const container = document.getElementById('monthly-grid-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            monthlyData.forEach((day, index) => {
+                const card = document.createElement('div');
+                card.className = 'monthly-day-card';
+                if (day.status === "BUFFER/REST") {
+                    card.style.borderColor = 'var(--accent)';
+                    card.style.background = 'rgba(45, 212, 191, 0.03)';
+                } else if (day.status === "MOCK TEST") {
+                    card.style.borderColor = 'var(--danger)';
+                    card.style.background = 'rgba(239, 68, 68, 0.03)';
+                }
+                card.innerHTML = `
+                    <div class="monthly-day-num">${day.dayNum}</div>
+                    <div class="monthly-day-status">${day.status}</div>
+                `;
+                
+                // Add click listener to switch to daily view of that day!
+                card.addEventListener('click', () => {
+                    renderDailyViewForDay(index + 1);
+                    switchView('daily');
+                });
+                container.appendChild(card);
+            });
+        }
+
+        // --- VIEW SWITCHER ---
+        function switchView(viewName) {
+            // Remove active toggles
+            document.getElementById('toggle-daily').classList.remove('active');
+            document.getElementById('toggle-weekly').classList.remove('active');
+            document.getElementById('toggle-monthly').classList.remove('active');
+
+            // Hide containers
+            document.getElementById('view-daily').classList.remove('active');
+            document.getElementById('view-weekly').classList.remove('active');
+            document.getElementById('view-monthly').classList.remove('active');
+
+            // Set active toggle
+            document.getElementById(`toggle-${viewName}`).classList.add('active');
+
+            // Show container
+            document.getElementById(`view-${viewName}`).classList.add('active');
+        }
+
+        // --- SIDEBAR TOGGLE ---
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('collapsed');
+        });
+
+        // Initialize UI
+        updateLimitUI();
+    </script>
+</body>
+</html>

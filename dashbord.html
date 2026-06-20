@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Learnser AI</title>
+    
+    <script src="theme.js?v=2.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #818cf8; 
+            --accent: #2dd4bf; 
+            --bg: #020617;      
+            --panel-bg: rgba(15, 23, 42, 0.6); 
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8; 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            
+            --sidebar-width: 320px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text-main);
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: 76px 1fr; 
+            transition: grid-template-columns 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body.collapsed { --sidebar-width: 90px; }
+
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(circle at 10% 10%, var(--bg-gradient-1, rgba(129, 140, 248, 0.05)) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 90%, var(--bg-gradient-2, rgba(45, 212, 191, 0.04)) 0%, transparent 40%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* --- QUADRANT 1: TOP-LEFT CORNER --- */
+        .top-navbar-corner {
+            grid-column: 1 / 2; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); border-right: 1px solid var(--glass-border);
+            display: flex; align-items: center; padding: 0 16px; gap: 8px; overflow: hidden; 
+            transition: padding 0.3s, gap 0.3s;
+        }
+
+        /* Adjusted to fit perfectly inside 90px */
+        body.collapsed .top-navbar-corner {
+            padding: 0 8px; /* Reduced side padding */
+            gap: 4px;       /* Tighter gap between button and image */
+        }
+
+        .hamburger-btn {
+            background: transparent; border: none; color: var(--text-main);
+            cursor: pointer; border-radius: 8px; padding: 8px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: background 0.2s, padding 0.3s;
+        }
+        .hamburger-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+        body.collapsed .hamburger-btn {
+            padding: 6px; 
+        }
+
+        .user-profile {
+            display: flex; align-items: center;
+            padding: 6px 16px 6px 6px; border-radius: 12px;
+            transition: background 0.2s, padding 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            white-space: nowrap; overflow: hidden;
+        }
+        .user-profile:hover { background: rgba(255, 255, 255, 0.05); }
+
+        body.collapsed .user-profile { 
+            padding: 0; 
+        }
+
+        .pfp {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid var(--accent); object-fit: cover; background: var(--bg); 
+            flex-shrink: 0; margin-right: 16px; 
+            transition: margin-right 0.3s cubic-bezier(0.25, 1, 0.5, 1), width 0.3s, height 0.3s;
+        }
+        
+        /* Scaled to 30px so it perfectly clears the 90px hidden overflow cutoff */
+        body.collapsed .pfp { 
+            margin-right: 0;
+            width: 30px; height: 30px; 
+        }
+
+        .user-details {
+            display: flex; flex-direction: column; justify-content: center; overflow: hidden;
+            width: 180px; transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s;
+        }
+        body.collapsed .user-details { width: 0; opacity: 0; pointer-events: none; }
+
+        .user-name { font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+        .user-email { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- QUADRANT 2: TOP NAVBAR (MAIN) --- */
+        .top-navbar-main {
+            grid-column: 2 / 3; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; padding: 0 32px;
+        }
+
+        /* --- QUADRANT 3: SIDEBAR NAVIGATION (MENU STYLES) --- */
+        .sidebar {
+            grid-column: 1 / 2; grid-row: 2 / 3;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column;
+            overflow-y: auto; overflow-x: hidden; padding: 32px 20px;
+            
+            /* HIDE SCROLLBARS FOR FIREFOX & IE/EDGE */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        /* HIDE SCROLLBARS FOR CHROME/SAFARI/EDGE */
+        .sidebar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .sidebar-menu { display: flex; flex-direction: column; gap: 32px; }
+        .menu-section { display: flex; flex-direction: column; gap: 6px; }
+
+        .section-title {
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-dim); margin-left: 14px; margin-bottom: 8px;
+            transition: opacity 0.2s, height 0.2s; white-space: nowrap;
+        }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 14px; border-radius: 12px; color: var(--text-dim);
+            text-decoration: none; font-weight: 600; font-size: 0.95rem;
+            transition: background 0.2s, color 0.2s, padding 0.3s; white-space: nowrap;
+        }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+        .menu-item.active { background: rgba(129, 140, 248, 0.15); color: var(--primary); }
+
+        .menu-item svg { width: 22px; height: 22px; flex-shrink: 0; transition: color 0.2s; }
+        .menu-item.active svg { color: var(--primary); }
+
+        .menu-text { transition: opacity 0.2s, width 0.2s; }
+
+        /* Icon-Only Collapsed State Rules */
+        body.collapsed .section-title { opacity: 0; height: 0; margin-bottom: 0; overflow: hidden; }
+        body.collapsed .menu-text { opacity: 0; width: 0; overflow: hidden; display: none; }
+        body.collapsed .menu-item { justify-content: center; padding-left: 0; padding-right: 0; }
+
+        /* --- QUADRANT 4: MAIN CONTENT AREA --- */
+        .main-content {
+            grid-column: 2 / 3; grid-row: 2 / 3;
+            position: relative; overflow-y: auto; padding: 40px;
+            
+            /* HIDE SCROLLBARS FOR FIREFOX & IE/EDGE */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        /* HIDE SCROLLBARS FOR CHROME/SAFARI/EDGE */
+        .main-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Dashboard Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 24px 0 32px 0;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(129, 140, 248, 0.3);
+            box-shadow: 0 12px 30px -10px rgba(129, 140, 248, 0.15);
+        }
+
+        .stat-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .stat-icon.streak { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+        .stat-icon.weekly { background: rgba(45, 212, 191, 0.15); color: var(--accent); }
+        .stat-icon.total { background: rgba(129, 140, 248, 0.15); color: var(--primary); }
+
+        .stat-info { display: flex; flex-direction: column; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--text-main); line-height: 1.1; }
+        .stat-label { font-size: 0.8rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 4px; }
+
+        /* Dashboard Two Column Section */
+        .dashboard-columns {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Leaderboard Styling */
+        .leaderboard-container {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .leaderboard-table th {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .leaderboard-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        .leaderboard-row {
+            transition: background 0.2s ease;
+            border-radius: 8px;
+        }
+        .leaderboard-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .leaderboard-row.current-user {
+            background: rgba(129, 140, 248, 0.08);
+            border-left: 3px solid var(--primary);
+        }
+
+        .rank-cell {
+            font-weight: 700;
+            width: 60px;
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 0.8rem;
+        }
+        
+        .rank-badge.rank-1 { background: linear-gradient(135deg, #fbbf24, #d97706); color: #020617; font-weight: 800; }
+        .rank-badge.rank-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #020617; font-weight: 800; }
+        .rank-badge.rank-3 { background: linear-gradient(135deg, #f59e0b, #b45309); color: #020617; font-weight: 800; }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .xp-cell {
+            text-align: right;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Challenge Card (XP simulation) */
+        .challenge-card {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .challenge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .challenge-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .challenge-desc {
+            font-size: 0.92rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        .btn-challenge {
+            background: var(--accent);
+            color: #020617;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            align-self: flex-start;
+        }
+
+        .btn-challenge:hover {
+            background: #5eead4;
+            transform: translateY(-1px);
+        }
+
+        /* Loading Skeleton */
+        .shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.5s infinite;
+        }
+
+        @keyframes loading-shimmer {
+            to { background-position: -200% 0; }
+        }
+
+        .skeleton-row {
+            height: 48px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        /* Alerts and Overlays */
+        .security-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .security-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .security-card {
+            background: var(--bg);
+            border: 1px solid var(--glass-border);
+            max-width: 440px;
+            width: 90%;
+            padding: 32px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 24px 48px -12px rgba(0,0,0,0.8);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .security-modal.active .security-card {
+            transform: scale(1);
+        }
+
+        /* Daily Check-In Modal styling */
+        .checkin-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .checkin-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .checkin-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            max-width: 420px;
+            width: 90%;
+            padding: 40px 32px;
+            border-radius: 28px;
+            text-align: center;
+            box-shadow: 0 32px 64px -16px rgba(0,0,0,0.6), 
+                        0 0 50px -10px rgba(45, 212, 191, 0.15);
+            transform: scale(0.85) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checkin-modal.active .checkin-card {
+            transform: scale(1) translateY(0);
+        }
+
+        /* Ambient light effects in card */
+        .checkin-card::before {
+            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 50% 50%, rgba(45, 212, 191, 0.1) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .checkin-emoji {
+            font-size: 4rem;
+            animation: bounce-wiggle 2s infinite ease-in-out;
+            z-index: 1;
+        }
+
+        @keyframes bounce-wiggle {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(8deg); }
+        }
+
+        .checkin-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            z-index: 1;
+        }
+
+        .checkin-subtitle {
+            font-size: 0.92rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+            z-index: 1;
+        }
+
+        .checkin-reward-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            background: rgba(129, 140, 248, 0.1);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            padding: 12px 24px;
+            border-radius: 16px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .reward-xp {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .reward-divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .reward-streak {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .btn-checkin-claim {
+            background: linear-gradient(135deg, var(--accent) 0%, #14b8a6 100%);
+            color: #020617;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 20px -6px rgba(45, 212, 191, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            z-index: 1;
+        }
+
+        .btn-checkin-claim:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -6px rgba(45, 212, 191, 0.5);
+            background: linear-gradient(135deg, #5eead4 0%, #0d9488 100%);
+        }
+
+        .btn-checkin-claim:active {
+            transform: translateY(0);
+        }
+
+        /* Spinner styling */
+        .checkin-card .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(2, 6, 23, 0.2);
+            border-top: 3px solid #020617;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-navbar-corner">
+        <button class="hamburger-btn" id="sidebar-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="user-profile">
+            <img src="" id="user-pfp" alt="Profile" class="pfp">
+            <div class="user-details">
+                <span class="user-name" id="user-name">Loading...</span>
+                <span class="user-email" id="user-email">Syncing profile</span>
+            </div>
+        </div>
+    </div>
+
+    <header class="top-navbar-main">
+        <div style="font-weight: 800; letter-spacing: 1px; font-size: 1.2rem;">LEARNSER <span style="color: var(--accent);">AI</span></div>
+    </header>
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">
+            
+            <div class="menu-section">
+                <div class="section-title">OVERVIEW</div>
+                <a href="#" class="menu-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">LEARN</div>
+                <a href="ai_doubtsolver.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+                    <span class="menu-text">AI Doubt Solver</span>
+                </a>
+                <a href="chapternotes.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span class="menu-text">Chapter Notes</span>
+                </a>
+                <a href="plannedtt.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="menu-text">Smart Timetable</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">PRACTICE</div>
+                <a href="test/test.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    <span class="menu-text">AI Test Generator</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="14" r="1"></circle><path d="M12 11c1.5 0 2-1 2-2s-.5-2-2-2-2 1-2 2"></path></svg>
+                    <span class="menu-text">Previous Year Qs</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">PROGRESS</div>
+                <a href="analytics.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <span class="menu-text">Analytics</span>
+                </a>
+                <a href="rewardshop.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                    <span class="menu-text">Streak & Coins</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                    <span class="menu-text">Badges</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">COMMUNITY</div>
+                <a href="podcast.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    <span class="menu-text">AI Podcast</span>
+                </a>
+                <a href="#" class="menu-item" style="opacity: 0.5; cursor: not-allowed;" onclick="alert('Community Chat is temporarily disabled.'); return false;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="menu-text">Community Chat <small style="font-size: 0.65rem; color: var(--text-dim);">(Disabled)</small></span>
+                </a>
+            </div>
+
+        </div>
+
+        <div style="flex-grow: 1;"></div>
+
+        <div class="menu-section" style="margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 24px;">
+            <a href="admin.html" id="adminNavLink" class="menu-item" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
+                <span class="menu-text">Admin Panel</span>
+            </a>
+            <a href="settings.html" class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span class="menu-text">Settings</span>
+            </a>
+            <a href="#" onclick="signOutUser(); return false;" class="menu-item" style="color: var(--danger);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span class="menu-text">Log Out</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="dashboard-header" style="margin-bottom: 16px;">
+            <h2 style="color: var(--text-main); font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px;">Welcome back, <span id="dash-display-name" style="color: var(--primary);">Student</span>!</h2>
+            <p style="color: var(--text-dim); font-size: 0.95rem; margin-top: 4px;">Track your learning progress, stay consistent, and lead the scoreboard.</p>
+        </div>
+
+        <!-- Dashboard Stats Grid -->
+        <div class="stats-grid" id="dashboard-stats">
+            <!-- Streak Card -->
+            <div class="stat-card">
+                <div class="stat-icon streak">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="stat-streak">0</span>
+                    <span class="stat-label">Daily Streak</span>
+                </div>
+            </div>
+
+            <!-- Weekly XP Card -->
+            <div class="stat-card">
+                <div class="stat-icon weekly">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="stat-weekly-xp">0</span>
+                    <span class="stat-label">Weekly XP</span>
+                </div>
+            </div>
+
+            <!-- Total XP Card -->
+            <div class="stat-card">
+                <div class="stat-icon total">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="stat-total-xp">0</span>
+                    <span class="stat-label">Total XP</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Columns -->
+        <div class="dashboard-columns">
+            
+            <!-- Column 1: Learning Actions & Interactive Simulation -->
+            <div style="display: flex; flex-direction: column; gap: 32px;">
+                
+                <!-- Daily Challenge Action -->
+                <div class="challenge-card">
+                    <div class="challenge-header">
+                        <div>
+                            <span style="font-size: 0.75rem; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px;">DAILY INCENTIVE</span>
+                            <h3 class="challenge-title" style="margin-top: 4px;">Solve Today's AI Challenge</h3>
+                        </div>
+                        <span style="background: rgba(45, 212, 191, 0.1); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">+150 XP</span>
+                    </div>
+                    <p class="challenge-desc">Complete today's adaptive problem in the Doubt Solver. It will automatically test your weakest topics to solidify your retention.</p>
+                    <button class="btn-challenge" id="btn-start-challenge">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Start Session
+                    </button>
+                </div>
+
+                <!-- XP Safety Information -->
+                <div class="stat-card" style="align-items: flex-start; gap: 16px;">
+                    <div class="stat-icon total" style="background: rgba(129, 140, 248, 0.1); color: var(--primary);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <div class="stat-info" style="gap: 4px;">
+                        <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">Integrity Assurance</span>
+                        <p style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.5;">To prevent client-side tampering, all user points (XP) are generated, stored, and verified strictly on our database using secure PostgreSQL schemas and database RPC triggers. Client-side state is strictly read-only.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Column 2: Leaderboard Component -->
+            <div class="leaderboard-container">
+                <div class="leaderboard-header">
+                    <h3 class="leaderboard-title">Weekly Leaderboard</h3>
+                    <span style="background: rgba(129, 140, 248, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">Top 10</span>
+                </div>
+                
+                <!-- Table loader -->
+                <div id="leaderboard-loading">
+                    <div class="shimmer skeleton-row"></div>
+                    <div class="shimmer skeleton-row"></div>
+                    <div class="shimmer skeleton-row"></div>
+                    <div class="shimmer skeleton-row"></div>
+                    <div class="shimmer skeleton-row"></div>
+                </div>
+
+                <div id="leaderboard-error" style="display: none; text-align: center; padding: 20px; color: #f87171;">
+                    <p style="font-size: 0.85rem;">Failed to fetch rankings. Please check configuration.</p>
+                </div>
+
+                <table class="leaderboard-table" id="leaderboard-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Student</th>
+                            <th style="text-align: right;">Weekly XP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Security Information Overlay -->
+    <div class="security-modal" id="security-modal">
+        <div class="security-card">
+            <div style="font-size: 3rem;">🔒</div>
+            <h3 style="color: var(--text-main); font-size: 1.3rem; font-weight: 800;">Secure Backend Execution</h3>
+            <p style="color: var(--text-dim); font-size: 0.9rem; line-height: 1.6;">
+                Solving this challenge initiates a verified learning session. To preserve system integrity, the XP reward will be calculated and updated on the server. Direct client-side updates are disabled.
+            </p>
+            <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button class="btn" style="flex: 1; background: var(--glass-border); color: var(--text-main);" onclick="closeSecurityModal()">Cancel</button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="simulateChallengeSuccess()">Proceed to Doubt Solver</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Check-In Modal -->
+    <div class="checkin-modal" id="checkin-modal">
+        <div class="checkin-card">
+            <div class="checkin-emoji">🎉</div>
+            <h3 class="checkin-title">Daily Login Bonus!</h3>
+            <p class="checkin-subtitle">Welcome back! Claim your daily reward to boost your learning streak.</p>
+            <div class="checkin-reward-badge">
+                <span class="reward-xp">+10 XP</span>
+                <span class="reward-divider"></span>
+                <span class="reward-streak">+1 Day Streak</span>
+            </div>
+            <div class="checkin-error-msg" id="checkin-error-msg" style="display: none; color: #f87171; font-size: 0.85rem; margin-top: 4px;"></div>
+            <button class="btn-checkin-claim" id="btn-claim-checkin">
+                <span class="btn-text">Claim Reward</span>
+                <span class="spinner" id="checkin-spinner" style="display: none;"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK & Configuration Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth-check.js"></script>
+
+    <script>
+        const rewardSound = new Audio('./Daily-Login-Reward.mp3');
+
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('collapsed');
+        });
+
+        // Listen for Supabase profile details from auth-check.js
+        window.addEventListener('profileready', (e) => {
+            const profile = e.detail;
+            
+            // Update dashboard user metrics
+            document.getElementById('dash-display-name').innerText = profile.display_name || "Student";
+            document.getElementById('stat-streak').innerText = profile.streak_days || 0;
+            document.getElementById('stat-weekly-xp').innerText = profile.weekly_xp || 0;
+            document.getElementById('stat-total-xp').innerText = profile.total_xp || 0;
+            
+            // Load the public leaderboard table
+            loadLeaderboard(profile.id);
+
+            // Verify and display the daily check-in bonus modal
+            checkDailyCheckIn(profile);
+        });
+
+        // Cross-tab storage change sync redraw
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'learnser_supabase_profile') {
+                try {
+                    const profile = JSON.parse(e.newValue);
+                    if (profile) {
+                        document.getElementById('dash-display-name').innerText = profile.display_name || "Student";
+                        document.getElementById('stat-streak').innerText = profile.streak_days || 0;
+                        document.getElementById('stat-weekly-xp').innerText = profile.weekly_xp || 0;
+                        document.getElementById('stat-total-xp').innerText = profile.total_xp || 0;
+                        loadLeaderboard(profile.id);
+                    }
+                } catch(err) {
+                    console.error("Failed to parse storage update for dashboard:", err);
+                }
+            }
+        });
+
+        // Fetch top 10 users ordered by weekly_xp desc
+        async function loadLeaderboard(currentUserId) {
+            const loadingEl = document.getElementById('leaderboard-loading');
+            const errorEl = document.getElementById('leaderboard-error');
+            const tableEl = document.getElementById('leaderboard-table');
+            const bodyEl = document.getElementById('leaderboard-body');
+
+            const database = window.database;
+            if (!database) {
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const snapshot = await database.ref('users').orderByChild('weekly_xp').limitToLast(10).once('value');
+                const rawData = [];
+                snapshot.forEach(child => {
+                    rawData.push({ id: child.key, ...child.val() });
+                });
+                
+                // orderByChild returns in ascending order, so reverse for podium order
+                const data = rawData.reverse();
+
+                bodyEl.innerHTML = '';
+
+                data.forEach((row, index) => {
+                    const rank = index + 1;
+                    const isCurrentUser = row.id === currentUserId;
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = `leaderboard-row ${isCurrentUser ? 'current-user' : ''}`;
+
+                    let rankHtml = rank;
+                    if (rank <= 3) {
+                        rankHtml = `<span class="rank-badge rank-${rank}">${rank}</span>`;
+                    } else {
+                        rankHtml = `<span style="padding-left: 8px;">${rank}</span>`;
+                    }
+
+                    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.display_name || 'S')}&background=${isCurrentUser ? '2dd4bf' : '818cf8'}&color=${isCurrentUser ? '020617' : 'fff'}&rounded=true`;
+
+                      tr.innerHTML = `
+                          <td class="rank-cell">${rankHtml}</td>
+                          <td>
+                              <div class="user-cell">
+                                  <img src="${avatarUrl}" style="width:28px; height:28px; border-radius:50%;" alt="avatar">
+                                  <span style="font-weight: ${isCurrentUser ? '700' : '500'};">${row.display_name || 'Anonymous Student'}${isCurrentUser ? ' <small style="opacity:0.75; font-weight:600; color:var(--accent);">(You)</small>' : ''}</span>
+                              </div>
+                          </td>
+                          <td class="xp-cell">${parseInt(row.weekly_xp || 0).toLocaleString()} XP</td>
+                      `;
+                      bodyEl.appendChild(tr);
+                  });
+
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'none';
+                tableEl.style.display = 'table';
+
+            } catch (err) {
+                console.error("Leaderboard fetch error:", err);
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                tableEl.style.display = 'none';
+            }
+        }
+
+        // Daily Challenge Actions & Security Verification Modals
+        const startChallengeBtn = document.getElementById('btn-start-challenge');
+        const securityModal = document.getElementById('security-modal');
+
+        if (startChallengeBtn) {
+            startChallengeBtn.addEventListener('click', () => {
+                securityModal.classList.add('active');
+            });
+        }
+
+        window.closeSecurityModal = function() {
+            securityModal.classList.remove('active');
+        };
+
+        window.simulateChallengeSuccess = function() {
+            securityModal.classList.remove('active');
+            window.location.href = "ai_doubtsolver.html";
+        };
+
+        // --- Daily Check-In Bonus Logic ---
+        
+        function checkDailyCheckIn(profile) {
+            const today = new Date().toLocaleDateString('en-CA'); // Formats as YYYY-MM-DD local time
+            const lastLoginDate = localStorage.getItem('last_login_date');
+            
+            if (lastLoginDate === today) {
+                console.log("User has already checked in today:", today);
+                return;
+            }
+            
+            // Trigger popup
+            const modal = document.getElementById('checkin-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                // Trigger transition reflow
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 10);
+                
+                setupCheckInClaim(profile, today);
+            }
+        }
+        
+        function setupCheckInClaim(profile, today) {
+            const claimBtn = document.getElementById('btn-claim-checkin');
+            const errorMsg = document.getElementById('checkin-error-msg');
+            
+            if (!claimBtn) return;
+            
+            claimBtn.onclick = async () => {
+                setCheckInLoading(true);
+                if (errorMsg) errorMsg.style.display = 'none';
+                
+                try {
+                    const database = window.database;
+                    if (!database) throw new Error("Firebase database client is not available.");
+                    
+                    const newTotalXp = (profile.total_xp || 0) + 10;
+                    const newStreak = (profile.streak_days || 0) + 1;
+                    const newWeeklyXp = (profile.weekly_xp || 0) + 10;
+                    
+                    const updates = {
+                        total_xp: newTotalXp,
+                        streak_days: newStreak,
+                        weekly_xp: newWeeklyXp
+                    };
+
+                    await database.ref('users/' + profile.id).update(updates);
+                    
+                    const updatedProfile = {
+                        ...profile,
+                        ...updates
+                    };
+                    
+                    // Play success reward sound effect
+                    rewardSound.currentTime = 0;
+                    rewardSound.play().catch(e => console.log("Audio playback delayed until user interaction:", e));
+                    
+                    // 1. Success! Lock localStorage
+                    localStorage.setItem('last_login_date', today);
+                    
+                    // 2. Cache new profile data
+                    localStorage.setItem('learnser_supabase_profile', JSON.stringify(updatedProfile));
+                    
+                    // 3. Dynamic UI Counter Updates (no reload)
+                    document.getElementById('stat-streak').innerText = updatedProfile.streak_days;
+                    document.getElementById('stat-weekly-xp').innerText = updatedProfile.weekly_xp;
+                    document.getElementById('stat-total-xp').innerText = updatedProfile.total_xp;
+                    
+                    const dashName = document.getElementById('dash-display-name');
+                    if (dashName) dashName.innerText = updatedProfile.display_name || "Student";
+                    
+                    // Refresh weekly rankings
+                    loadLeaderboard(updatedProfile.id);
+                    
+                    // 4. Premium Transition & Close Modal
+                    const modalTitle = document.querySelector('.checkin-title');
+                    const modalSubtitle = document.querySelector('.checkin-subtitle');
+                    const rewardBadge = document.querySelector('.checkin-reward-badge');
+                    
+                    if (modalTitle) modalTitle.innerText = "Claimed! 🎉";
+                    if (modalSubtitle) modalSubtitle.innerText = "XP and streak updated successfully. Keep up the good work!";
+                    if (rewardBadge) {
+                        rewardBadge.style.background = "rgba(45, 212, 191, 0.15)";
+                        rewardBadge.style.borderColor = "rgba(45, 212, 191, 0.3)";
+                    }
+                    
+                    claimBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#020617"><polyline points="20 6 9 17 4 12"></polyline></svg> Claimed';
+                    claimBtn.style.background = "linear-gradient(135deg, #2dd4bf 0%, #2dd4bf 100%)";
+                    claimBtn.style.cursor = "default";
+                    claimBtn.onclick = null;
+                    
+                    setTimeout(() => {
+                        const modal = document.getElementById('checkin-modal');
+                        if (modal) {
+                            modal.classList.remove('active');
+                            setTimeout(() => {
+                                modal.style.display = 'none';
+                            }, 400);
+                        }
+                    }, 1500);
+                    
+                } catch (err) {
+                    console.error("Daily check-in claim error:", err);
+                    if (errorMsg) {
+                        errorMsg.innerText = `Update failed: ${err.message || err}`;
+                        errorMsg.style.display = 'block';
+                    }
+                    setCheckInLoading(false);
+                }
+            };
+        }
+        
+        function setCheckInLoading(isLoading) {
+            const claimBtn = document.getElementById('btn-claim-checkin');
+            const spinner = document.getElementById('checkin-spinner');
+            const btnText = claimBtn ? claimBtn.querySelector('.btn-text') : null;
+            
+            if (!claimBtn) return;
+            
+            if (isLoading) {
+                claimBtn.disabled = true;
+                if (spinner) spinner.style.display = 'inline-block';
+                if (btnText) btnText.innerText = "Claiming...";
+                claimBtn.style.opacity = '0.8';
+            } else {
+                claimBtn.disabled = false;
+                if (spinner) spinner.style.display = 'none';
+                if (btnText) btnText.innerText = "Claim Reward";
+                claimBtn.style.opacity = '1';
+            }
+        }
+    </script>
+</body>
+</html>

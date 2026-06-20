@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | Learnser AI</title>
+    
+    <script src="theme.js?v=2.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #818cf8; 
+            --accent: #2dd4bf; 
+            --bg: #020617;      
+            --panel-bg: rgba(15, 23, 42, 0.6); 
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8; 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --card-bg: rgba(30, 41, 59, 0.4);
+            
+            --sidebar-width: 320px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text-main);
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: 76px 1fr; 
+            transition: grid-template-columns 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body.collapsed { --sidebar-width: 90px; }
+
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(circle at 10% 10%, var(--bg-gradient-1, rgba(129, 140, 248, 0.05)) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 90%, var(--bg-gradient-2, rgba(45, 212, 191, 0.04)) 0%, transparent 40%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* --- QUADRANT 1: TOP-LEFT CORNER --- */
+        .top-navbar-corner {
+            grid-column: 1 / 2; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); border-right: 1px solid var(--glass-border);
+            display: flex; align-items: center; padding: 0 16px; gap: 8px; overflow: hidden; 
+            transition: padding 0.3s, gap 0.3s;
+        }
+
+        body.collapsed .top-navbar-corner {
+            padding: 0 8px;
+            gap: 4px;
+        }
+
+        .hamburger-btn {
+            background: transparent; border: none; color: var(--text-main);
+            cursor: pointer; border-radius: 8px; padding: 8px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: background 0.2s, padding 0.3s;
+        }
+        .hamburger-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+        body.collapsed .hamburger-btn {
+            padding: 6px; 
+        }
+
+        .user-profile {
+            display: flex; align-items: center;
+            padding: 6px 16px 6px 6px; border-radius: 12px;
+            transition: background 0.2s, padding 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            white-space: nowrap; overflow: hidden;
+        }
+        .user-profile:hover { background: rgba(255, 255, 255, 0.05); }
+
+        body.collapsed .user-profile { 
+            padding: 0; 
+        }
+
+        .pfp {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid var(--accent); object-fit: cover; background: var(--bg); 
+            flex-shrink: 0; margin-right: 16px; 
+            transition: margin-right 0.3s cubic-bezier(0.25, 1, 0.5, 1), width 0.3s, height 0.3s;
+        }
+        
+        body.collapsed .pfp { 
+            margin-right: 0;
+            width: 30px; height: 30px; 
+        }
+
+        .user-details {
+            display: flex; flex-direction: column; justify-content: center; overflow: hidden;
+            width: 180px; transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s;
+        }
+        body.collapsed .user-details { width: 0; opacity: 0; pointer-events: none; }
+
+        .user-name { font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+        .user-email { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- QUADRANT 2: TOP NAVBAR (MAIN) --- */
+        .top-navbar-main {
+            grid-column: 2 / 3; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; padding: 0 32px;
+        }
+
+        /* --- QUADRANT 3: SIDEBAR NAVIGATION --- */
+        .sidebar {
+            grid-column: 1 / 2; grid-row: 2 / 3;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column;
+            overflow-y: auto; overflow-x: hidden; padding: 32px 20px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .sidebar::-webkit-scrollbar { display: none; }
+
+        .sidebar-menu { display: flex; flex-direction: column; gap: 32px; }
+        .menu-section { display: flex; flex-direction: column; gap: 6px; }
+
+        .section-title {
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-dim); margin-left: 14px; margin-bottom: 8px;
+            transition: opacity 0.2s, height 0.2s; white-space: nowrap;
+        }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 14px; border-radius: 12px; color: var(--text-dim);
+            text-decoration: none; font-weight: 600; font-size: 0.95rem;
+            transition: background 0.2s, color 0.2s, padding 0.3s; white-space: nowrap;
+        }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+        .menu-item.active { background: rgba(129, 140, 248, 0.15); color: var(--primary); }
+
+        .menu-item svg { width: 22px; height: 22px; flex-shrink: 0; transition: color 0.2s; }
+        .menu-item.active svg { color: var(--primary); }
+
+        .menu-text { transition: opacity 0.2s, width 0.2s; }
+
+        body.collapsed .section-title { opacity: 0; height: 0; margin-bottom: 0; overflow: hidden; }
+        body.collapsed .menu-text { opacity: 0; width: 0; overflow: hidden; display: none; }
+        body.collapsed .menu-item { justify-content: center; padding-left: 0; padding-right: 0; }
+
+        /* --- QUADRANT 4: MAIN CONTENT AREA --- */
+        .main-content {
+            grid-column: 2 / 3; grid-row: 2 / 3;
+            position: relative; overflow-y: auto; padding: 40px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 80px;
+        }
+        .main-content::-webkit-scrollbar { display: none; }
+
+        /* Tabs Navigation */
+        .tabs-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .tabs-nav::-webkit-scrollbar { display: none; }
+        
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            color: var(--text-dim);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-main);
+        }
+        .tab-btn.active {
+            background: rgba(129, 140, 248, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* Admin Cards */
+        .admin-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 28px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .admin-card-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+            margin-bottom: 8px;
+        }
+
+        /* Form Controls */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .form-group-full {
+            grid-column: 1 / -1;
+        }
+        label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .admin-input, .admin-select, .admin-textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        .admin-input:focus, .admin-select:focus, .admin-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(129, 140, 248, 0.15);
+            background: rgba(15, 23, 42, 0.8);
+        }
+        .admin-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+            color: #f1f5f9;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+        }
+
+        /* Drag & Drop File Uploads */
+        .dropzone-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        .dropzone {
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 120px;
+        }
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--primary);
+            background: rgba(129, 140, 248, 0.05);
+        }
+        .dropzone p {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+        .dropzone img {
+            max-width: 100%;
+            max-height: 80px;
+            border-radius: 8px;
+            margin-top: 4px;
+        }
+        .dropzone-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(239, 68, 68, 0.8);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Toggle Switches */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            transition: all 0.2s ease;
+        }
+        .toggle-container:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+        }
+        .toggle-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .toggle-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+        .toggle-desc {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #334155;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px; width: 20px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--accent);
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* History items & database lists */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .history-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--primary);
+        }
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #f87171;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-navbar-corner">
+        <button class="hamburger-btn" id="sidebar-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="user-profile">
+            <img src="" id="user-pfp" alt="Profile" class="pfp">
+            <div class="user-details">
+                <span class="user-name" id="user-name">Loading...</span>
+                <span class="user-email" id="user-email">Syncing profile</span>
+            </div>
+        </div>
+    </div>
+
+    <header class="top-navbar-main">
+        <div style="font-weight: 800; letter-spacing: 1px; font-size: 1.2rem;">LEARNSER <span style="color: var(--accent);">AI</span></div>
+    </header>
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">
+            
+            <div class="menu-section">
+                <div class="section-title">OVERVIEW</div>
+                <a href="dashbord.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">LEARN</div>
+                <a href="ai_doubtsolver.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+                    <span class="menu-text">AI Doubt Solver</span>
+                </a>
+                <a href="chapternotes.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span class="menu-text">Chapter Notes</span>
+                </a>
+                <a href="plannedtt.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="menu-text">Smart Timetable</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">PRACTICE</div>
+                <a href="test/test.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    <span class="menu-text">AI Test Generator</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="14" r="1"></circle><path d="M12 11c1.5 0 2-1 2-2s-.5-2-2-2-2 1-2 2"></path></svg>
+                    <span class="menu-text">Previous Year Qs</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">PROGRESS</div>
+                <a href="analytics.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <span class="menu-text">Analytics</span>
+                </a>
+                <a href="rewardshop.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                    <span class="menu-text">Streak & Coins</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                    <span class="menu-text">Badges</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="section-title">COMMUNITY</div>
+                <a href="podcast.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    <span class="menu-text">AI Podcast</span>
+                </a>
+                <a href="#" class="menu-item" style="opacity: 0.5; cursor: not-allowed;" onclick="alert('Community Chat is temporarily disabled.'); return false;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="menu-text">Community Chat <small style="font-size: 0.65rem; color: var(--text-dim);">(Disabled)</small></span>
+                </a>
+            </div>
+
+        </div>
+
+        <div style="flex-grow: 1;"></div>
+
+        <div class="menu-section" style="margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 24px;">
+            <a href="admin.html" id="adminNavLink" class="menu-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
+                <span class="menu-text">Admin Panel</span>
+            </a>
+            <a href="settings.html" class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span class="menu-text">Settings</span>
+            </a>
+            <a href="#" onclick="signOutUser(); return false;" class="menu-item" style="color: var(--danger);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span class="menu-text">Log Out</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content" style="display: none;" id="adminMainContent">
+        <div class="dashboard-header" style="margin-bottom: 24px;">
+            <h2 style="color: var(--text-main); font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px;">Admin <span style="color: var(--accent);">Console</span></h2>
+            <p style="color: var(--text-dim); font-size: 0.95rem; margin-top: 4px;">Manage learning syllabus, questions metadata, JEE mock exams, and control user access keys.</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('questions')">Questions DB</button>
+            <button class="tab-btn" onclick="switchTab('chapters')">Syllabus Chapters</button>
+            <button class="tab-btn" onclick="switchTab('exams')">JEE Mock Exams</button>
+            <button id="permissionsTabBtn" class="tab-btn" onclick="switchTab('permissions')" style="display: none;">Permissions & Access</button>
+        </div>
+
+        <!-- TABS CONTAINER -->
+        
+        <!-- Tab 1: Questions Database -->
+        <div id="tab-questions" class="tab-content active">
+            
+            <div class="admin-card">
+                <h3 class="admin-card-title">Add New Question</h3>
+                <form id="addQuestionForm" onsubmit="handleAddQuestion(event)" style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="questionSubject">Subject *</label>
+                            <select id="questionSubject" class="admin-select" onchange="onSubjectChange('questionSubject', 'questionChapter')" required>
+                                <option value="">Select Subject</option>
+                                <option value="physics">Physics</option>
+                                <option value="chemistry">Chemistry</option>
+                                <option value="mathematics">Mathematics</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="questionChapter">Chapter *</label>
+                            <select id="questionChapter" class="admin-select" disabled required>
+                                <option value="">Select Subject First</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="correctAnswer">Correct Option *</label>
+                            <select id="correctAnswer" class="admin-select" required>
+                                <option value="">Select Option</option>
+                                <option value="0">A</option>
+                                <option value="1">B</option>
+                                <option value="2">C</option>
+                                <option value="3">D</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="questionText">Question Text *</label>
+                        <textarea id="questionText" class="admin-textarea" placeholder="Enter question description text or LaTeX formula..." required></textarea>
+                    </div>
+
+                    <!-- Drag & Drop Option Images -->
+                    <div class="form-group form-group-full">
+                        <label>Drag & Drop Images (Click to Upload / Drag Files)</label>
+                        <div class="dropzone-grid" style="margin-top: 8px;">
+                            <!-- Question Image -->
+                            <div class="dropzone" id="questionDropzone">
+                                <p>Question Image</p>
+                                <input type="file" id="questionImgInput" style="display: none;" accept="image/*">
+                                <img id="questionImgPreview" style="display: none;">
+                                <button type="button" class="dropzone-remove" id="questionImgRemove">×</button>
+                            </div>
+                            <!-- Option A Image -->
+                            <div class="dropzone" id="optADropzone">
+                                <p>Option A Image</p>
+                                <input type="file" id="optAImgInput" style="display: none;" accept="image/*">
+                                <img id="optAImgPreview" style="display: none;">
+                                <button type="button" class="dropzone-remove" id="optAImgRemove">×</button>
+                            </div>
+                            <!-- Option B Image -->
+                            <div class="dropzone" id="optBDropzone">
+                                <p>Option B Image</p>
+                                <input type="file" id="optBImgInput" style="display: none;" accept="image/*">
+                                <img id="optBImgPreview" style="display: none;">
+                                <button type="button" class="dropzone-remove" id="optBImgRemove">×</button>
+                            </div>
+                            <!-- Option C Image -->
+                            <div class="dropzone" id="optCDropzone">
+                                <p>Option C Image</p>
+                                <input type="file" id="optCImgInput" style="display: none;" accept="image/*">
+                                <img id="optCImgPreview" style="display: none;">
+                                <button type="button" class="dropzone-remove" id="optCImgRemove">×</button>
+                            </div>
+                            <!-- Option D Image -->
+                            <div class="dropzone" id="optDDropzone">
+                                <p>Option D Image</p>
+                                <input type="file" id="optDImgInput" style="display: none;" accept="image/*">
+                                <img id="optDImgPreview" style="display: none;">
+                                <button type="button" class="dropzone-remove" id="optDImgRemove">×</button>
+                            </div>
+                            <!-- Solution Image -->
+                            <div class="dropzone" id="solutionDropzone">
+                                <p>Solution Image</p>
+                                <input type="file" id="solutionImgInput" style="display: none;" accept="image/*">
+                                <img id="solutionImgPreview" style="display: none;">
+                                <button type="button" class="dropzone-remove" id="solutionImgRemove">×</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="optionA">Option A Text *</label>
+                            <input type="text" id="optionA" class="admin-input" placeholder="Value A" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="optionB">Option B Text *</label>
+                            <input type="text" id="optionB" class="admin-input" placeholder="Value B" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="optionC">Option C Text *</label>
+                            <input type="text" id="optionC" class="admin-input" placeholder="Value C" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="optionD">Option D Text *</label>
+                            <input type="text" id="optionD" class="admin-input" placeholder="Value D" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="questionYear">Exam Year</label>
+                            <input type="text" id="questionYear" class="admin-input" placeholder="e.g. 2024">
+                        </div>
+                        <div class="form-group">
+                            <label for="questionShift">Exam Shift</label>
+                            <input type="text" id="questionShift" class="admin-input" placeholder="e.g. Shift 1 / Morning">
+                        </div>
+                        <div class="form-group">
+                            <label for="questionDifficulty">Difficulty</label>
+                            <select id="questionDifficulty" class="admin-select">
+                                <option value="">Select Level</option>
+                                <option value="Easy">Easy</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="questionSubtopic">Subtopic</label>
+                            <input type="text" id="questionSubtopic" class="admin-input" placeholder="e.g. Photoelectric Effect">
+                        </div>
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="detailedExplanation">Detailed Step-by-Step Explanation</label>
+                        <textarea id="detailedExplanation" class="admin-textarea" placeholder="Explain the detailed solution process step-by-step..."></textarea>
+                    </div>
+
+                    <button type="submit" id="addQuestionBtn" class="btn-generate" style="margin-top: 10px;">Add Question</button>
+                </form>
+            </div>
+
+            <!-- Existing Questions Filter and Manager -->
+            <div class="admin-card">
+                <h3 class="admin-card-title">Manage Existing Questions</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="filterSubject">Subject</label>
+                        <select id="filterSubject" class="admin-select" onchange="onSubjectChange('filterSubject', 'filterChapter')">
+                            <option value="">Select Subject</option>
+                            <option value="physics">Physics</option>
+                            <option value="chemistry">Chemistry</option>
+                            <option value="mathematics">Mathematics</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterChapter">Chapter</label>
+                        <select id="filterChapter" class="admin-select" disabled>
+                            <option value="">Select Subject First</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <button type="button" class="btn-generate" onclick="loadExistingQuestions()">Search Questions</button>
+                    </div>
+                </div>
+
+                <div class="history-list" id="questionsList" style="margin-top: 12px;">
+                    <div style="color: var(--text-dim); text-align: center; padding: 20px;">Choose parameters above to filter and list questions.</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Tab 2: Syllabus Chapters -->
+        <div id="tab-chapters" class="tab-content">
+            
+            <div class="admin-card">
+                <h3 class="admin-card-title">Add New Chapter</h3>
+                <form id="addChapterForm" onsubmit="handleAddChapter(event)" class="form-grid" style="align-items: flex-end;">
+                    <div class="form-group">
+                        <label for="chapterSubject">Subject *</label>
+                        <select id="chapterSubject" class="admin-select" required>
+                            <option value="">Select Subject</option>
+                            <option value="physics">Physics</option>
+                            <option value="chemistry">Chemistry</option>
+                            <option value="mathematics">Mathematics</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 2;">
+                        <label for="chapterName">Chapter Name *</label>
+                        <input type="text" id="chapterName" class="admin-input" placeholder="e.g. Electrostatics" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="chapterOrder">Display Order (Integer) *</label>
+                        <input type="number" id="chapterOrder" class="admin-input" placeholder="e.g. 1" required>
+                    </div>
+                    <button type="submit" class="btn-generate" style="height: 50px; width: auto; padding: 0 24px;">Add Chapter</button>
+                </form>
+            </div>
+
+            <!-- Display Syllabus List -->
+            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                <!-- Physics List -->
+                <div class="admin-card">
+                    <h4 style="color: var(--primary); font-weight: 800;">PHYSICS</h4>
+                    <div class="history-list" id="physicsChaptersList" style="margin-top: 12px;">
+                        <div style="color: var(--text-dim); padding: 8px;">No chapters yet.</div>
+                    </div>
+                </div>
+                <!-- Chemistry List -->
+                <div class="admin-card">
+                    <h4 style="color: var(--accent); font-weight: 800;">CHEMISTRY</h4>
+                    <div class="history-list" id="chemistryChaptersList" style="margin-top: 12px;">
+                        <div style="color: var(--text-dim); padding: 8px;">No chapters yet.</div>
+                    </div>
+                </div>
+                <!-- Mathematics List -->
+                <div class="admin-card">
+                    <h4 style="color: #a78bfa; font-weight: 800;">MATHEMATICS</h4>
+                    <div class="history-list" id="mathematicsChaptersList" style="margin-top: 12px;">
+                        <div style="color: var(--text-dim); padding: 8px;">No chapters yet.</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Tab 3: JEE Mock Exams -->
+        <div id="tab-exams" class="tab-content">
+            
+            <div class="admin-card">
+                <h3 class="admin-card-title">Schedule New Mock Exam</h3>
+                <form id="addExamForm" onsubmit="handleAddExam(event)" style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="examName">Exam Name *</label>
+                            <input type="text" id="examName" class="admin-input" placeholder="e.g. JEE Main Mock Test 1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="examDate">Exam Date & Time *</label>
+                            <input type="datetime-local" id="examDate" class="admin-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="examLink">External Syllabus Link / PDF</label>
+                            <input type="url" id="examLink" class="admin-input" placeholder="https://example.com/syllabus.pdf">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="examDetails">Details / Instructions *</label>
+                        <textarea id="examDetails" class="admin-textarea" placeholder="Enter duration, syllabus, pattern rules..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-generate">Add Exam</button>
+                </form>
+            </div>
+
+            <!-- List Scheduled Exams -->
+            <div class="admin-card">
+                <h3 class="admin-card-title">Scheduled Mock Exams</h3>
+                <div class="history-list" id="examsList">
+                    <div style="color: var(--text-dim); padding: 12px;">No exams added yet.</div>
+                </div>
+            </div>
+
+            <!-- Exam Display Toggles -->
+            <div class="admin-card">
+                <h3 class="admin-card-title">Practice Test Toggles</h3>
+                <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: -8px; margin-bottom: 8px;">Enable or disable student practice portals globally.</p>
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- BITSAT -->
+                    <div class="toggle-container">
+                        <div class="toggle-info">
+                            <span class="toggle-title">BITSAT Practice Test</span>
+                            <span class="toggle-desc">Enable BITSAT mock test portal access.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-bitsat" onchange="handleExamToggle('bitsat', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <!-- VITEEE -->
+                    <div class="toggle-container">
+                        <div class="toggle-info">
+                            <span class="toggle-title">VITEEE Practice Test</span>
+                            <span class="toggle-desc">Enable VITEEE mock test portal access.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-viteee" onchange="handleExamToggle('viteee', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <!-- MHTCET -->
+                    <div class="toggle-container">
+                        <div class="toggle-info">
+                            <span class="toggle-title">MHTCET Practice Test</span>
+                            <span class="toggle-desc">Enable MHTCET mock test portal access.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-mhtcet" onchange="handleExamToggle('mhtcet', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <!-- MET -->
+                    <div class="toggle-container">
+                        <div class="toggle-info">
+                            <span class="toggle-title">MET Practice Test</span>
+                            <span class="toggle-desc">Enable MET mock test portal access.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-met" onchange="handleExamToggle('met', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <!-- NDA -->
+                    <div class="toggle-container">
+                        <div class="toggle-info">
+                            <span class="toggle-title">NDA Practice Test</span>
+                            <span class="toggle-desc">Enable NDA mock test portal access.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-nda" onchange="handleExamToggle('nda', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Tab 4: Permissions & Feature Access (Super Admin Only) -->
+        <div id="tab-permissions" class="tab-content">
+            
+            <div class="admin-card">
+                <h3 class="admin-card-title">Manage Admin Emails</h3>
+                <form id="addAdminForm" onsubmit="handleAddAdmin(event)" style="display: flex; gap: 12px; max-width: 500px; margin-bottom: 20px;">
+                    <input type="email" id="adminEmailInput" class="admin-input" placeholder="Enter admin email address" required>
+                    <button type="submit" class="btn-generate" style="width: auto; padding: 0 24px; white-space: nowrap;">Add Admin</button>
+                </form>
+                
+                <h4 style="color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">Admin Access List</h4>
+                <div class="history-list" id="adminsList">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Global Feature Toggles -->
+            <div class="admin-card">
+                <h3 class="admin-card-title">Global Feature Access Control</h3>
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="toggle-container">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Community Chat</span>
+                            <span class="toggle-desc">Toggle messaging access across all student accounts.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-communityChat" onchange="handleFeatureToggle('communityChat', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-container">
+                        <div class="toggle-info">
+                            <span class="toggle-title">AI Podcast Generation</span>
+                            <span class="toggle-desc">Toggle the LLM/TTS generation backend.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-aiPodcast" onchange="handleFeatureToggle('aiPodcast', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Firebase SDK & Configuration Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth-check.js"></script>
+
+    <script>
+        // Image Base64 placeholders
+        let questionImageBase64 = null;
+        let optAImageBase64 = null;
+        let optBImageBase64 = null;
+        let optCImageBase64 = null;
+        let optDImageBase64 = null;
+        let solutionImageBase64 = null;
+
+        // Toggle Sidebar collapsed state
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('collapsed');
+        });
+
+        // Tab navigation switching logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Listen for profile ready event from auth-check.js
+        window.addEventListener('profileready', (e) => {
+            if (!window.isCurrentUserAdmin) {
+                alert("Unauthorized access. Redirecting to dashboard...");
+                window.location.href = "dashbord.html";
+                return;
+            }
+
+            // Grant super admin view
+            if (window.isCurrentUserSuperAdmin) {
+                const permTabBtn = document.getElementById('permissionsTabBtn');
+                if (permTabBtn) permTabBtn.style.display = 'block';
+            }
+
+            // Reveal content
+            document.getElementById('adminMainContent').style.display = 'block';
+            
+            // Initialize panel
+            initAdminPanel();
+        });
+
+        // Initialize Panel data loading
+        async function initAdminPanel() {
+            // Load Chapters
+            loadAllChapters();
+            // Load Exams
+            loadAdminExams();
+            // Load Practice Toggles
+            loadExamToggles();
+            // Load Feature Toggles
+            loadFeatureToggles();
+            
+            // Set up Drag and Drop fields
+            setupDropzones();
+            
+            // If super admin, load admins list
+            if (window.isCurrentUserSuperAdmin) {
+                loadAdmins();
+            }
+        }
+
+        // Subject Change dropdown logic
+        async function onSubjectChange(subjectSelectId, chapterSelectId) {
+            const subject = document.getElementById(subjectSelectId).value;
+            const chapterSelect = document.getElementById(chapterSelectId);
+            
+            chapterSelect.disabled = true;
+            chapterSelect.innerHTML = '<option value="">Loading chapters...</option>';
+            
+            if (!subject) {
+                chapterSelect.innerHTML = '<option value="">Select Subject First</option>';
+                return;
+            }
+            
+            try {
+                const snapshot = await window.database.ref('chapters/' + subject).orderByChild('order').once('value');
+                chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
+                
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const opt = document.createElement('option');
+                        opt.value = child.key;
+                        opt.textContent = child.val().name;
+                        chapterSelect.appendChild(opt);
+                    });
+                    chapterSelect.disabled = false;
+                } else {
+                    chapterSelect.innerHTML = '<option value="">No chapters found</option>';
+                }
+            } catch (err) {
+                console.error("Error loading chapters:", err);
+                chapterSelect.innerHTML = '<option value="">Failed to load chapters</option>';
+            }
+        }
+
+        // Setup dropzones utility
+        function setupDropzones() {
+            setupDropzone('questionDropzone', 'questionImgInput', 'questionImgPreview', 'questionImgRemove', (data) => { questionImageBase64 = data; });
+            setupDropzone('optADropzone', 'optAImgInput', 'optAImgPreview', 'optAImgRemove', (data) => { optAImageBase64 = data; });
+            setupDropzone('optBDropzone', 'optBImgInput', 'optBImgPreview', 'optBImgRemove', (data) => { optBImageBase64 = data; });
+            setupDropzone('optCDropzone', 'optCImgInput', 'optCImgPreview', 'optCImgRemove', (data) => { optCImageBase64 = data; });
+            setupDropzone('optDDropzone', 'optDImgInput', 'optDImgPreview', 'optDImgRemove', (data) => { optDImageBase64 = data; });
+            setupDropzone('solutionDropzone', 'solutionImgInput', 'solutionImgPreview', 'solutionImgRemove', (data) => { solutionImageBase64 = data; });
+        }
+
+        function setupDropzone(dropzoneId, inputId, previewId, removeBtnId, callback) {
+            const dropzone = document.getElementById(dropzoneId);
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            const removeBtn = document.getElementById(removeBtnId);
+
+            if (!dropzone || !input) return;
+
+            dropzone.addEventListener('click', (e) => {
+                if (e.target === removeBtn) return;
+                input.click();
+            });
+
+            input.addEventListener('change', () => {
+                if (input.files.length > 0) {
+                    handleFile(input.files[0]);
+                }
+            });
+
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            });
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('dragover');
+            });
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    preview.src = '';
+                    preview.style.display = 'none';
+                    removeBtn.style.display = 'none';
+                    input.value = '';
+                    callback(null);
+                });
+            }
+
+            function handleFile(file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Please upload an image file.');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    if (removeBtn) removeBtn.style.display = 'flex';
+                    callback(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearDropzones() {
+            questionImageBase64 = null;
+            optAImageBase64 = null;
+            optBImageBase64 = null;
+            optCImageBase64 = null;
+            optDImageBase64 = null;
+            solutionImageBase64 = null;
+
+            const previews = ['questionImgPreview', 'optAImgPreview', 'optBImgPreview', 'optCImgPreview', 'optDImgPreview', 'solutionImgPreview'];
+            const removes = ['questionImgRemove', 'optAImgRemove', 'optBImgRemove', 'optCImgRemove', 'optDImgRemove', 'solutionImgRemove'];
+            const inputs = ['questionImgInput', 'optAImgInput', 'optBImgInput', 'optCImgInput', 'optDImgInput', 'solutionImgInput'];
+
+            previews.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.src = ''; el.style.display = 'none'; }
+            });
+            removes.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.style.display = 'none'; }
+            });
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.value = ''; }
+            });
+        }
+
+        // Add Question Handler
+        async function handleAddQuestion(e) {
+            e.preventDefault();
+            const subject = document.getElementById('questionSubject').value;
+            const chapterId = document.getElementById('questionChapter').value;
+            const questionText = document.getElementById('questionText').value;
+            const optA = document.getElementById('optionA').value;
+            const optB = document.getElementById('optionB').value;
+            const optC = document.getElementById('optionC').value;
+            const optD = document.getElementById('optionD').value;
+            const correctAnswer = parseInt(document.getElementById('correctAnswer').value);
+            const year = document.getElementById('questionYear').value;
+            const shift = document.getElementById('questionShift').value;
+            const difficulty = document.getElementById('questionDifficulty').value;
+            const subtopic = document.getElementById('questionSubtopic').value;
+            const detailedAnswer = document.getElementById('detailedExplanation').value;
+
+            if (!subject || !chapterId || !questionText || !optA || !optB || !optC || !optD || isNaN(correctAnswer)) {
+                alert('Please fill out all required fields.');
+                return;
+            }
+
+            const questionData = {
+                question: questionText,
+                options: [optA, optB, optC, optD],
+                correctAnswer: correctAnswer,
+                year: year || null,
+                shift: shift || null,
+                difficulty: difficulty || null,
+                subtopic: subtopic || null,
+                detailedAnswer: detailedAnswer || null,
+                questionImage: questionImageBase64 || null,
+                optionAImage: optAImageBase64 || null,
+                optionBImage: optBImageBase64 || null,
+                optionCImage: optCImageBase64 || null,
+                optionDImage: optDImageBase64 || null,
+                detailedAnswerImage: solutionImageBase64 || null,
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                document.getElementById('addQuestionBtn').disabled = true;
+                document.getElementById('addQuestionBtn').textContent = 'Adding...';
+                
+                await window.database.ref('questions/' + subject + '/' + chapterId).push(questionData);
+                
+                alert('Question added successfully!');
+                e.target.reset();
+                clearDropzones();
+                document.getElementById('questionChapter').disabled = true;
+                document.getElementById('questionChapter').innerHTML = '<option value="">Select Subject First</option>';
+            } catch (error) {
+                console.error('Error adding question:', error);
+                alert('Failed to add question: ' + error.message);
+            } finally {
+                document.getElementById('addQuestionBtn').disabled = false;
+                document.getElementById('addQuestionBtn').textContent = 'Add Question';
+            }
+        }
+
+        // Questions filtering manager
+        async function loadExistingQuestions() {
+            const subject = document.getElementById('filterSubject').value;
+            const chapterId = document.getElementById('filterChapter').value;
+            const questionsList = document.getElementById('questionsList');
+
+            if (!subject) {
+                alert('Please select a subject first.');
+                return;
+            }
+
+            questionsList.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 20px;">Searching questions...</div>';
+
+            try {
+                let ref = window.database.ref('questions/' + subject);
+                if (chapterId) {
+                    ref = ref.child(chapterId);
+                }
+
+                const snapshot = await ref.once('value');
+                const questions = [];
+
+                snapshot.forEach(childSnapshot => {
+                    if (chapterId) {
+                        questions.push({
+                            id: childSnapshot.key,
+                            chapterId: chapterId,
+                            ...childSnapshot.val()
+                        });
+                    } else {
+                        childSnapshot.forEach(questionSnapshot => {
+                            questions.push({
+                                id: questionSnapshot.key,
+                                chapterId: childSnapshot.key,
+                                ...questionSnapshot.val()
+                            });
+                        });
+                    }
+                });
+
+                if (questions.length === 0) {
+                    questionsList.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 20px;">No questions found.</div>';
+                } else {
+                    questionsList.innerHTML = questions.slice(0, 100).map((q, index) => {
+                        let imgBadge = q.questionImage ? '<span style="background: var(--accent); color: #020617; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 8px;">Has Image</span>' : '';
+                        return `
+                            <div class="history-item" style="cursor: default; flex-direction: column; align-items: stretch; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+                                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">
+                                        Q${index + 1}: ${escapeHtml(q.question.substring(0, 80))}${q.question.length > 80 ? '...' : ''}
+                                        ${imgBadge}
+                                    </div>
+                                    <button class="btn-delete" onclick="deleteQuestion('${subject}', '${q.chapterId}', '${q.id}')">
+                                        Delete
+                                    </button>
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.5;">
+                                    <strong>Year:</strong> ${q.year || 'N/A'} | 
+                                    <strong>Shift:</strong> ${q.shift || 'N/A'} | 
+                                    <strong>Difficulty:</strong> ${q.difficulty || 'N/A'} | 
+                                    <strong>Subtopic:</strong> ${q.subtopic || 'N/A'}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                questionsList.innerHTML = '<div style="color: #f87171; text-align: center; padding: 20px;">Failed to load questions.</div>';
+            }
+        }
+
+        async function deleteQuestion(subject, chapterId, questionId) {
+            if (!confirm('Are you sure you want to delete this question?')) return;
+            try {
+                await window.database.ref('questions/' + subject + '/' + chapterId + '/' + questionId).remove();
+                alert('Question deleted successfully!');
+                loadExistingQuestions();
+            } catch (err) {
+                alert('Failed to delete question: ' + err.message);
+            }
+        }
+
+        // Chapters Tab Logic
+        async function handleAddChapter(e) {
+            e.preventDefault();
+            const subject = document.getElementById('chapterSubject').value;
+            const name = document.getElementById('chapterName').value.trim();
+            const order = parseInt(document.getElementById('chapterOrder').value);
+
+            if (!subject || !name || isNaN(order)) return;
+
+            try {
+                await window.database.ref('chapters/' + subject).push({
+                    name: name,
+                    order: order,
+                    createdAt: new Date().toISOString()
+                });
+                alert('Chapter added successfully!');
+                e.target.reset();
+                loadAllChapters();
+            } catch (err) {
+                alert('Failed to add chapter: ' + err.message);
+            }
+        }
+
+        async function loadAllChapters() {
+            const subjects = ['physics', 'chemistry', 'mathematics'];
+            for (const subject of subjects) {
+                try {
+                    const snapshot = await window.database.ref('chapters/' + subject).orderByChild('order').once('value');
+                    const chapters = [];
+                    snapshot.forEach(child => {
+                        chapters.push({ id: child.key, ...child.val() });
+                    });
+                    
+                    const listEl = document.getElementById(subject + 'ChaptersList');
+                    if (chapters.length === 0) {
+                        listEl.innerHTML = '<div style="color: var(--text-dim); padding: 8px;">No chapters yet.</div>';
+                        continue;
+                    }
+                    
+                    listEl.innerHTML = chapters.map(ch => `
+                        <div class="history-item" style="cursor: default; padding: 12px 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 0.95rem;">${escapeHtml(ch.name)}</span>
+                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">Order Index: ${ch.order}</div>
+                            </div>
+                            <button class="btn-delete" style="padding: 4px 10px;" onclick="deleteChapter('${subject}', '${ch.id}', '${escapeHtml(ch.name)}')">Delete</button>
+                        </div>
+                    `).join('');
+                } catch(err) {
+                    console.error(`Error loading chapters for ${subject}:`, err);
+                }
+            }
+        }
+
+        async function deleteChapter(subject, id, name) {
+            if (!confirm(`Are you sure you want to delete "${name}"? This will delete all questions within this chapter.`)) return;
+            try {
+                await window.database.ref('chapters/' + subject + '/' + id).remove();
+                await window.database.ref('questions/' + subject + '/' + id).remove();
+                alert('Chapter and its questions deleted successfully!');
+                loadAllChapters();
+            } catch(err) {
+                alert('Failed to delete chapter: ' + err.message);
+            }
+        }
+
+        // Exams Tab Logic
+        async function handleAddExam(e) {
+            e.preventDefault();
+            const name = document.getElementById('examName').value.trim();
+            const date = document.getElementById('examDate').value;
+            const link = document.getElementById('examLink').value.trim();
+            const details = document.getElementById('examDetails').value.trim();
+
+            if (!name || !date || !details) return;
+
+            try {
+                await window.database.ref('exams').push({
+                    name: name,
+                    date: date,
+                    details: details,
+                    link: link || '',
+                    createdAt: new Date().toISOString()
+                });
+                alert('Exam scheduled successfully!');
+                e.target.reset();
+                loadAdminExams();
+            } catch(err) {
+                alert('Failed to add exam: ' + err.message);
+            }
+        }
+
+        async function loadAdminExams() {
+            const listEl = document.getElementById('examsList');
+            if (!listEl) return;
+            
+            try {
+                const snapshot = await window.database.ref('exams').orderByChild('date').once('value');
+                listEl.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    listEl.innerHTML = '<div style="color: var(--text-dim); padding: 12px;">No exams added yet.</div>';
+                    return;
+                }
+                
+                snapshot.forEach(child => {
+                    const exam = child.val();
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.style.cursor = 'default';
+                    div.style.flexDirection = 'column';
+                    div.style.alignItems = 'stretch';
+                    div.style.gap = '8px';
+                    div.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <span style="font-weight: 700; font-size: 1rem; color: var(--text-main);">${escapeHtml(exam.name)}</span>
+                            <button class="btn-delete" onclick="deleteExam('${child.key}', '${escapeHtml(exam.name)}')">Delete</button>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5;">
+                            <strong>Date:</strong> ${new Date(exam.date).toLocaleString()}<br>
+                            <strong>Details:</strong> ${escapeHtml(exam.details)}
+                            ${exam.link ? `<br><strong>Link:</strong> <a href="${escapeHtml(exam.link)}" target="_blank" style="color: var(--accent); text-decoration: none;">${escapeHtml(exam.link)}</a>` : ''}
+                        </div>
+                    `;
+                    listEl.appendChild(div);
+                });
+            } catch(err) {
+                console.error("Error loading exams:", err);
+            }
+        }
+
+        async function deleteExam(id, name) {
+            if (!confirm(`Are you sure you want to delete exam "${name}"?`)) return;
+            try {
+                await window.database.ref('exams/' + id).remove();
+                alert('Exam deleted successfully!');
+                loadAdminExams();
+            } catch(err) {
+                alert('Failed to delete exam: ' + err.message);
+            }
+        }
+
+        // Exam toggles (Practice portal controls)
+        async function loadExamToggles() {
+            try {
+                const snapshot = await window.database.ref('examToggles').once('value');
+                const toggles = snapshot.val() || {};
+                ['bitsat', 'viteee', 'mhtcet', 'met', 'nda'].forEach(examId => {
+                    const el = document.getElementById('toggle-' + examId);
+                    if (el) el.checked = toggles[examId] === true;
+                });
+            } catch (err) {
+                console.warn('loadExamToggles skipped:', err);
+            }
+        }
+
+        async function handleExamToggle(examId, enabled) {
+            try {
+                await window.database.ref('examToggles/' + examId).set(enabled);
+            } catch (err) {
+                console.error('Error saving exam toggle:', err);
+                const el = document.getElementById('toggle-' + examId);
+                if (el) el.checked = !enabled;
+            }
+        }
+
+        // Feature Toggles (Global Community Toggles)
+        async function loadFeatureToggles() {
+            try {
+                const snapshot = await window.database.ref('featureToggles').once('value');
+                const toggles = snapshot.val() || {};
+                
+                const ccToggle = document.getElementById('toggle-communityChat');
+                const apToggle = document.getElementById('toggle-aiPodcast');
+                
+                if (ccToggle) ccToggle.checked = toggles.communityChat === true;
+                if (apToggle) apToggle.checked = toggles.aiPodcast !== false; // defaults to true
+            } catch(err) {
+                console.warn("Failed to load feature toggles:", err);
+            }
+        }
+
+        async function handleFeatureToggle(featureId, enabled) {
+            try {
+                await window.database.ref('featureToggles/' + featureId).set(enabled);
+            } catch(err) {
+                console.error("Failed to save feature toggle:", err);
+                alert("Failed to update feature access: " + err.message);
+            }
+        }
+
+        // Permissions management (Super Admin Only)
+        async function loadAdmins() {
+            const listEl = document.getElementById('adminsList');
+            if (!listEl) return;
+            
+            listEl.innerHTML = '<div style="color: var(--text-dim); padding: 12px;">Loading admin access list...</div>';
+            
+            try {
+                const snapshot = await window.database.ref('admins').once('value');
+                listEl.innerHTML = '';
+                
+                // Show hardcoded super admins first
+                window.SUPER_ADMIN_EMAILS.forEach(email => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.style.cursor = 'default';
+                    div.innerHTML = `
+                        <div>
+                            <div style="font-weight: 700; color: var(--text-main);">${escapeHtml(email)}</div>
+                            <div style="font-size: 0.75rem; color: var(--accent); margin-top: 4px; font-weight: 700;">Super Admin (Hardcoded)</div>
+                        </div>
+                    `;
+                    listEl.appendChild(div);
+                });
+
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const data = child.val();
+                        const email = data.email || child.key.replace(/,/g, '.');
+                        
+                        if (!window.SUPER_ADMIN_EMAILS.includes(email)) {
+                            const div = document.createElement('div');
+                            div.className = 'history-item';
+                            div.style.cursor = 'default';
+                            div.innerHTML = `
+                                <div>
+                                    <div style="font-weight: 700; color: var(--text-main);">${escapeHtml(email)}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Added by Super Admin</div>
+                                </div>
+                                <button class="btn-delete" style="padding: 4px 10px;" onclick="removeAdmin('${child.key}')">Remove</button>
+                            `;
+                            listEl.appendChild(div);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading admins:", err);
+                listEl.innerHTML = '<div style="color: #f87171; padding: 12px;">Failed to load admins table.</div>';
+            }
+        }
+
+        async function handleAddAdmin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmailInput').value.trim();
+            if (!email) return;
+            
+            const sanitizedEmail = email.toLowerCase().replace(/\./g, ',');
+            
+            try {
+                await window.database.ref('admins/' + sanitizedEmail).set({
+                    email: email,
+                    addedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                alert(`Admin access granted to: ${email}`);
+                document.getElementById('adminEmailInput').value = '';
+                loadAdmins();
+            } catch(err) {
+                alert("Failed to add admin: " + err.message);
+            }
+        }
+
+        async function removeAdmin(sanitizedEmail) {
+            if (!confirm("Are you sure you want to revoke admin status?")) return;
+            try {
+                await window.database.ref('admins/' + sanitizedEmail).remove();
+                alert("Admin status revoked successfully.");
+                loadAdmins();
+            } catch(err) {
+                alert("Failed to revoke admin: " + err.message);
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+    </script>
+
+</body>
+</html>

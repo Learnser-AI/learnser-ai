@@ -1,6 +1,5 @@
 // Firebase Configuration
-// Replace these values with your actual Firebase project configuration
-// Get these from: Firebase Console > Project Settings > Your apps > Firebase SDK snippet
+// Initialized from the learnser-ai project credentials.
 
 const firebaseConfig = {
     apiKey: "AIzaSyC5_jj24rIgXT8L_L797lhCFAN7w5ElgNo",
@@ -16,17 +15,19 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Get Firebase services
-const auth = firebase.auth();
-const database = firebase.database();
+// Export services for global use
+window.auth = firebase.auth();
+window.database = firebase.database();
 
-// Super Admin email configuration
-const SUPER_ADMIN_EMAILS = [
+let storage = null;
+try {
+    storage = firebase.storage();
+} catch (e) {
+    console.error("Firebase Storage initialization failed:", e);
+}
+window.storage = storage;
+
+window.SUPER_ADMIN_EMAILS = [
     'aryamansingh2w16@gmail.com',
     'gk123ganubanu@gmail.com'
 ];
-
-// Export for use in other files
-window.auth = auth;
-window.database = database;
-window.SUPER_ADMIN_EMAILS = SUPER_ADMIN_EMAILS;
