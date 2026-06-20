@@ -83,5 +83,6 @@ def purge_cache():
     return jsonify({"status": "cleared"})
 
 if __name__ == '__main__':
-    print("🚀 Starting EduPod Backend Server explicitly on http://127.0.0.1:8080...")
-    app.run(host='127.0.0.1', port=8080, debug=False)
+    port = int(os.environ.get('PORT', 8080))
+    print(f"🚀 Starting EduPod Backend Server on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)

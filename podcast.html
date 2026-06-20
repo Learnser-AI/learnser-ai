@@ -704,6 +704,7 @@
 
     <script>
         const SARVAM_API_KEY = "sk_4rrt5bjm_3GMlfBpRrJ0bFhMGWYaLd5KB";
+        const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : 'https://learnser-ai.onrender.com';
         let globalScriptArray = []; 
         
         let currentLineIndex = 0;
@@ -795,7 +796,7 @@
         async function loadSavedPodcast(topicText, scriptData) {
             resetPlayerState();
             try {
-                await fetch('/purge-cache', { method: 'POST' });
+                await fetch(BACKEND_URL + '/purge-cache', { method: 'POST' });
             } catch(e) {
                 console.log("Cache clear unavailable.");
             }
@@ -837,7 +838,7 @@
 
             resetPlayerState();
             try {
-                await fetch('/purge-cache', { method: 'POST' });
+                await fetch(BACKEND_URL + '/purge-cache', { method: 'POST' });
             } catch(e) {
                 console.log("Cache clear unavailable.");
             }
@@ -1031,7 +1032,7 @@ Return strictly valid raw JSON data matching this exact format schema without an
             }
 
             try {
-                const response = await fetch('/stream-line', {
+                const response = await fetch(BACKEND_URL + '/stream-line', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ speaker: line.speaker || 'HOST A', text: line.text, index: index }),
@@ -1089,7 +1090,7 @@ Return strictly valid raw JSON data matching this exact format schema without an
             const nextLine = globalScriptArray[nextIndex];
             if (nextLine.type === 'direction' || !nextLine.text) return;
 
-            fetch('/stream-line', {
+            fetch(BACKEND_URL + '/stream-line', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ speaker: nextLine.speaker || 'HOST A', text: nextLine.text, index: nextIndex })
