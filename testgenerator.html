@@ -1,0 +1,2350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Custom Test Generator | Learnser AI</title>
+    
+    <script src="theme.js?v=2.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #818cf8; 
+            --accent: #2dd4bf; 
+            --bg: #020617;      
+            --panel-bg: rgba(15, 23, 42, 0.6); 
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8; 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --sidebar-width: 320px;
+            --danger: #ef4444;
+            --success: #10b981;
+            
+            --legend-answered: #10b981;
+            --legend-unanswered: #f87171;
+            --legend-review: #fbbf24;
+            --legend-notvisited: rgba(255, 255, 255, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text-main);
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: 76px 1fr; 
+            transition: grid-template-columns 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body.collapsed { --sidebar-width: 90px; }
+
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(circle at 10% 10%, var(--bg-gradient-1, rgba(129, 140, 248, 0.05)) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 90%, var(--bg-gradient-2, rgba(45, 212, 191, 0.04)) 0%, transparent 40%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* --- QUADRANT 1: TOP-LEFT CORNER --- */
+        .top-navbar-corner {
+            grid-column: 1 / 2; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); border-right: 1px solid var(--glass-border);
+            display: flex; align-items: center; padding: 0 16px; gap: 8px; overflow: hidden; 
+            transition: padding 0.3s, gap 0.3s;
+            z-index: 10;
+        }
+
+        body.collapsed .top-navbar-corner {
+            padding: 0 8px;
+            gap: 4px;
+        }
+
+        .hamburger-btn {
+            background: transparent; border: none; color: var(--text-main);
+            cursor: pointer; border-radius: 8px; padding: 8px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: background 0.2s, padding 0.3s;
+        }
+        .hamburger-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+        body.collapsed .hamburger-btn {
+            padding: 6px; 
+        }
+
+        .user-profile {
+            display: flex; align-items: center;
+            padding: 6px 16px 6px 6px; border-radius: 12px;
+            transition: background 0.2s, padding 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            white-space: nowrap; overflow: hidden;
+        }
+        .user-profile:hover { background: rgba(255, 255, 255, 0.05); }
+
+        body.collapsed .user-profile { 
+            padding: 0; 
+        }
+
+        .pfp {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid var(--accent); object-fit: cover; background: var(--bg); 
+            flex-shrink: 0; margin-right: 16px; 
+            transition: margin-right 0.3s cubic-bezier(0.25, 1, 0.5, 1), width 0.3s, height 0.3s;
+        }
+        
+        body.collapsed .pfp { 
+            margin-right: 0;
+            width: 30px; height: 30px; 
+        }
+
+        .user-details {
+            display: flex; flex-direction: column; justify-content: center; overflow: hidden;
+            width: 180px; transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s;
+        }
+        body.collapsed .user-details { width: 0; opacity: 0; pointer-events: none; }
+
+        .user-name { font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+        .user-email { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- QUADRANT 2: TOP NAVBAR (MAIN) --- */
+        .top-navbar-main {
+            grid-column: 2 / 3; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; padding: 0 32px;
+            z-index: 9;
+        }
+
+        /* --- QUADRANT 3: SIDEBAR NAVIGATION --- */
+        .sidebar {
+            grid-column: 1 / 2; grid-row: 2 / 3;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column;
+            overflow-y: auto; overflow-x: hidden; padding: 32px 20px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .sidebar::-webkit-scrollbar { display: none; }
+
+        .sidebar-menu { display: flex; flex-direction: column; gap: 32px; }
+        .menu-section { display: flex; flex-direction: column; gap: 6px; }
+
+        .section-title {
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-dim); margin-left: 14px; margin-bottom: 8px;
+            transition: opacity 0.2s, height 0.2s; white-space: nowrap;
+        }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 14px; border-radius: 12px; color: var(--text-dim);
+            text-decoration: none; font-weight: 600; font-size: 0.95rem;
+            transition: background 0.2s, color 0.2s, padding 0.3s; white-space: nowrap;
+        }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+        .menu-item.active { background: rgba(129, 140, 248, 0.15); color: var(--primary); }
+
+        .menu-item svg { width: 22px; height: 22px; flex-shrink: 0; transition: color 0.2s; }
+        .menu-item.active svg { color: var(--primary); }
+
+        .menu-text { transition: opacity 0.2s, width 0.2s; }
+
+        body.collapsed .section-title { opacity: 0; height: 0; margin-bottom: 0; overflow: hidden; }
+        body.collapsed .menu-text { opacity: 0; width: 0; overflow: hidden; display: none; }
+        body.collapsed .menu-item { justify-content: center; padding-left: 0; padding-right: 0; }
+
+        /* --- QUADRANT 4: MAIN CONTENT AREA --- */
+        .main-content {
+            grid-column: 2 / 3; grid-row: 2 / 3;
+            position: relative; overflow-y: auto; padding: 40px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .main-content::-webkit-scrollbar { display: none; }
+
+        /* UI Views transitions */
+        .ui-view {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            flex-direction: column;
+            gap: 24px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .ui-view.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .view-title { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+        .view-subtitle { font-size: 0.95rem; color: var(--text-dim); margin-top: -16px; margin-bottom: 8px;}
+
+        /* --- VIEW 1: WIZARD CONFIGURATION --- */
+        .wizard-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .wizard-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+        }
+
+        .syllabus-toggle-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+        }
+        .wizard-crown-icon { font-size: 1.25rem; }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative; display: inline-block; width: 44px; height: 24px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1); transition: .3s; border-radius: 34px;
+            border: 1px solid var(--glass-border);
+        }
+        .toggle-slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background-color: var(--text-dim); transition: .3s; border-radius: 50%;
+        }
+        input:checked + .toggle-slider { background-color: var(--primary); }
+        input:checked + .toggle-slider:before { transform: translateX(20px); background-color: #020617; }
+
+        .wizard-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .wizard-section h3 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.2px;
+        }
+
+        /* Subject Accordions */
+        .subject-accordion {
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.01);
+            transition: all 0.2s ease;
+        }
+
+        .subject-accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .subject-accordion-header:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .subject-header-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .subject-dot { font-size: 1.2rem; }
+        .subject-title { font-weight: 700; font-size: 0.98rem; }
+        .subject-count {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(129, 140, 248, 0.1);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            color: var(--primary);
+        }
+
+        .btn-show-units {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-show-units:hover {
+            color: var(--text-main);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .subject-accordion-content {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(2, 6, 23, 0.2);
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .accordion-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-link-select {
+            background: transparent; border: none; color: var(--primary);
+            font-size: 0.8rem; font-weight: 700; cursor: pointer;
+            padding: 2px 4px;
+        }
+        .btn-link-select:hover { text-decoration: underline; }
+
+        .chapters-checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .chapters-checkbox-grid::-webkit-scrollbar { width: 4px; }
+        .chapters-checkbox-grid::-webkit-scrollbar-track { background: transparent; }
+        .chapters-checkbox-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+        .chapter-cb-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            line-height: 1.4;
+            transition: all 0.15s;
+        }
+        .chapter-cb-label:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(129, 140, 248, 0.2);
+        }
+        .chapter-cb-label input {
+            margin-top: 2px;
+            accent-color: var(--primary);
+        }
+
+        /* Source selection cards */
+        .test-source-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .source-card {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .source-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(129, 140, 248, 0.3);
+        }
+        .source-card.active {
+            background: rgba(129, 140, 248, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 16px -4px rgba(129, 140, 248, 0.3);
+        }
+
+        .source-icon { font-size: 1.8rem; }
+        .source-card h4 { font-size: 0.95rem; font-weight: 800; }
+        .source-card p { font-size: 0.75rem; color: var(--text-dim); line-height: 1.4; }
+
+        /* Count Pills */
+        .count-pills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .count-pill {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .count-pill:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: var(--primary);
+        }
+        .count-pill.active {
+            background: var(--primary);
+            color: #020617;
+            border-color: var(--primary);
+        }
+
+        .wizard-summary-text {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* Duration Control */
+        .duration-control-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .duration-btn {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .duration-btn:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--primary);
+        }
+
+        .duration-display {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--glass-border);
+            padding: 10px 24px;
+            border-radius: 10px;
+            min-width: 120px;
+            justify-content: center;
+        }
+        .duration-value { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+        .duration-unit { font-size: 0.8rem; font-weight: 700; color: var(--text-dim); }
+
+        .wizard-recommendation {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* Year Selection */
+        .years-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .year-card {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            transition: all 0.2s ease;
+            height: 110px;
+        }
+        .year-card:hover {
+            border-color: rgba(129, 140, 248, 0.3);
+        }
+        .year-card.active {
+            background: rgba(129, 140, 248, 0.08);
+            border-color: var(--primary);
+        }
+
+        .year-card-checkmark { font-size: 1.3rem; color: var(--primary); font-weight: 800; }
+        .year-card-number { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+        .year-card h4 { font-size: 0.95rem; font-weight: 700; }
+
+        .btn-custom-years {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-dim);
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            align-self: flex-start;
+            transition: all 0.2s;
+        }
+        .btn-custom-years:hover {
+            color: var(--text-main);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .custom-years-select-panel {
+            background: rgba(2, 6, 23, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .custom-years-checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+        }
+
+        .year-cb-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 700;
+            justify-content: center;
+        }
+        .year-cb-label input { accent-color: var(--primary); }
+
+        .wizard-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn-primary.btn-full, .btn-secondary.btn-full {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #020617;
+            box-shadow: 0 8px 20px -6px rgba(129, 140, 248, 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -6px rgba(129, 140, 248, 0.5);
+            background: #9fa8f9;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border) !important;
+            color: var(--text-main);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.06);
+        }
+
+        /* --- VIEW 2: EXAM TIMED INTERFACE --- */
+        .exam-mode-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .exam-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            padding: 16px 28px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .exam-title-box h2 {
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+        .exam-info-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .exam-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            color: var(--text-dim);
+        }
+
+        .exam-timer-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 8px 16px;
+            border-radius: 10px;
+            color: var(--danger);
+            font-weight: 800;
+            font-size: 1.25rem;
+        }
+        .timer-icon { font-size: 1.15rem; }
+
+        .exam-workspace {
+            display: grid;
+            grid-template-columns: 1.6fr 0.9fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .exam-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .exam-question-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .exam-question-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-height: 400px;
+        }
+
+        .question-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 16px;
+        }
+        .question-index-label {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .question-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .difficulty-tag, .subject-tag {
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        .difficulty-tag.easy { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .difficulty-tag.medium { background: rgba(245, 158, 11, 0.1); color: var(--accent); }
+        .difficulty-tag.hard { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .subject-tag { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+
+        .btn-bookmark {
+            background: none; border: none; cursor: pointer; color: var(--text-dim);
+            transition: color 0.2s;
+        }
+        .btn-bookmark:hover { color: var(--primary); }
+        .btn-bookmark.active { color: var(--primary); fill: var(--primary); }
+
+        .question-text {
+            font-size: 1.08rem;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .options-container-exam {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn-exam {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-align: left;
+            transition: all 0.15s;
+            width: 100%;
+        }
+        .option-btn-exam:hover {
+            background: rgba(255,255,255,0.03);
+            border-color: var(--primary);
+        }
+        .option-btn-exam.selected {
+            background: rgba(129, 140, 248, 0.08);
+            border-color: var(--primary);
+        }
+
+        .option-letter-box {
+            width: 30px; height: 30px; border-radius: 6px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .option-btn-exam.selected .option-letter-box {
+            background: var(--primary); color: #020617;
+        }
+
+        .media-container img { max-width: 100%; max-height: 300px; border-radius: 8px; margin-top: 12px; border: 1px solid var(--glass-border); }
+
+        .exam-navigation-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .nav-left, .nav-right { display: flex; gap: 12px; }
+
+        .btn-exam-nav {
+            padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; border: none;
+        }
+        .btn-danger-outline { background: transparent; border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); }
+        .btn-danger-outline:hover { background: rgba(239, 68, 68, 0.08); }
+        .btn-warning-outline { background: transparent; border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; }
+        .btn-warning-outline:hover { background: rgba(245, 158, 11, 0.08); }
+        .btn-secondary-outline { background: transparent; border: 1px solid var(--glass-border); color: var(--text-main); }
+        .btn-secondary-outline:hover { background: rgba(255,255,255,0.05); }
+
+        .exam-palette-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .palette-summary h3 { font-size: 0.98rem; font-weight: 800; margin-bottom: 16px; }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .palette-grid::-webkit-scrollbar { width: 4px; }
+        .palette-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+        .palette-btn {
+            height: 40px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; border: none; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .palette-btn.notvisited { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: var(--text-dim); }
+        .palette-btn.unanswered { background: var(--legend-unanswered); color: #020617; }
+        .palette-btn.answered { background: var(--legend-answered); color: #020617; }
+        .palette-btn.review { background: var(--legend-review); color: #020617; }
+        .palette-btn.active { outline: 2px solid var(--text-main); outline-offset: 2px; }
+
+        .palette-legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 16px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 700; color: var(--text-dim); }
+        .legend-color { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+        .legend-answered { background: var(--legend-answered); }
+        .legend-unanswered { background: var(--legend-unanswered); }
+        .legend-review { background: var(--legend-review); }
+        .legend-notvisited { background: var(--legend-notvisited); border: 1px solid rgba(255,255,255,0.08); }
+
+        .palette-actions { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px; }
+
+        /* Fullscreen Blocker Overlay */
+        .fullscreen-blocker-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.95);
+            backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 99999;
+        }
+        .blocker-card {
+            background: var(--bg); border: 1px solid var(--glass-border); padding: 40px; border-radius: 24px;
+            max-width: 500px; width: 90%; text-align: center; display: flex; flex-direction: column; gap: 16px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+        }
+        .blocker-icon { font-size: 3rem; animation: pulse-warning 2s infinite; }
+        @keyframes pulse-warning {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        .blocker-card h2 { font-size: 1.6rem; font-weight: 800; color: var(--text-main); }
+        .blocker-card p { font-size: 0.9rem; color: var(--text-dim); line-height: 1.6; }
+
+        /* --- VIEW 3: TEST RESULTS PAGE --- */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .metric-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .metric-value { font-size: 2rem; font-weight: 800; color: var(--text-main); }
+        .metric-label { font-size: 0.75rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; }
+        
+        .card-score .metric-value { color: var(--primary); }
+        .card-success .metric-value { color: var(--success); }
+        .card-danger .metric-value { color: var(--danger); }
+        .card-warning .metric-value { color: #fbbf24; }
+
+        .results-tab-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 28px;
+            backdrop-filter: blur(10px);
+        }
+
+        .results-tabs {
+            display: flex;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 12px;
+        }
+
+        .results-tab-btn {
+            background: transparent; border: none; color: var(--text-dim); font-size: 0.9rem; font-weight: 700; cursor: pointer; padding: 8px 16px; border-radius: 8px; transition: all 0.2s;
+        }
+        .results-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.04); }
+        .results-tab-btn.active { color: var(--primary); background: rgba(129, 140, 248, 0.1); }
+
+        .ai-review-card {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ai-review-header { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 14px; }
+        .ai-sparkles-icon { font-size: 1.25rem; color: var(--accent); }
+        .ai-review-header h3 { font-size: 1.05rem; font-weight: 800; }
+        .ai-review-body { font-size: 0.95rem; line-height: 1.6; color: var(--text-dim); white-space: pre-line; }
+
+        .solutions-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .filter-btn {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px 16px; font-size: 0.8rem; font-weight: 700; color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+        }
+        .filter-btn:hover { border-color: var(--primary); color: var(--text-main); }
+        .filter-btn.active { background: var(--primary); color: #020617; border-color: var(--primary); }
+
+        .solutions-list { display: flex; flex-direction: column; gap: 16px; }
+        .solution-card {
+            background: rgba(255,255,255,0.01); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .solution-card.correct { border-color: rgba(16, 185, 129, 0.2); }
+        .solution-card.incorrect { border-color: rgba(239, 68, 68, 0.2); }
+        .solution-card.unattempted { border-color: var(--glass-border); }
+
+        .solution-card-header { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-dim); }
+        .solution-text { font-size: 0.98rem; font-weight: 600; line-height: 1.5; }
+        .solution-answers { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 700; margin-top: 4px; }
+        .user-ans-correct { color: var(--success); }
+        .user-ans-wrong { color: var(--danger); }
+        .solution-explanation { background: rgba(255,255,255,0.02); border-radius: 10px; padding: 14px; font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin-top: 4px; }
+
+        .results-actions-bar { margin-top: 12px; }
+
+        /* Mobile responsive */
+        @media (max-width: 1024px) {
+            body { grid-template-columns: 0px 1fr; }
+            body.collapsed { --sidebar-width: 320px; grid-template-columns: var(--sidebar-width) 1fr; }
+            .sidebar {
+                position: fixed; top: 76px; left: 0; height: calc(100vh - 76px); z-index: 99; transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            }
+            body.collapsed .sidebar { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-navbar-corner">
+        <button class="hamburger-btn" id="sidebar-toggle">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="user-profile">
+            <img class="pfp" id="user-pfp" src="https://ui-avatars.com/api/?name=Student&background=818cf8&color=fff&rounded=true" alt="PFP">
+            <div class="user-details">
+                <span class="user-name" id="user-name">Student</span>
+                <span class="user-email" id="user-email">Loading...</span>
+            </div>
+        </div>
+    </div>
+    
+    <header class="top-navbar-main">
+        <div style="font-weight: 800; letter-spacing: 1px; font-size: 1.2rem;">LEARNSER <span style="color: var(--accent);">AI</span></div>
+    </header>
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">
+            <div class="menu-section">
+                <div class="section-title">OVERVIEW</div>
+                <a href="dashbord.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="section-title">LEARN</div>
+                <a href="ai_doubtsolver.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+                    <span class="menu-text">AI Doubt Solver</span>
+                </a>
+                <a href="chapternotes.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span class="menu-text">Chapter Notes</span>
+                </a>
+                <a href="plannedtt.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span class="menu-text">Smart Timetable</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="section-title">PRACTICE</div>
+                <a href="testgenerator.html" class="menu-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    <span class="menu-text">AI Test Generator</span>
+                </a>
+                <a href="pyq.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="14" r="1"></circle><path d="M12 11c1.5 0 2-1 2-2s-.5-2-2-2-2 1-2 2"></path></svg>
+                    <span class="menu-text">Previous Year Qs</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="section-title">PROGRESS</div>
+                <a href="analytics.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <span class="menu-text">Analytics</span>
+                </a>
+                <a href="rewardshop.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                    <span class="menu-text">Streak & Coins</span>
+                </a>
+                <a href="leaderboard.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                    <span class="menu-text">Leaderboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="section-title">COMMUNITY</div>
+                <a href="podcast.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    <span class="menu-text">AI Podcast</span>
+                </a>
+                <a href="#" class="menu-item" style="opacity: 0.5; cursor: not-allowed;" onclick="alert('Community Chat is temporarily disabled.'); return false;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="menu-text">Community Chat <small style="font-size: 0.65rem; color: var(--text-dim);">(Disabled)</small></span>
+                </a>
+            </div>
+        </div>
+        <div style="flex-grow: 1;"></div>
+        <div class="menu-section" style="margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 24px;">
+            <a href="admin.html" id="adminNavLink" class="menu-item" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
+                <span class="menu-text">Admin Panel</span>
+            </a>
+            <a href="settings.html" class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span class="menu-text">Settings</span>
+            </a>
+            <a href="#" onclick="signOutUser(); return false;" class="menu-item" style="color: #f87171;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span class="menu-text">Log Out</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        
+        <!-- VIEW 1: TEST CONFIGURATION WIZARD -->
+        <div id="view-wizard" class="ui-view active">
+            <h2 class="view-title">Create Custom Mock Test</h2>
+            <p class="view-subtitle">Configure your mock test settings from JEE Mains past questions</p>
+
+            <div class="wizard-card">
+                
+                <!-- Out of Syllabus Toggle -->
+                <div class="wizard-row">
+                    <div class="syllabus-toggle-info">
+                        <span class="wizard-crown-icon">👑</span>
+                        <span>Exclude Out of Syllabus Questions</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="wizard-syllabus-toggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <!-- Subject Chapter Selection Accordions -->
+                <div class="wizard-section">
+                    <h3>Select Subjects and Chapters</h3>
+                    
+                    <!-- Physics Accordion -->
+                    <div class="subject-accordion" id="physics-accordion">
+                        <div class="subject-accordion-header" onclick="toggleAccordion('physics')">
+                            <div class="subject-header-info">
+                                <span class="subject-dot">⚛️</span>
+                                <span class="subject-title">Physics</span>
+                                <span class="subject-count" id="count-physics">0 Selected</span>
+                            </div>
+                            <button class="btn-show-units" onclick="event.stopPropagation(); toggleAccordion('physics')">SHOW UNITS</button>
+                        </div>
+                        <div class="subject-accordion-content" id="content-physics">
+                            <div class="accordion-actions">
+                                <button class="btn-link-select" onclick="selectSubjectChapters('physics', true)">Select All</button>
+                                <button class="btn-link-select" onclick="selectSubjectChapters('physics', false)">Select None</button>
+                            </div>
+                            <div class="chapters-checkbox-grid" id="grid-physics">
+                                <div style="color: var(--text-dim); font-size: 0.8rem; padding: 10px;">Loading chapters...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chemistry Accordion -->
+                    <div class="subject-accordion" id="chemistry-accordion">
+                        <div class="subject-accordion-header" onclick="toggleAccordion('chemistry')">
+                            <div class="subject-header-info">
+                                <span class="subject-dot">🧪</span>
+                                <span class="subject-title">Chemistry</span>
+                                <span class="subject-count" id="count-chemistry">0 Selected</span>
+                            </div>
+                            <button class="btn-show-units" onclick="event.stopPropagation(); toggleAccordion('chemistry')">SHOW UNITS</button>
+                        </div>
+                        <div class="subject-accordion-content" id="content-chemistry">
+                            <div class="accordion-actions">
+                                <button class="btn-link-select" onclick="selectSubjectChapters('chemistry', true)">Select All</button>
+                                <button class="btn-link-select" onclick="selectSubjectChapters('chemistry', false)">Select None</button>
+                            </div>
+                            <div class="chapters-checkbox-grid" id="grid-chemistry">
+                                <div style="color: var(--text-dim); font-size: 0.8rem; padding: 10px;">Loading chapters...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mathematics Accordion -->
+                    <div class="subject-accordion" id="mathematics-accordion">
+                        <div class="subject-accordion-header" onclick="toggleAccordion('mathematics')">
+                            <div class="subject-header-info">
+                                <span class="subject-dot">📐</span>
+                                <span class="subject-title">Mathematics</span>
+                                <span class="subject-count" id="count-mathematics">0 Selected</span>
+                            </div>
+                            <button class="btn-show-units" onclick="event.stopPropagation(); toggleAccordion('mathematics')">SHOW UNITS</button>
+                        </div>
+                        <div class="subject-accordion-content" id="content-mathematics">
+                            <div class="accordion-actions">
+                                <button class="btn-link-select" onclick="selectSubjectChapters('mathematics', true)">Select All</button>
+                                <button class="btn-link-select" onclick="selectSubjectChapters('mathematics', false)">Select None</button>
+                            </div>
+                            <div class="chapters-checkbox-grid" id="grid-mathematics">
+                                <div style="color: var(--text-dim); font-size: 0.8rem; padding: 10px;">Loading chapters...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Test From Section -->
+                <div class="wizard-section">
+                    <h3>Create Test From</h3>
+                    <div class="test-source-grid">
+                        <div class="source-card active" data-source="all" onclick="selectTestSource('all')">
+                            <div class="source-icon">📋</div>
+                            <h4>All Qs</h4>
+                            <p>Test will draw from all JEE Main questions</p>
+                        </div>
+                        <div class="source-card" data-source="incorrect" onclick="selectTestSource('incorrect')">
+                            <div class="source-icon">❌</div>
+                            <h4>Incorrect Qs</h4>
+                            <p>From your previously wrong attempts</p>
+                        </div>
+                        <div class="source-card" data-source="unattempted" onclick="selectTestSource('unattempted')">
+                            <div class="source-icon">⚠️</div>
+                            <h4>Unattempted Qs</h4>
+                            <p>Questions you haven't attempted yet</p>
+                        </div>
+                        <div class="source-card" data-source="bookmarked" onclick="selectTestSource('bookmarked')">
+                            <div class="source-icon">🔖</div>
+                            <h4>Bookmarked Qs</h4>
+                            <p>Questions you saved to bookmarks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Count Section -->
+                <div class="wizard-section">
+                    <h3>Number of Qs per subject</h3>
+                    <div class="count-pills-grid">
+                        <div class="count-pill" data-count="5" onclick="selectQuestionCount(5)">5 Qs</div>
+                        <div class="count-pill" data-count="10" onclick="selectQuestionCount(10)">10 Qs</div>
+                        <div class="count-pill" data-count="15" onclick="selectQuestionCount(15)">15 Qs</div>
+                        <div class="count-pill" data-count="20" onclick="selectQuestionCount(20)">20 Qs</div>
+                        <div class="count-pill" data-count="25" onclick="selectQuestionCount(25)">25 Qs</div>
+                        <div class="count-pill active" data-count="30" onclick="selectQuestionCount(30)">30 Qs</div>
+                    </div>
+                    <div class="wizard-summary-text" id="wizard-total-qs-text">Total Questions: 0 (30 Qs x 0 Subjects)</div>
+                </div>
+
+                <!-- Test Duration Section -->
+                <div class="wizard-section">
+                    <h3>Test Duration</h3>
+                    <div class="duration-control-container">
+                        <button class="duration-btn" onclick="adjustDuration(-5)">-</button>
+                        <div class="duration-display">
+                            <span class="duration-value" id="duration-value">180</span>
+                            <span class="duration-unit">min</span>
+                        </div>
+                        <button class="duration-btn" onclick="adjustDuration(5)">+</button>
+                    </div>
+                    <div class="wizard-recommendation" id="wizard-duration-rec">Recommended Time: 0 min</div>
+                </div>
+
+                <!-- Year Selection Section -->
+                <div class="wizard-section">
+                    <h3>Select Year of Paper</h3>
+                    <div class="years-cards-grid">
+                        <div class="year-card active" data-years="all" onclick="selectYearOption('all')">
+                            <div class="year-card-checkmark">✓</div>
+                            <h4>All Years</h4>
+                        </div>
+                        <div class="year-card" data-years="3" onclick="selectYearOption('3')">
+                            <div class="year-card-number">3</div>
+                            <h4>Last 3 Years</h4>
+                        </div>
+                        <div class="year-card" data-years="5" onclick="selectYearOption('5')">
+                            <div class="year-card-number">5</div>
+                            <h4>Last 5 Years</h4>
+                        </div>
+                        <div class="year-card" data-years="10" onclick="selectYearOption('10')">
+                            <div class="year-card-number">10</div>
+                            <h4>Last 10 Years</h4>
+                        </div>
+                    </div>
+
+                    <button class="btn-custom-years" id="btn-toggle-custom-years" onclick="toggleCustomYearsPanel()">✏️ Select Custom Years</button>
+                    <div class="custom-years-select-panel" id="custom-years-panel">
+                        <div class="custom-years-checkbox-grid">
+                            <label class="year-cb-label"><input type="checkbox" value="2026" class="year-cb" onchange="updateCustomYearsSelected()"> 2026</label>
+                            <label class="year-cb-label"><input type="checkbox" value="2025" class="year-cb" onchange="updateCustomYearsSelected()"> 2025</label>
+                            <label class="year-cb-label"><input type="checkbox" value="2024" class="year-cb" onchange="updateCustomYearsSelected()"> 2024</label>
+                            <label class="year-cb-label"><input type="checkbox" value="2023" class="year-cb" onchange="updateCustomYearsSelected()"> 2023</label>
+                            <label class="year-cb-label"><input type="checkbox" value="2022" class="year-cb" onchange="updateCustomYearsSelected()"> 2022</label>
+                            <label class="year-cb-label"><input type="checkbox" value="2021" class="year-cb" onchange="updateCustomYearsSelected()"> 2021</label>
+                            <label class="year-cb-label"><input type="checkbox" value="2020" class="year-cb" onchange="updateCustomYearsSelected()"> 2020</label>
+                            <label class="year-cb-label"><input type="checkbox" value="2019" class="year-cb" onchange="updateCustomYearsSelected()"> 2019</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="wizard-actions">
+                    <button class="btn-primary btn-full" onclick="generateAndStartTest()">🚀 Start Test</button>
+                    <button class="btn-secondary btn-full" onclick="window.location.href='dashbord.html'">Cancel</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- VIEW 2: EXAM MODE (TIMED TEST) -->
+        <div id="view-exam" class="ui-view">
+            <div class="exam-header-bar">
+                <div class="exam-title-box">
+                    <h2>JEE Mains Custom Test</h2>
+                    <div class="exam-info-badges">
+                        <span class="exam-badge" id="exam-subject-badge">Physics + Chemistry + Maths</span>
+                        <span class="exam-badge" id="exam-warning-badge" style="background-color: var(--danger); color: white; display: none;">Tab Switch Warning: 0/3</span>
+                    </div>
+                </div>
+                <div class="exam-timer-box">
+                    <span class="timer-icon">⏰</span>
+                    <span class="exam-timer" id="exam-timer-display">180:00</span>
+                </div>
+            </div>
+
+            <div class="exam-workspace">
+                
+                <!-- Left Panel: Question -->
+                <div class="exam-question-panel">
+                    <div class="exam-question-card">
+                        <div class="question-card-header">
+                            <span class="question-index-label" id="exam-q-number-label">Question 1</span>
+                            <div class="question-header-actions">
+                                <span class="difficulty-tag" id="exam-q-difficulty-badge">Medium</span>
+                                <span class="subject-tag" id="exam-q-subject-badge">Physics</span>
+                                <button class="btn-bookmark" id="btn-exam-bookmark" onclick="handleBookmarkToggle()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" class="bookmark-svg">
+                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="question-text" id="exam-q-body-text">
+                            Loading question...
+                        </div>
+
+                        <div class="options-container-exam" id="exam-options-container">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="exam-navigation-bar">
+                        <div class="nav-left">
+                            <button class="btn-exam-nav btn-danger-outline" onclick="clearExamResponse()">Clear Response</button>
+                            <button class="btn-exam-nav btn-warning-outline" onclick="markExamForReview()">Mark for Review</button>
+                        </div>
+                        <div class="nav-right">
+                            <button class="btn-exam-nav btn-secondary-outline" onclick="navigateExamQuestion(-1)">← Previous</button>
+                            <button class="btn-exam-nav btn-primary" onclick="saveAndNextExamQuestion()">Save & Next →</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Palette -->
+                <div class="exam-palette-panel">
+                    <div class="palette-summary">
+                        <h3>Question Palette</h3>
+                        <div class="palette-grid" id="exam-palette-grid">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="palette-legend">
+                        <div class="legend-item"><span class="legend-color legend-answered"></span> Answered</div>
+                        <div class="legend-item"><span class="legend-color legend-unanswered"></span> Unanswered</div>
+                        <div class="legend-item"><span class="legend-color legend-notvisited"></span> Not Visited</div>
+                        <div class="legend-item"><span class="legend-color legend-review"></span> Marked for Review</div>
+                    </div>
+
+                    <div class="palette-actions">
+                        <button class="btn-primary btn-full" onclick="submitExamWithConfirmation()">Submit Test</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- VIEW 3: RESULTS PAGE -->
+        <div id="view-results" class="ui-view">
+            <h2 class="view-title">Test Performance Analysis</h2>
+            <p class="view-subtitle" id="results-subtitle-label">JEE Mains Custom Test Completed</p>
+
+            <!-- Metrics Grid -->
+            <div class="metrics-grid">
+                <div class="metric-card card-score">
+                    <div class="metric-value" id="results-score">0</div>
+                    <div class="metric-label">Score (JEE Mains)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="results-accuracy">0%</div>
+                    <div class="metric-label">Accuracy</div>
+                </div>
+                <div class="metric-card card-success">
+                    <div class="metric-value" id="results-correct">0</div>
+                    <div class="metric-label">Correct</div>
+                </div>
+                <div class="metric-card card-danger">
+                    <div class="metric-value" id="results-incorrect">0</div>
+                    <div class="metric-label">Incorrect</div>
+                </div>
+                <div class="metric-card card-warning">
+                    <div class="metric-value" id="results-unattempted">0</div>
+                    <div class="metric-label">Unattempted</div>
+                </div>
+            </div>
+
+            <!-- Detailed feedback tabs -->
+            <div class="results-tab-container">
+                <div class="results-tabs">
+                    <button class="results-tab-btn active" id="btn-tab-ai" onclick="switchResultsTab('ai')">🤖 AI Assessment</button>
+                    <button class="results-tab-btn" id="btn-tab-solutions" onclick="switchResultsTab('solutions')">📝 Questions & Solutions</button>
+                </div>
+
+                <!-- Tab content: AI Review -->
+                <div id="tab-results-ai" class="ai-review-card">
+                    <div class="ai-review-header">
+                        <span class="ai-sparkles-icon">✨</span>
+                        <h3>Detailed AI Assessment</h3>
+                    </div>
+                    <div class="ai-review-body" id="results-ai-content">
+                        Generating AI review of your performance...
+                    </div>
+                </div>
+
+                <!-- Tab content: Solutions -->
+                <div id="tab-results-solutions" style="display: none;">
+                    <div class="solutions-filter-bar">
+                        <button class="filter-btn active" data-filter="all" onclick="filterSolutions('all')">All Qs</button>
+                        <button class="filter-btn" data-filter="correct" onclick="filterSolutions('correct')">Correct</button>
+                        <button class="filter-btn" data-filter="incorrect" onclick="filterSolutions('incorrect')">Incorrect</button>
+                        <button class="filter-btn" data-filter="unattempted" onclick="filterSolutions('unattempted')">Unattempted</button>
+                    </div>
+                    <div class="solutions-list" id="results-solutions-list">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-actions-bar">
+                <button class="btn-primary" onclick="backToWizard()">Take Another Test</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Fullscreen Blocker Overlay -->
+    <div id="fullscreenBlocker" class="fullscreen-blocker-overlay" style="display: none;">
+        <div class="blocker-card">
+            <div class="blocker-icon">⚠️</div>
+            <h2>Fullscreen Required</h2>
+            <p>To maintain exam integrity, this test can only be attempted in fullscreen mode. Any attempt to exit fullscreen or resize the window is restricted.</p>
+            <button class="btn-primary" onclick="enterFullscreenAndResume()">Go Fullscreen & Resume</button>
+        </div>
+    </div>
+
+    <!-- Supabase SDK & Configuration Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script src="auth-check.js"></script>
+
+    <script>
+        // Global wizard variables
+        let wizardChapters = { physics: [], chemistry: [], mathematics: [] };
+        let wizardSelectedChapters = { physics: [], chemistry: [], mathematics: [] };
+        let selectedTestSourceOption = 'all';
+        let selectedQuestionCountOption = 30;
+        let testDurationValue = 180;
+        let selectedYearsOption = 'all';
+        let customYearsSelected = [];
+
+        // Global exam variables
+        let examQuestions = [];
+        let examAnswers = []; // questionId -> selectedOptionIdx (0-3 or null)
+        let examQuestionStatuses = []; // 'notvisited', 'unanswered', 'answered', 'review'
+        let examQuestionTimes = []; // questionId -> secondsSpent
+        let activeQuestionStartTime = null;
+        let currentExamQuestionIndex = 0;
+        let examSecondsRemaining = 0;
+        let examTimerInterval = null;
+        let examTabSwitchCount = 0;
+        let isExamActive = false;
+
+        // Sidebar Toggle
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('collapsed');
+        });
+
+        // Initialize custom test settings on load
+        window.addEventListener('load', async () => {
+            loadWizardChapters();
+            setupFullscreenListeners();
+        });
+
+        // Toggle subject chapters accordion
+        function toggleAccordion(subject) {
+            const accordion = document.getElementById(`${subject}-accordion`);
+            const content = document.getElementById(`content-${subject}`);
+            const btn = accordion.querySelector('.btn-show-units');
+
+            const isCollapsed = content.style.display === 'none' || content.style.display === '';
+
+            if (isCollapsed) {
+                content.style.display = 'flex';
+                btn.textContent = 'HIDE UNITS';
+            } else {
+                content.style.display = 'none';
+                btn.textContent = 'SHOW UNITS';
+            }
+        }
+
+        // Fetch all syllabus chapters from Supabase
+        async function loadWizardChapters() {
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+
+                const { data: chapters, error } = await supabase
+                    .from('chapters')
+                    .select('*')
+                    .order('sort_order', { ascending: true });
+
+                if (error) throw error;
+
+                if (data = chapters) {
+                    // Group by subject
+                    ['physics', 'chemistry', 'mathematics'].forEach(sub => {
+                        wizardChapters[sub] = chapters.filter(c => c.subject === sub);
+                        renderChaptersGrid(sub);
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to load syllabus chapters:', err);
+            }
+        }
+
+        // Render chapter checkboxes inside grids
+        function renderChaptersGrid(subject) {
+            const grid = document.getElementById(`grid-${subject}`);
+            grid.innerHTML = '';
+
+            const list = wizardChapters[subject];
+            if (list.length === 0) {
+                grid.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; padding: 10px;">No chapters yet.</div>';
+                return;
+            }
+
+            list.forEach(ch => {
+                const label = document.createElement('label');
+                label.className = 'chapter-cb-label';
+                label.innerHTML = `
+                    <input type="checkbox" value="${ch.id}" class="chapter-cb-${subject}" onchange="handleChapterCheckboxChange('${subject}')">
+                    <span>${escapeHtml(ch.name)}</span>
+                `;
+                grid.appendChild(label);
+            });
+
+            updateWizardSummary();
+        }
+
+        // Checkbox change handlers
+        function handleChapterCheckboxChange(subject) {
+            const checkboxes = document.querySelectorAll(`.chapter-cb-${subject}:checked`);
+            wizardSelectedChapters[subject] = Array.from(checkboxes).map(cb => cb.value);
+            
+            // Update badge count
+            const countBadge = document.getElementById(`count-${subject}`);
+            countBadge.textContent = `${wizardSelectedChapters[subject].length} Selected`;
+
+            updateWizardSummary();
+        }
+
+        // Select All / Select None units button helper
+        function selectSubjectChapters(subject, selectAll) {
+            const checkboxes = document.querySelectorAll(`.chapter-cb-${subject}`);
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll;
+            });
+            handleChapterCheckboxChange(subject);
+        }
+
+        // Toggle custom source selector
+        function selectTestSource(source) {
+            selectedTestSourceOption = source;
+            document.querySelectorAll('.source-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.querySelector(`.source-card[data-source="${source}"]`).classList.add('active');
+        }
+
+        // Toggle question count pills
+        function selectQuestionCount(count) {
+            selectedQuestionCountOption = count;
+            document.querySelectorAll('.count-pill').forEach(pill => {
+                pill.classList.remove('active');
+            });
+            document.querySelector(`.count-pill[data-count="${count}"]`).classList.add('active');
+            updateWizardSummary();
+        }
+
+        // Adjust Duration stepper
+        function adjustDuration(amount) {
+            testDurationValue += amount;
+            if (testDurationValue < 5) testDurationValue = 5;
+            if (testDurationValue > 300) testDurationValue = 300;
+
+            document.getElementById('duration-value').textContent = testDurationValue;
+        }
+
+        // Toggle Year selection cards
+        function selectYearOption(option) {
+            selectedYearsOption = option;
+            document.querySelectorAll('.year-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            const activeCard = document.querySelector(`.year-card[data-years="${option}"]`);
+            if (activeCard) activeCard.classList.add('active');
+
+            // Hide custom years checkboxes panel if they selected a card
+            document.getElementById('custom-years-panel').style.display = 'none';
+        }
+
+        // Toggle custom years panel
+        function toggleCustomYearsPanel() {
+            // Remove active class from year cards
+            document.querySelectorAll('.year-card').forEach(card => card.classList.remove('active'));
+            selectedYearsOption = 'custom';
+
+            const panel = document.getElementById('custom-years-panel');
+            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        // Update selected custom years list
+        function updateCustomYearsSelected() {
+            const checkedYears = document.querySelectorAll('.year-cb:checked');
+            customYearsSelected = Array.from(checkedYears).map(cb => cb.value);
+        }
+
+        // Update Wizard overview text
+        function updateWizardSummary() {
+            let activeSubjects = 0;
+            ['physics', 'chemistry', 'mathematics'].forEach(sub => {
+                if (wizardSelectedChapters[sub].length > 0) activeSubjects++;
+            });
+
+            const totalQs = activeSubjects * selectedQuestionCountOption;
+            document.getElementById('wizard-total-qs-text').textContent = `Total Questions: ${totalQs} (${selectedQuestionCountOption} Qs x ${activeSubjects} Subject${activeSubjects !== 1 ? 's' : ''})`;
+
+            const recommendedTime = totalQs * 2;
+            document.getElementById('wizard-duration-rec').textContent = `Recommended Time: ${recommendedTime} min`;
+
+            // Auto-adjust default duration value to match recommended time on load
+            testDurationValue = recommendedTime > 0 ? recommendedTime : 180;
+            document.getElementById('duration-value').textContent = testDurationValue;
+        }
+
+        // --- BALANCING & GENERATING CUSTOM TEST ---
+        async function generateAndStartTest() {
+            let selectedSubjects = [];
+            let chapterIdsToQuery = [];
+
+            ['physics', 'chemistry', 'mathematics'].forEach(sub => {
+                if (wizardSelectedChapters[sub].length > 0) {
+                    selectedSubjects.push(sub);
+                    chapterIdsToQuery = [...chapterIdsToQuery, ...wizardSelectedChapters[sub]];
+                }
+            });
+
+            if (selectedSubjects.length === 0) {
+                alert("Please select at least one subject and select chapters to start the test!");
+                return;
+            }
+
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                // Fetch bookmark and wrong attempts maps from localstorage
+                const localBookmarks = JSON.parse(localStorage.getItem('learnser_bookmarks') || '{}');
+                const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
+
+                // Query chapters questions
+                const { data: questions, error } = await supabase
+                    .from('questions')
+                    .select('*')
+                    .in('chapter_id', chapterIdsToQuery);
+
+                if (error) throw error;
+
+                if (!questions || questions.length === 0) {
+                    alert("No questions found for the selected chapters in the database!");
+                    return;
+                }
+
+                // Apply Out-Of-Syllabus filters
+                const excludeOutOfSyllabus = document.getElementById('wizard-syllabus-toggle').checked;
+                let filteredQs = questions.filter(q => {
+                    if (excludeOutOfSyllabus && (q.outOfSyllabus === true || q.syllabus === 'out')) return false;
+                    return true;
+                });
+
+                // Apply Source Filter (Incorrect, Unattempted, Bookmarked)
+                filteredQs = filteredQs.filter(q => {
+                    if (selectedTestSourceOption === 'incorrect') {
+                        // User had wrong attempt
+                        return localAttempts[q.id] && localAttempts[q.id].correct === false;
+                    } else if (selectedTestSourceOption === 'unattempted') {
+                        // User has never attempted this question
+                        return !localAttempts[q.id];
+                    } else if (selectedTestSourceOption === 'bookmarked') {
+                        // Bookmarked questions
+                        return localBookmarks[q.id] === true;
+                    }
+                    return true; // All Qs
+                });
+
+                // Apply Years Filter
+                let yearsFilterList = [];
+                if (selectedYearsOption !== 'all' && selectedYearsOption !== 'custom') {
+                    const currentYear = new Date().getFullYear();
+                    const limit = parseInt(selectedYearsOption);
+                    for (let i = 0; i < limit; i++) {
+                        yearsFilterList.push(String(currentYear - i));
+                    }
+                } else if (selectedYearsOption === 'custom') {
+                    yearsFilterList = customYearsSelected;
+                }
+
+                if (yearsFilterList.length > 0) {
+                    filteredQs = filteredQs.filter(q => q.year && yearsFilterList.includes(String(q.year)));
+                }
+
+                // Balance Questions (30% Easy, 50% Medium, 20% Hard) per subject
+                examQuestions = [];
+
+                selectedSubjects.forEach(subject => {
+                    const subQs = filteredQs.filter(q => q.subject === subject);
+                    if (subQs.length === 0) return;
+
+                    const easyPool = subQs.filter(q => (q.difficulty || '').toLowerCase() === 'easy');
+                    const mediumPool = subQs.filter(q => (q.difficulty || '').toLowerCase() === 'medium' || !q.difficulty);
+                    const hardPool = subQs.filter(q => (q.difficulty || '').toLowerCase() === 'hard');
+
+                    const targetEasy = Math.round(selectedQuestionCountOption * 0.3);
+                    const targetMedium = Math.round(selectedQuestionCountOption * 0.5);
+                    const targetHard = selectedQuestionCountOption - targetEasy - targetMedium;
+
+                    const drawRandom = (arr, count) => {
+                        const shuffled = [...arr].sort(() => 0.5 - Math.random());
+                        return shuffled.slice(0, count);
+                    };
+
+                    let selected = [
+                        ...drawRandom(easyPool, targetEasy),
+                        ...drawRandom(mediumPool, targetMedium),
+                        ...drawRandom(hardPool, targetHard)
+                    ];
+
+                    // Backfill if not enough balanced questions
+                    if (selected.length < selectedQuestionCountOption && subQs.length > selected.length) {
+                        const selectedIds = new Set(selected.map(q => q.id));
+                        const remainingPool = subQs.filter(q => !selectedIds.has(q.id));
+                        const extraNeeded = selectedQuestionCountOption - selected.length;
+                        selected = [...selected, ...drawRandom(remainingPool, extraNeeded)];
+                    }
+
+                    // Shuffle
+                    selected.sort(() => 0.5 - Math.random());
+                    examQuestions = [...examQuestions, ...selected];
+                });
+
+                if (examQuestions.length === 0) {
+                    alert("No questions found matching your filter criteria. Try selecting more chapters or widening your year filters.");
+                    return;
+                }
+
+                // Initialize Exam state
+                examAnswers = {};
+                examQuestionStatuses = new Array(examQuestions.length).fill('notvisited');
+                examQuestionStatuses[0] = 'unanswered';
+                examQuestionTimes = {};
+                examQuestions.forEach(q => {
+                    examQuestionTimes[q.id] = 0;
+                });
+                
+                currentExamQuestionIndex = 0;
+                examTabSwitchCount = 0;
+                
+                // Duration setup
+                examSecondsRemaining = testDurationValue * 60;
+                
+                // Badges setup
+                const badgeText = selectedSubjects.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(" + ");
+                document.getElementById('exam-subject-badge').textContent = badgeText;
+                
+                // Reset Warning Badge
+                const warningBadge = document.getElementById('exam-warning-badge');
+                warningBadge.style.display = 'none';
+                warningBadge.textContent = 'Tab Switch Warning: 0/3';
+
+                // Launch into Exam Mode
+                isExamActive = true;
+                activeQuestionStartTime = Date.now();
+                
+                switchView('exam');
+                
+                // Enter fullscreen
+                enterFullscreenMode();
+                
+                startExamTimer();
+                renderExamQuestion();
+                renderExamPalette();
+
+            } catch (err) {
+                console.error("Error setting up custom test:", err);
+                alert("Failed to configure test. Check database/connection.");
+            }
+        }
+
+        // --- EXAM MODE CONTROLLER ---
+        function startExamTimer() {
+            if (examTimerInterval) clearInterval(examTimerInterval);
+
+            updateTimerDisplay();
+
+            examTimerInterval = setInterval(() => {
+                examSecondsRemaining--;
+                updateTimerDisplay();
+
+                if (examSecondsRemaining <= 0) {
+                    clearInterval(examTimerInterval);
+                    alert("Time's up! Your custom test is being submitted.");
+                    submitExam('timeout');
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const display = document.getElementById('exam-timer-display');
+            if (!display) return;
+
+            const h = Math.floor(examSecondsRemaining / 3600);
+            const m = Math.floor((examSecondsRemaining % 3600) / 60);
+            const s = examSecondsRemaining % 60;
+
+            let timeStr = "";
+            if (h > 0) {
+                timeStr += `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+            } else {
+                timeStr += `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+            }
+            display.textContent = timeStr;
+        }
+
+        // Render current question in timed test
+        function renderExamQuestion() {
+            const q = examQuestions[currentExamQuestionIndex];
+            if (!q) return;
+
+            // Labels
+            document.getElementById('exam-q-number-label').textContent = `Question ${currentExamQuestionIndex + 1}`;
+            
+            const diffBadge = document.getElementById('exam-q-difficulty-badge');
+            diffBadge.textContent = q.difficulty || 'Medium';
+            diffBadge.className = `difficulty-tag ${(q.difficulty || 'Medium').toLowerCase()}`;
+
+            const subBadge = document.getElementById('exam-q-subject-badge');
+            subBadge.textContent = (q.subject || 'Physics').toUpperCase();
+
+            // Bookmark state
+            const bookmarkBtn = document.getElementById('btn-exam-bookmark');
+            const localBookmarks = JSON.parse(localStorage.getItem('learnser_bookmarks') || '{}');
+            if (localBookmarks[q.id] === true) {
+                bookmarkBtn.classList.add('active');
+            } else {
+                bookmarkBtn.classList.remove('active');
+            }
+
+            // Body
+            let bodyHtml = `<div>${q.question}</div>`;
+            if (q.question_image) {
+                bodyHtml += `<div class="media-container"><img src="${q.question_image}" alt="Question Image"></div>`;
+            }
+            document.getElementById('exam-q-body-text').innerHTML = bodyHtml;
+
+            // Options
+            const container = document.getElementById('exam-options-container');
+            const userAnswer = examAnswers[q.id];
+            const optionImages = [q.option_a_image, q.option_b_image, q.option_c_image, q.option_d_image];
+
+            container.innerHTML = q.options.map((opt, idx) => {
+                const letter = String.fromCharCode(65 + idx);
+                const isSelected = userAnswer === idx;
+                
+                let optImgHtml = '';
+                if (optionImages[idx]) {
+                    optImgHtml = `<div class="media-container" style="margin-top: 8px;"><img src="${optionImages[idx]}" alt="Option Image"></div>`;
+                }
+
+                return `
+                    <button class="option-btn-exam ${isSelected ? 'selected' : ''}" onclick="selectExamOption(${idx})">
+                        <div class="option-letter-box">${letter}</div>
+                        <div class="option-content-wrapper">
+                            <div>${opt}</div>
+                            ${optImgHtml}
+                        </div>
+                    </button>
+                `;
+            }).join('');
+
+            activeQuestionStartTime = Date.now();
+        }
+
+        // Option selection in timed test
+        function selectExamOption(idx) {
+            const q = examQuestions[currentExamQuestionIndex];
+            examAnswers[q.id] = idx;
+
+            // Highlight in UI
+            document.querySelectorAll('.option-btn-exam').forEach((btn, buttonIdx) => {
+                if (buttonIdx === idx) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+
+            // Update state
+            if (examQuestionStatuses[currentExamQuestionIndex] !== 'review') {
+                examQuestionStatuses[currentExamQuestionIndex] = 'answered';
+            }
+            renderExamPalette();
+        }
+
+        // Render numbered palette
+        function renderExamPalette() {
+            const grid = document.getElementById('exam-palette-grid');
+            grid.innerHTML = examQuestions.map((_, idx) => {
+                const status = examQuestionStatuses[idx];
+                const isActive = idx === currentExamQuestionIndex;
+                return `
+                    <button class="palette-btn ${status} ${isActive ? 'active' : ''}" onclick="navigateExamQuestionIndex(${idx})">
+                        ${idx + 1}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // Navigate between questions
+        function navigateExamQuestionIndex(targetIdx) {
+            if (targetIdx < 0 || targetIdx >= examQuestions.length) return;
+
+            // Save time spent on current question
+            if (activeQuestionStartTime) {
+                const elapsed = Math.round((Date.now() - activeQuestionStartTime) / 1000);
+                const currentQ = examQuestions[currentExamQuestionIndex];
+                examQuestionTimes[currentQ.id] += elapsed;
+            }
+
+            currentExamQuestionIndex = targetIdx;
+
+            // Visited check
+            if (examQuestionStatuses[currentExamQuestionIndex] === 'notvisited') {
+                examQuestionStatuses[currentExamQuestionIndex] = 'unanswered';
+            }
+
+            renderExamQuestion();
+            renderExamPalette();
+        }
+
+        // Prev/Next handlers
+        function navigateExamQuestion(dir) {
+            navigateExamQuestionIndex(currentExamQuestionIndex + dir);
+        }
+
+        function saveAndNextExamQuestion() {
+            const q = examQuestions[currentExamQuestionIndex];
+            if (examAnswers[q.id] !== undefined && examQuestionStatuses[currentExamQuestionIndex] !== 'review') {
+                examQuestionStatuses[currentExamQuestionIndex] = 'answered';
+            }
+            
+            if (currentExamQuestionIndex < examQuestions.length - 1) {
+                navigateExamQuestionIndex(currentExamQuestionIndex + 1);
+            } else {
+                // Save time spent
+                if (activeQuestionStartTime) {
+                    const elapsed = Math.round((Date.now() - activeQuestionStartTime) / 1000);
+                    examQuestionTimes[q.id] += elapsed;
+                    activeQuestionStartTime = Date.now();
+                }
+                renderExamPalette();
+            }
+        }
+
+        // Clear response
+        function clearExamResponse() {
+            const q = examQuestions[currentExamQuestionIndex];
+            delete examAnswers[q.id];
+            examQuestionStatuses[currentExamQuestionIndex] = 'unanswered';
+
+            document.querySelectorAll('.option-btn-exam').forEach(btn => btn.classList.remove('selected'));
+            renderExamPalette();
+        }
+
+        // Mark for review
+        function markExamForReview() {
+            examQuestionStatuses[currentExamQuestionIndex] = 'review';
+            renderExamPalette();
+            saveAndNextExamQuestion();
+        }
+
+        // Bookmark toggle
+        function handleBookmarkToggle() {
+            const q = examQuestions[currentExamQuestionIndex];
+            const btn = document.getElementById('btn-exam-bookmark');
+            
+            const bookmarks = JSON.parse(localStorage.getItem('learnser_bookmarks') || '{}');
+            const isBookmarked = !bookmarks[q.id];
+            bookmarks[q.id] = isBookmarked;
+            localStorage.setItem('learnser_bookmarks', JSON.stringify(bookmarks));
+
+            if (isBookmarked) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        // --- SUBMIT WORKSPACE AND RESULTS DISPLAY ---
+        function submitExamWithConfirmation() {
+            if (confirm("Are you sure you want to submit your Custom Test?")) {
+                submitExam('manual');
+            }
+        }
+
+        async function submitExam(reason) {
+            isExamActive = false;
+            if (examTimerInterval) clearInterval(examTimerInterval);
+
+            // Exit fullscreen
+            exitFullscreenMode();
+
+            // Save final time spent
+            if (activeQuestionStartTime) {
+                const elapsed = Math.round((Date.now() - activeQuestionStartTime) / 1000);
+                const currentQ = examQuestions[currentExamQuestionIndex];
+                examQuestionTimes[currentQ.id] += elapsed;
+            }
+
+            // Calculations
+            let score = 0;
+            let correctCount = 0;
+            let incorrectCount = 0;
+            let unattemptedCount = 0;
+            let totalTimeSpent = 0;
+
+            const questionDetailsList = [];
+            const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
+
+            examQuestions.forEach((q, idx) => {
+                const userAns = examAnswers[q.id];
+                const isCorrect = userAns === q.correct_answer;
+                const timeSpent = examQuestionTimes[q.id] || 0;
+                totalTimeSpent += timeSpent;
+
+                if (userAns === undefined) {
+                    unattemptedCount++;
+                } else if (isCorrect) {
+                    correctCount++;
+                    score += 4;
+                } else {
+                    incorrectCount++;
+                    score -= 1;
+                }
+
+                // Store attempt details locally for custom source query matching
+                localAttempts[q.id] = {
+                    correct: userAns !== undefined ? isCorrect : false,
+                    userOption: userAns !== undefined ? userAns : -1
+                };
+
+                questionDetailsList.push({
+                    id: q.id,
+                    subject: q.subject,
+                    difficulty: q.difficulty || 'Medium',
+                    timeSpent: timeSpent,
+                    questionText: q.question,
+                    questionImage: q.question_image || null,
+                    options: q.options,
+                    optionImages: [q.option_a_image, q.option_b_image, q.option_c_image, q.option_d_image],
+                    detailedAnswer: q.detailed_answer || '',
+                    solutionImage: q.detailed_answer_image || null,
+                    userOption: userAns !== undefined ? userAns : -1,
+                    correctOption: q.correct_answer
+                });
+            });
+
+            // Save attempts back to localstorage
+            localStorage.setItem('learnser_attempts', JSON.stringify(localAttempts));
+
+            // Accuracy
+            const attempted = correctCount + incorrectCount;
+            const accuracy = attempted > 0 ? Math.round((correctCount / attempted) * 100) : 0;
+
+            // Populate UI Metrics
+            document.getElementById('results-score').textContent = score;
+            document.getElementById('results-accuracy').textContent = `${accuracy}%`;
+            document.getElementById('results-correct').textContent = correctCount;
+            document.getElementById('results-incorrect').textContent = incorrectCount;
+            document.getElementById('results-unattempted').textContent = unattemptedCount;
+
+            let subtitle = "JEE Mains Custom Test Completed";
+            if (reason === 'timeout') subtitle += " (Time Out)";
+            else if (reason === 'tab_switch') subtitle += " (Terminated due to tab switching)";
+            document.getElementById('results-subtitle-label').textContent = subtitle;
+
+            // Show results view
+            switchView('results');
+
+            // Render solutions cards
+            renderResultsSolutions(questionDetailsList);
+
+            // Fetch Sarvam AI Feedback
+            await generateAIReview(score, correctCount, incorrectCount, unattemptedCount, accuracy, totalTimeSpent, reason, questionDetailsList);
+
+            // Award XP based on custom test completion
+            await awardTestCompletionXP(correctCount, totalTimeSpent);
+        }
+
+        // Render solutions tab list
+        let resultsSolutionsCached = [];
+        function renderResultsSolutions(questionDetails) {
+            resultsSolutionsCached = questionDetails;
+            filterSolutions('all');
+        }
+
+        function filterSolutions(filter) {
+            const list = document.getElementById('results-solutions-list');
+            list.innerHTML = '';
+
+            document.querySelectorAll('.solutions-filter-bar .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === filter) btn.classList.add('active');
+            });
+
+            const filtered = resultsSolutionsCached.filter(q => {
+                if (filter === 'correct') return q.userOption === q.correctOption;
+                if (filter === 'incorrect') return q.userOption !== -1 && q.userOption !== q.correctOption;
+                if (filter === 'unattempted') return q.userOption === -1;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-dim); text-align: center; padding: 20px;">No questions in this category.</p>';
+                return;
+            }
+
+            filtered.forEach((q, idx) => {
+                const isCorrect = q.userOption === q.correctOption;
+                const isUnattempted = q.userOption === -1;
+                
+                let cardClass = 'solution-card';
+                let userAnsText = "Unattempted";
+                if (isCorrect) {
+                    cardClass += ' correct';
+                    userAnsText = `Your Answer: Option ${String.fromCharCode(65 + q.userOption)} (Correct)`;
+                } else if (!isUnattempted) {
+                    cardClass += ' incorrect';
+                    userAnsText = `Your Answer: Option ${String.fromCharCode(65 + q.userOption)} (Incorrect)`;
+                }
+
+                let qImgHtml = '';
+                if (q.questionImage) qImgHtml = `<div class="media-container"><img src="${q.questionImage}"></div>`;
+
+                let solImgHtml = '';
+                if (q.solutionImage) solImgHtml = `<div class="media-container" style="margin-top: 12px;"><img src="${q.solutionImage}"></div>`;
+
+                const card = document.createElement('div');
+                card.className = cardClass;
+                card.innerHTML = `
+                    <div class="solution-card-header">
+                        <span>${(q.subject || 'physics').toUpperCase()} | Difficulty: ${q.difficulty}</span>
+                        <span>Time Spent: ${q.timeSpent}s</span>
+                    </div>
+                    <div class="solution-text">
+                        <div>${q.questionText}</div>
+                        ${qImgHtml}
+                    </div>
+                    <div class="solution-answers">
+                        <span class="${isCorrect ? 'user-ans-correct' : (isUnattempted ? '' : 'user-ans-wrong')}">${userAnsText}</span>
+                        <span>Correct Answer: Option ${String.fromCharCode(65 + q.correctOption)}</span>
+                    </div>
+                    <div class="solution-explanation">
+                        <strong>Detailed Explanation:</strong>
+                        <p style="margin-top: 4px; white-space: pre-line;">${q.detailedAnswer || 'No detailed explanation provided.'}</p>
+                        ${solImgHtml}
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // Toggle Results Tabs
+        function switchResultsTab(tabId) {
+            document.querySelectorAll('.results-tabs .results-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-tab-${tabId}`).classList.add('active');
+
+            if (tabId === 'ai') {
+                document.getElementById('tab-results-ai').style.display = 'flex';
+                document.getElementById('tab-results-solutions').style.display = 'none';
+            } else {
+                document.getElementById('tab-results-ai').style.display = 'none';
+                document.getElementById('tab-results-solutions').style.display = 'block';
+            }
+        }
+
+        // Request Feedback from Sarvam AI Chat completions
+        async function generateAIReview(score, correct, incorrect, unattempted, accuracy, timeSpent, reason, questionDetails) {
+            const aiBody = document.getElementById('results-ai-content');
+            aiBody.textContent = "Analyzing custom test patterns and generating detailed AI feedback...";
+
+            const cachedProfile = localStorage.getItem('learnser_supabase_profile');
+            const studentName = cachedProfile ? JSON.parse(cachedProfile).display_name : "Student";
+
+            try {
+                const systemPrompt = `You are an expert academic coach and test analyst for JEE Mains. Your job is to analyze a student's custom exam performance and give a detailed review. Focus on time taken per question relative to its difficulty (Easy, Medium, Hard). Identify questions where they wasted time, qualitative insights on their preparation, and clear, actionable steps for improvement. Use markdown format.`;
+                
+                const userPrompt = `
+Analyze the following student test attempt:
+Student Name: ${studentName}
+Score: ${score} (JEE Format: +4 for correct, -1 for incorrect)
+Correct Answers: ${correct}
+Incorrect Answers: ${incorrect}
+Unattempted Questions: ${unattempted}
+Accuracy: ${accuracy}%
+Total Time Taken: ${Math.floor(timeSpent / 60)}m ${timeSpent % 60}s
+Exam Termination Reason: ${reason}
+
+Question Breakdown Details:
+${questionDetails.map((q, idx) => `
+Q${idx+1}: Subject: ${q.subject}, Difficulty: ${q.difficulty}
+User Answer: ${q.userOption === -1 ? 'Unattempted' : String.fromCharCode(65 + q.userOption)}, Correct Answer: ${String.fromCharCode(65 + q.correctOption)}
+Result: ${q.userOption === -1 ? 'Unattempted' : (q.userOption === q.correctOption ? 'Correct' : 'Incorrect')}
+Time Spent: ${q.timeSpent} seconds
+`).join('')}
+
+Provide:
+1. Difficulty-to-Time Analysis: Focus on whether the student spent too much time on Easy or Medium questions vs Hard questions, and if it cost them score.
+2. Strengths and Weaknesses: Highlight subjects and difficulties they succeeded in and where they struggled.
+3. Time Management Review: Point out any specific questions where they spent an excessive amount of time (e.g. over 150 seconds).
+4. Actionable Steps: Specific recommendations for their next custom test attempt.
+`;
+
+                const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer sk_6fppdea6_iZG0WGKmfPXtZImv5W1m49uH`
+                    },
+                    body: JSON.stringify({
+                        model: "sarvam-30b",
+                        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+                        temperature: 0.5,
+                        max_tokens: 2048,
+                        stream: false
+                    })
+                });
+
+                if (response.ok) {
+                    const res = await response.json();
+                    aiBody.innerHTML = res?.choices?.[0]?.message?.content || "Failed to generate AI review.";
+                } else {
+                    aiBody.textContent = "AI analytics review service is temporarily unavailable.";
+                }
+            } catch (err) {
+                console.error("AI review query error:", err);
+                aiBody.textContent = "Could not connect to Sarvam AI assessment endpoint.";
+            }
+        }
+
+        // Award XP and complete mock exam metrics
+        async function awardTestCompletionXP(correctCount, totalTimeSeconds) {
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+
+                const cached = localStorage.getItem('learnser_supabase_profile');
+                if (!cached) return;
+
+                const profile = JSON.parse(cached);
+                // Custom test completion: +50 XP baseline, +15 XP per correct answer
+                const xpGain = 50 + (correctCount * 15);
+
+                const updates = {
+                    total_xp: (profile.total_xp || 0) + xpGain,
+                    weekly_xp: (profile.weekly_xp || 0) + xpGain,
+                    total_time_seconds: (profile.total_time_seconds || 0) + totalTimeSeconds
+                };
+
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .update(updates)
+                    .eq('id', profile.id)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                if (data) {
+                    localStorage.setItem('learnser_supabase_profile', JSON.stringify(data));
+                    window.dispatchEvent(new CustomEvent('profileready', { detail: data }));
+                }
+            } catch (e) {
+                console.warn('Failed to update profile XP metrics:', e);
+            }
+        }
+
+        // Return to setup wizard
+        function backToWizard() {
+            switchView('wizard');
+        }
+
+        // --- FULLSCREEN CONTROLLER ---
+        function enterFullscreenMode() {
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(err => console.log(err));
+            } else if (docEl.webkitRequestFullscreen) {
+                docEl.webkitRequestFullscreen().catch(err => console.log(err));
+            }
+        }
+
+        function exitFullscreenMode() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen().catch(err => {});
+            }
+        }
+
+        function setupFullscreenListeners() {
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+        }
+
+        function handleFullscreenChange() {
+            if (!isExamActive) return;
+
+            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+            const blocker = document.getElementById('fullscreenBlocker');
+
+            if (!isFullscreen) {
+                // Show blocker screen
+                blocker.style.display = 'flex';
+                // Stop timer
+                if (examTimerInterval) clearInterval(examTimerInterval);
+            } else {
+                blocker.style.display = 'none';
+                // Resume timer
+                startExamTimer();
+            }
+        }
+
+        function enterFullscreenAndResume() {
+            enterFullscreenMode();
+        }
+
+        // Cheating restriction: Visibility tab switch check
+        function handleVisibilityChange() {
+            if (!isExamActive) return;
+
+            if (document.visibilityState === 'hidden') {
+                examTabSwitchCount++;
+                
+                const warningBadge = document.getElementById('exam-warning-badge');
+                warningBadge.style.display = 'inline-block';
+                warningBadge.textContent = `Tab Switch Warning: ${examTabSwitchCount}/3`;
+
+                alert(`WARNING: Minimizing the test window or switching tabs is restricted! (Switch ${examTabSwitchCount}/3). You will be disqualified on the 3rd switch.`);
+
+                if (examTabSwitchCount >= 3) {
+                    alert("Disqualification: Maximum tab switches exceeded. Submitting test immediately.");
+                    submitExam('tab_switch');
+                }
+            }
+        }
+
+        // Helper: Escape HTML strings to prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

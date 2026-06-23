@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previous Year Questions | Learnser AI</title>
+    
+    <script src="theme.js?v=2.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #818cf8; 
+            --accent: #2dd4bf; 
+            --bg: #020617;      
+            --panel-bg: rgba(15, 23, 42, 0.6); 
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8; 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --sidebar-width: 320px;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text-main);
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: 76px 1fr; 
+            transition: grid-template-columns 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        body.collapsed { --sidebar-width: 90px; }
+
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(circle at 10% 10%, var(--bg-gradient-1, rgba(129, 140, 248, 0.05)) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 90%, var(--bg-gradient-2, rgba(45, 212, 191, 0.04)) 0%, transparent 40%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* --- QUADRANT 1: TOP-LEFT CORNER --- */
+        .top-navbar-corner {
+            grid-column: 1 / 2; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); border-right: 1px solid var(--glass-border);
+            display: flex; align-items: center; padding: 0 16px; gap: 8px; overflow: hidden; 
+            transition: padding 0.3s, gap 0.3s;
+            z-index: 10;
+        }
+
+        body.collapsed .top-navbar-corner {
+            padding: 0 8px;
+            gap: 4px;
+        }
+
+        .hamburger-btn {
+            background: transparent; border: none; color: var(--text-main);
+            cursor: pointer; border-radius: 8px; padding: 8px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            transition: background 0.2s, padding 0.3s;
+        }
+        .hamburger-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+        body.collapsed .hamburger-btn {
+            padding: 6px; 
+        }
+
+        .user-profile {
+            display: flex; align-items: center;
+            padding: 6px 16px 6px 6px; border-radius: 12px;
+            transition: background 0.2s, padding 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            white-space: nowrap; overflow: hidden;
+        }
+        .user-profile:hover { background: rgba(255, 255, 255, 0.05); }
+
+        body.collapsed .user-profile { 
+            padding: 0; 
+        }
+
+        .pfp {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid var(--accent); object-fit: cover; background: var(--bg); 
+            flex-shrink: 0; margin-right: 16px; 
+            transition: margin-right 0.3s cubic-bezier(0.25, 1, 0.5, 1), width 0.3s, height 0.3s;
+        }
+        
+        body.collapsed .pfp { 
+            margin-right: 0;
+            width: 30px; height: 30px; 
+        }
+
+        .user-details {
+            display: flex; flex-direction: column; justify-content: center; overflow: hidden;
+            width: 180px; transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s;
+        }
+        body.collapsed .user-details { width: 0; opacity: 0; pointer-events: none; }
+
+        .user-name { font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+        .user-email { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- QUADRANT 2: TOP NAVBAR (MAIN) --- */
+        .top-navbar-main {
+            grid-column: 2 / 3; grid-row: 1 / 2;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; padding: 0 32px;
+            z-index: 9;
+        }
+
+        /* --- QUADRANT 3: SIDEBAR NAVIGATION --- */
+        .sidebar {
+            grid-column: 1 / 2; grid-row: 2 / 3;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column;
+            overflow-y: auto; overflow-x: hidden; padding: 32px 20px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .sidebar::-webkit-scrollbar { display: none; }
+
+        .sidebar-menu { display: flex; flex-direction: column; gap: 32px; }
+        .menu-section { display: flex; flex-direction: column; gap: 6px; }
+
+        .section-title {
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-dim); margin-left: 14px; margin-bottom: 8px;
+            transition: opacity 0.2s, height 0.2s; white-space: nowrap;
+        }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 14px; border-radius: 12px; color: var(--text-dim);
+            text-decoration: none; font-weight: 600; font-size: 0.95rem;
+            transition: background 0.2s, color 0.2s, padding 0.3s; white-space: nowrap;
+        }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+        .menu-item.active { background: rgba(129, 140, 248, 0.15); color: var(--primary); }
+
+        .menu-item svg { width: 22px; height: 22px; flex-shrink: 0; transition: color 0.2s; }
+        .menu-item.active svg { color: var(--primary); }
+
+        .menu-text { transition: opacity 0.2s, width 0.2s; }
+
+        body.collapsed .section-title { opacity: 0; height: 0; margin-bottom: 0; overflow: hidden; }
+        body.collapsed .menu-text { opacity: 0; width: 0; overflow: hidden; display: none; }
+        body.collapsed .menu-item { justify-content: center; padding-left: 0; padding-right: 0; }
+
+        /* --- QUADRANT 4: MAIN CONTENT AREA --- */
+        .main-content {
+            grid-column: 2 / 3; grid-row: 2 / 3;
+            position: relative; overflow-y: auto; padding: 40px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .main-content::-webkit-scrollbar { display: none; }
+
+        /* UI Views transitions */
+        .ui-view {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            flex-direction: column;
+            gap: 24px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .ui-view.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .btn-back-link {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .btn-back-link:hover {
+            color: var(--text-main);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .view-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .view-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            margin-top: -16px;
+        }
+
+        /* --- EXAM SELECTION VIEW --- */
+        .exam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        .exam-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 28px;
+            position: relative;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .exam-card::after {
+            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.02) 0%, transparent 55%);
+            pointer-events: none; z-index: 0;
+            transition: transform 0.5s ease;
+        }
+
+        .exam-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(129, 140, 248, 0.4);
+            box-shadow: 0 12px 40px -8px rgba(129, 140, 248, 0.25);
+        }
+
+        .exam-card:hover::after {
+            transform: scale(1.1);
+        }
+
+        .exam-card.active-exam-jee {
+            background: linear-gradient(135deg, rgba(49, 46, 129, 0.6) 0%, rgba(67, 56, 202, 0.6) 50%, rgba(99, 102, 241, 0.6) 100%);
+            border-color: rgba(129, 140, 248, 0.4);
+            box-shadow: 0 12px 30px -10px rgba(99, 102, 241, 0.3);
+        }
+
+        .exam-card.exam-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .exam-card.exam-disabled:hover {
+            transform: none;
+            border-color: var(--glass-border);
+            box-shadow: none;
+        }
+
+        .exam-card-badge {
+            align-self: flex-start;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            z-index: 1;
+        }
+
+        .badge-primary { background: rgba(45, 212, 191, 0.15); color: var(--accent); border: 1px solid rgba(45, 212, 191, 0.3); }
+        .badge-disabled { background: rgba(255, 255, 255, 0.05); color: var(--text-dim); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .badge-active { background: rgba(129, 140, 248, 0.2); color: #a5b4fc; border: 1px solid rgba(129, 140, 248, 0.4); }
+
+        .exam-card-icon {
+            font-size: 2.2rem;
+            margin-top: 8px;
+            z-index: 1;
+        }
+
+        .exam-card-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-main);
+            z-index: 1;
+        }
+
+        .exam-card-sub {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            z-index: 1;
+            margin-top: -4px;
+        }
+
+        .exam-card-arrow {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            transition: transform 0.3s;
+            z-index: 1;
+        }
+
+        .exam-card:hover .exam-card-arrow {
+            transform: translateX(4px);
+            color: var(--text-main);
+        }
+
+        .exam-card.exam-disabled .exam-card-arrow {
+            display: none;
+        }
+
+        .lock-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .exam-card.exam-disabled:hover .lock-overlay {
+            opacity: 1;
+        }
+
+        .lock-box {
+            background: var(--bg);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dim);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- SUBJECT SELECTION VIEW --- */
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        .subject-card {
+            height: 180px;
+            border-radius: 20px;
+            padding: 28px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .subject-card.physics {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(59, 130, 246, 0.15) 100%);
+        }
+        .subject-card.chemistry {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(20, 184, 166, 0.15) 100%);
+        }
+        .subject-card.maths {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(236, 72, 153, 0.15) 100%);
+        }
+
+        .subject-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .subject-card.physics:hover { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 12px 30px -10px rgba(59, 130, 246, 0.3); }
+        .subject-card.chemistry:hover { border-color: rgba(20, 184, 166, 0.4); box-shadow: 0 12px 30px -10px rgba(20, 184, 166, 0.3); }
+        .subject-card.maths:hover { border-color: rgba(236, 72, 153, 0.4); box-shadow: 0 12px 30px -10px rgba(236, 72, 153, 0.3); }
+
+        .subject-card-icon {
+            font-size: 2.2rem;
+        }
+
+        .subject-card-details h3 {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+        .subject-card-details p {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        /* --- CHAPTERS VIEW --- */
+        .chapters-container {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px;
+            backdrop-filter: blur(10px);
+        }
+
+        .chapters-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .chapter-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chapter-row:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(129, 140, 248, 0.3);
+            transform: translateX(4px);
+        }
+
+        .chapter-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .chapter-number {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--primary);
+            background: rgba(129, 140, 248, 0.1);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chapter-name {
+            font-size: 0.98rem;
+            font-weight: 700;
+        }
+
+        .chapter-arrow {
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        .chapter-row:hover .chapter-arrow {
+            color: var(--text-main);
+        }
+
+        .no-chapters {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: 0.95rem;
+        }
+
+        /* --- PRACTICE VIEW --- */
+        .practice-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            padding: 16px 24px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .filters-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .filter-select {
+            background: var(--bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .filter-select:focus {
+            border-color: var(--primary);
+        }
+
+        .practice-stats {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-dim);
+        }
+        .stat-count-correct { color: var(--success); }
+        .stat-count-incorrect { color: var(--danger); }
+
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .question-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .question-card.answered-correct {
+            border-color: rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.1);
+        }
+
+        .question-card.answered-incorrect {
+            border-color: rgba(239, 68, 68, 0.3);
+            box-shadow: 0 0 20px -5px rgba(239, 68, 68, 0.1);
+        }
+
+        .question-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 16px;
+        }
+
+        .question-number {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .question-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .q-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-dim);
+        }
+
+        .q-badge.easy { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .q-badge.medium { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .q-badge.hard { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        .question-body {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .media-container {
+            max-width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            align-self: flex-start;
+            margin-top: 12px;
+        }
+
+        .media-container img {
+            max-width: 100%;
+            max-height: 350px;
+            display: block;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-button {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 16px 20px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .option-button:hover:not(:disabled) {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--primary);
+        }
+
+        .option-button.selected {
+            background: rgba(129, 140, 248, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(129, 140, 248, 0.15);
+        }
+
+        .option-button.correct {
+            background: rgba(16, 185, 129, 0.12) !important;
+            border-color: var(--success) !important;
+            color: #34d399 !important;
+        }
+
+        .option-button.incorrect {
+            background: rgba(239, 68, 68, 0.12) !important;
+            border-color: var(--danger) !important;
+            color: #f87171 !important;
+        }
+
+        .option-letter {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .option-button.selected .option-letter {
+            background: var(--primary);
+            color: #020617;
+            border-color: var(--primary);
+        }
+
+        .option-button.correct .option-letter {
+            background: var(--success);
+            color: #020617;
+            border-color: var(--success);
+        }
+
+        .option-button.incorrect .option-letter {
+            background: var(--danger);
+            color: #020617;
+            border-color: var(--danger);
+        }
+
+        .option-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .action-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .btn-check-answer {
+            background: var(--primary);
+            color: #020617;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(129, 140, 248, 0.2);
+        }
+        
+        .btn-check-answer:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(129, 140, 248, 0.3);
+        }
+        
+        .btn-check-answer:disabled {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-dim);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .explanation-card {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 16px;
+            display: none;
+            animation: slideDown 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .explanation-title {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .explanation-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-dim);
+            white-space: pre-line;
+        }
+
+        .no-questions-placeholder {
+            text-align: center;
+            padding: 60px;
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            color: var(--text-dim);
+            backdrop-filter: blur(10px);
+        }
+        .no-questions-placeholder h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        /* --- LOADING SPINNER --- */
+        .loading-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            padding: 80px 0;
+            width: 100%;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(129, 140, 248, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile sidebar rules */
+        @media (max-width: 1024px) {
+            body {
+                grid-template-columns: 0px 1fr;
+            }
+            body.collapsed {
+                --sidebar-width: 320px;
+                grid-template-columns: var(--sidebar-width) 1fr;
+            }
+            .sidebar {
+                position: fixed;
+                top: 76px;
+                left: 0;
+                height: calc(100vh - 76px);
+                z-index: 99;
+                transform: translateX(-100%);
+                transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            }
+            body.collapsed .sidebar {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-navbar-corner">
+        <button class="hamburger-btn" id="sidebar-toggle">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="user-profile">
+            <img class="pfp" id="user-pfp" src="https://ui-avatars.com/api/?name=Student&background=818cf8&color=fff&rounded=true" alt="PFP">
+            <div class="user-details">
+                <span class="user-name" id="user-name">Student</span>
+                <span class="user-email" id="user-email">Loading...</span>
+            </div>
+        </div>
+    </div>
+    
+    <header class="top-navbar-main">
+        <div style="font-weight: 800; letter-spacing: 1px; font-size: 1.2rem;">LEARNSER <span style="color: var(--accent);">AI</span></div>
+    </header>
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">
+            <div class="menu-section">
+                <div class="section-title">OVERVIEW</div>
+                <a href="dashbord.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="section-title">LEARN</div>
+                <a href="ai_doubtsolver.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+                    <span class="menu-text">AI Doubt Solver</span>
+                </a>
+                <a href="chapternotes.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span class="menu-text">Chapter Notes</span>
+                </a>
+                <a href="plannedtt.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span class="menu-text">Smart Timetable</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="section-title">PRACTICE</div>
+                <a href="testgenerator.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    <span class="menu-text">AI Test Generator</span>
+                </a>
+                <a href="pyq.html" class="menu-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="14" r="1"></circle><path d="M12 11c1.5 0 2-1 2-2s-.5-2-2-2-2 1-2 2"></path></svg>
+                    <span class="menu-text">Previous Year Qs</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="section-title">PROGRESS</div>
+                <a href="analytics.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    <span class="menu-text">Analytics</span>
+                </a>
+                <a href="rewardshop.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                    <span class="menu-text">Streak & Coins</span>
+                </a>
+                <a href="leaderboard.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                    <span class="menu-text">Leaderboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="section-title">COMMUNITY</div>
+                <a href="podcast.html" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    <span class="menu-text">AI Podcast</span>
+                </a>
+                <a href="#" class="menu-item" style="opacity: 0.5; cursor: not-allowed;" onclick="alert('Community Chat is temporarily disabled.'); return false;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="menu-text">Community Chat <small style="font-size: 0.65rem; color: var(--text-dim);">(Disabled)</small></span>
+                </a>
+            </div>
+        </div>
+        <div style="flex-grow: 1;"></div>
+        <div class="menu-section" style="margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 24px;">
+            <a href="admin.html" id="adminNavLink" class="menu-item" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
+                <span class="menu-text">Admin Panel</span>
+            </a>
+            <a href="settings.html" class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span class="menu-text">Settings</span>
+            </a>
+            <a href="#" onclick="signOutUser(); return false;" class="menu-item" style="color: #f87171;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span class="menu-text">Log Out</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        
+        <!-- VIEW 1: EXAM SELECTION -->
+        <div id="view-exams" class="ui-view active">
+            <div class="page-header">
+                <h2 class="view-title">Previous Year Questions</h2>
+            </div>
+            <p class="view-subtitle">Select an examination portal to practice real past papers</p>
+            
+            <div class="exam-grid" id="exam-selection-grid">
+                <!-- JEE Mains Card (Always Active) -->
+                <div class="exam-card active-exam-jee" data-exam="jee">
+                    <div class="exam-card-badge badge-primary">Primary</div>
+                    <div class="exam-card-icon">⚛️</div>
+                    <h3 class="exam-card-title">JEE Mains</h3>
+                    <p class="exam-card-sub">Joint Entrance Examination</p>
+                    <div class="exam-card-arrow">→</div>
+                </div>
+
+                <!-- BITSAT Card -->
+                <div class="exam-card exam-disabled" id="exam-card-bitsat" data-exam="bitsat">
+                    <div class="exam-card-badge badge-disabled" id="badge-bitsat">Coming Soon</div>
+                    <div class="exam-card-icon">🎯</div>
+                    <h3 class="exam-card-title">BITSAT</h3>
+                    <p class="exam-card-sub">BITS Admission Test</p>
+                    <div class="exam-card-arrow">→</div>
+                    <div class="lock-overlay" id="lock-bitsat">
+                        <div class="lock-box">🔒 Locked</div>
+                    </div>
+                </div>
+
+                <!-- VITEEE Card -->
+                <div class="exam-card exam-disabled" id="exam-card-viteee" data-exam="viteee">
+                    <div class="exam-card-badge badge-disabled" id="badge-viteee">Coming Soon</div>
+                    <div class="exam-card-icon">🏛️</div>
+                    <h3 class="exam-card-title">VITEEE</h3>
+                    <p class="exam-card-sub">VIT Engineering Entrance</p>
+                    <div class="exam-card-arrow">→</div>
+                    <div class="lock-overlay" id="lock-viteee">
+                        <div class="lock-box">🔒 Locked</div>
+                    </div>
+                </div>
+
+                <!-- MHTCET Card -->
+                <div class="exam-card exam-disabled" id="exam-card-mhtcet" data-exam="mhtcet">
+                    <div class="exam-card-badge badge-disabled" id="badge-mhtcet">Coming Soon</div>
+                    <div class="exam-card-icon">📐</div>
+                    <h3 class="exam-card-title">MHTCET</h3>
+                    <p class="exam-card-sub">Maharashtra CET</p>
+                    <div class="exam-card-arrow">→</div>
+                    <div class="lock-overlay" id="lock-mhtcet">
+                        <div class="lock-box">🔒 Locked</div>
+                    </div>
+                </div>
+
+                <!-- MET Card -->
+                <div class="exam-card exam-disabled" id="exam-card-met" data-exam="met">
+                    <div class="exam-card-badge badge-disabled" id="badge-met">Coming Soon</div>
+                    <div class="exam-card-icon">🔬</div>
+                    <h3 class="exam-card-title">MET</h3>
+                    <p class="exam-card-sub">Manipal Entrance Test</p>
+                    <div class="exam-card-arrow">→</div>
+                    <div class="lock-overlay" id="lock-met">
+                        <div class="lock-box">🔒 Locked</div>
+                    </div>
+                </div>
+
+                <!-- NDA Card -->
+                <div class="exam-card exam-disabled" id="exam-card-nda" data-exam="nda">
+                    <div class="exam-card-badge badge-disabled" id="badge-nda">Coming Soon</div>
+                    <div class="exam-card-icon">🎖️</div>
+                    <h3 class="exam-card-title">NDA</h3>
+                    <p class="exam-card-sub">National Defence Academy</p>
+                    <div class="exam-card-arrow">→</div>
+                    <div class="lock-overlay" id="lock-nda">
+                        <div class="lock-box">🔒 Locked</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: SUBJECT SELECTION -->
+        <div id="view-subjects" class="ui-view">
+            <div class="page-header">
+                <button class="btn-back-link" onclick="switchView('exams')">← Back to Exams</button>
+                <h2 class="view-title" id="subject-view-title">Select Subject</h2>
+            </div>
+            <p class="view-subtitle" id="subject-view-subtitle">Practice past paper questions categorized by subject</p>
+
+            <div class="subject-grid">
+                <!-- Physics Card -->
+                <div class="subject-card physics" data-subject="physics">
+                    <div class="subject-card-icon">⚛️</div>
+                    <div class="subject-card-details">
+                        <h3>Physics</h3>
+                        <p>Mechanics, Electromagnetism, Modern Physics & more</p>
+                    </div>
+                </div>
+
+                <!-- Chemistry Card -->
+                <div class="subject-card chemistry" data-subject="chemistry">
+                    <div class="subject-card-icon">🧪</div>
+                    <div class="subject-card-details">
+                        <h3>Chemistry</h3>
+                        <p>Physical, Organic, Inorganic Chemistry & formulas</p>
+                    </div>
+                </div>
+
+                <!-- Mathematics Card -->
+                <div class="subject-card maths" data-subject="mathematics">
+                    <div class="subject-card-icon">📐</div>
+                    <div class="subject-card-details">
+                        <h3>Mathematics</h3>
+                        <p>Calculus, Algebra, Coordinate Geometry & vectors</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: CHAPTER LIST -->
+        <div id="view-chapters" class="ui-view">
+            <div class="page-header">
+                <button class="btn-back-link" onclick="switchView('subjects')">← Back to Subjects</button>
+                <h2 class="view-title" id="chapters-view-title">Syllabus Chapters</h2>
+            </div>
+            <p class="view-subtitle" id="chapters-view-subtitle">Select a chapter to see its previous years questions</p>
+
+            <div class="chapters-container">
+                <div id="chapters-list-loading" class="loading-screen">
+                    <div class="spinner"></div>
+                    <p style="color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Fetching chapters from syllabus...</p>
+                </div>
+                <div class="chapters-list" id="chapters-list-container" style="display: none;">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: QUESTION PRACTICE -->
+        <div id="view-practice" class="ui-view">
+            <div class="page-header">
+                <button class="btn-back-link" onclick="switchView('chapters')">← Back to Chapters</button>
+                <h2 class="view-title" id="practice-view-title">Question Practice</h2>
+            </div>
+            
+            <!-- Filters Bar -->
+            <div class="practice-toolbar">
+                <div class="filters-group">
+                    <!-- Year Filter -->
+                    <select id="filter-year" class="filter-select" onchange="applyPracticeFilters()">
+                        <option value="all">All Years</option>
+                    </select>
+
+                    <!-- Shift Filter -->
+                    <select id="filter-shift" class="filter-select" onchange="applyPracticeFilters()">
+                        <option value="all">All Shifts</option>
+                    </select>
+
+                    <!-- Difficulty Filter -->
+                    <select id="filter-difficulty" class="filter-select" onchange="applyPracticeFilters()">
+                        <option value="all">All Difficulties</option>
+                    </select>
+                </div>
+
+                <!-- Stats -->
+                <div class="practice-stats" id="practice-stats-display">
+                    Showing 0 questions
+                </div>
+            </div>
+
+            <!-- Questions Container -->
+            <div id="practice-questions-loading" class="loading-screen">
+                <div class="spinner"></div>
+                <p style="color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Loading chapter questions...</p>
+            </div>
+            
+            <div class="questions-list" id="questions-list-container" style="display: none;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Supabase SDK & Configuration Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script src="auth-check.js"></script>
+
+    <script>
+        // Global navigation state
+        let currentExam = 'jee';
+        let currentSubject = '';
+        let currentChapterId = '';
+        let currentChapterName = '';
+        
+        let allQuestions = [];
+        let filteredQuestions = [];
+        let userPracticeAnswers = {}; // questionId -> optionIdx
+
+        // Sidebar Toggle
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('collapsed');
+        });
+
+        // Initialize exam details on window load
+        window.addEventListener('load', () => {
+            loadExamStatuses();
+            setupClickHandlers();
+        });
+
+        // Query Supabase to see which exams are toggled/enabled
+        async function loadExamStatuses() {
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+
+                const { data, error } = await supabase.from('exams').select('*');
+                if (error) throw error;
+
+                if (data) {
+                    data.forEach(exam => {
+                        const examId = exam.exam_type.toLowerCase();
+                        const isEnabled = exam.enabled === true;
+                        
+                        const card = document.getElementById(`exam-card-${examId}`);
+                        const badge = document.getElementById(`badge-${examId}`);
+                        const lockOverlay = document.getElementById(`lock-${examId}`);
+
+                        if (card && badge) {
+                            if (isEnabled) {
+                                card.classList.remove('exam-disabled');
+                                badge.className = 'exam-card-badge badge-active';
+                                badge.textContent = 'Active';
+                                if (lockOverlay) lockOverlay.style.display = 'none';
+                            } else {
+                                card.classList.add('exam-disabled');
+                                badge.className = 'exam-card-badge badge-disabled';
+                                badge.textContent = 'Coming Soon';
+                                if (lockOverlay) lockOverlay.style.display = 'flex';
+                            }
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn('Could not load exam statuses from Supabase:', err);
+            }
+        }
+
+        // Set up click events
+        function setupClickHandlers() {
+            // Exam Cards click
+            document.querySelectorAll('.exam-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    if (card.classList.contains('exam-disabled')) return;
+                    
+                    currentExam = card.dataset.exam;
+                    const examName = card.querySelector('.exam-card-title').textContent;
+                    
+                    document.getElementById('subject-view-title').textContent = `${examName} Subjects`;
+                    document.getElementById('subject-view-subtitle').textContent = `Practice past paper questions from ${examName}`;
+                    
+                    switchView('subjects');
+                });
+            });
+
+            // Subject Cards click
+            document.querySelectorAll('.subject-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    currentSubject = card.dataset.subject;
+                    const subjectName = card.querySelector('h3').textContent;
+                    
+                    document.getElementById('chapters-view-title').textContent = `${subjectName} Chapters`;
+                    
+                    switchView('chapters');
+                    loadChapters();
+                });
+            });
+        }
+
+        // Switch active views
+        function switchView(viewId) {
+            document.querySelectorAll('.ui-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            
+            // Scroll main content to top on view change
+            document.querySelector('.main-content').scrollTop = 0;
+        }
+
+        // Load Chapters from Supabase
+        async function loadChapters() {
+            const loadingEl = document.getElementById('chapters-list-loading');
+            const containerEl = document.getElementById('chapters-list-container');
+            
+            loadingEl.style.display = 'flex';
+            containerEl.style.display = 'none';
+            containerEl.innerHTML = '';
+
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                const { data: chapters, error } = await supabase
+                    .from('chapters')
+                    .select('*')
+                    .eq('subject', currentSubject)
+                    .order('sort_order', { ascending: true });
+
+                if (error) throw error;
+
+                if (!chapters || chapters.length === 0) {
+                    containerEl.innerHTML = `<div class="no-chapters">No chapters found for ${currentSubject} yet.</div>`;
+                } else {
+                    chapters.forEach((ch, idx) => {
+                        const row = document.createElement('div');
+                        row.className = 'chapter-row';
+                        row.innerHTML = `
+                            <div class="chapter-info">
+                                <div class="chapter-number">${idx + 1}</div>
+                                <div class="chapter-name">${escapeHtml(ch.name)}</div>
+                            </div>
+                            <div class="chapter-arrow">→</div>
+                        `;
+                        
+                        row.addEventListener('click', () => {
+                            currentChapterId = ch.id;
+                            currentChapterName = ch.name;
+                            document.getElementById('practice-view-title').textContent = `${currentSubject.charAt(0).toUpperCase() + currentSubject.slice(1)} | ${ch.name}`;
+                            switchView('practice');
+                            loadQuestions();
+                        });
+
+                        containerEl.appendChild(row);
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading chapters:", err);
+                containerEl.innerHTML = `<div class="no-chapters" style="color: var(--danger);">Failed to load chapters: ${err.message}</div>`;
+            } finally {
+                loadingEl.style.display = 'none';
+                containerEl.style.display = 'flex';
+            }
+        }
+
+        // Load Questions for a Chapter from Supabase
+        async function loadQuestions() {
+            const loadingEl = document.getElementById('practice-questions-loading');
+            const containerEl = document.getElementById('questions-list-container');
+            
+            loadingEl.style.display = 'flex';
+            containerEl.style.display = 'none';
+            containerEl.innerHTML = '';
+            
+            allQuestions = [];
+            filteredQuestions = [];
+            userPracticeAnswers = {};
+
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                const { data: questions, error } = await supabase
+                    .from('questions')
+                    .select('*')
+                    .eq('chapter_id', currentChapterId);
+
+                if (error) throw error;
+
+                allQuestions = questions || [];
+                
+                // Populates filter dropdowns with unique values
+                populateFilters();
+                
+                // Show questions
+                applyPracticeFilters();
+
+            } catch (err) {
+                console.error("Error loading questions:", err);
+                containerEl.innerHTML = `<div class="no-questions-placeholder" style="border-color: rgba(239, 68, 68, 0.2);">
+                    <h3 style="color: var(--danger);">Failed to load questions</h3>
+                    <p style="color: var(--text-dim);">${err.message}</p>
+                </div>`;
+                loadingEl.style.display = 'none';
+                containerEl.style.display = 'flex';
+            }
+        }
+
+        // Populate Filter dropdowns
+        function populateFilters() {
+            // Years
+            const years = [...new Set(allQuestions.map(q => q.year).filter(Boolean))].sort((a,b) => b - a);
+            const yearSelect = document.getElementById('filter-year');
+            yearSelect.innerHTML = '<option value="all">All Years</option>' + 
+                years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+            // Shifts
+            const shifts = [...new Set(allQuestions.map(q => q.shift).filter(Boolean))].sort();
+            const shiftSelect = document.getElementById('filter-shift');
+            shiftSelect.innerHTML = '<option value="all">All Shifts</option>' + 
+                shifts.map(s => `<option value="${s}">${s}</option>`).join('');
+
+            // Difficulties
+            const difficulties = [...new Set(allQuestions.map(q => q.difficulty).filter(Boolean))];
+            const diffOrder = ['easy', 'medium', 'hard'];
+            const sortedDiffs = difficulties.sort((a,b) => diffOrder.indexOf(a.toLowerCase()) - diffOrder.indexOf(b.toLowerCase()));
+            const diffSelect = document.getElementById('filter-difficulty');
+            diffSelect.innerHTML = '<option value="all">All Difficulties</option>' + 
+                sortedDiffs.map(d => `<option value="${d}">${d.charAt(0).toUpperCase() + d.slice(1)}</option>`).join('');
+        }
+
+        // Filter and display questions
+        function applyPracticeFilters() {
+            const yearVal = document.getElementById('filter-year').value;
+            const shiftVal = document.getElementById('filter-shift').value;
+            const diffVal = document.getElementById('filter-difficulty').value;
+
+            filteredQuestions = allQuestions.filter(q => {
+                if (yearVal !== 'all' && String(q.year) !== yearVal) return false;
+                if (shiftVal !== 'all' && String(q.shift) !== shiftVal) return false;
+                if (diffVal !== 'all' && String(q.difficulty).toLowerCase() !== diffVal.toLowerCase()) return false;
+                return true;
+            });
+
+            renderQuestionsList();
+        }
+
+        // Render practice list
+        function renderQuestionsList() {
+            const containerEl = document.getElementById('questions-list-container');
+            const statsEl = document.getElementById('practice-stats-display');
+            const loadingEl = document.getElementById('practice-questions-loading');
+
+            loadingEl.style.display = 'none';
+            containerEl.style.display = 'flex';
+            containerEl.innerHTML = '';
+
+            if (filteredQuestions.length === 0) {
+                containerEl.innerHTML = `
+                    <div class="no-questions-placeholder">
+                        <h3>No questions match the filters</h3>
+                        <p>Try clearing your filters or selecting another chapter.</p>
+                    </div>
+                `;
+                statsEl.textContent = 'Showing 0 questions';
+                return;
+            }
+
+            // Calculate stats
+            let correctCount = 0;
+            let incorrectCount = 0;
+            let answeredCount = 0;
+
+            filteredQuestions.forEach(q => {
+                const userAns = userPracticeAnswers[q.id];
+                if (userAns !== undefined) {
+                    answeredCount++;
+                    if (userAns === q.correct_answer) {
+                        correctCount++;
+                    } else {
+                        incorrectCount++;
+                    }
+                }
+            });
+
+            const unattemptedCount = filteredQuestions.length - answeredCount;
+            statsEl.innerHTML = `
+                Showing ${filteredQuestions.length} question${filteredQuestions.length !== 1 ? 's' : ''} | 
+                <span class="stat-count-correct">${correctCount} Correct</span> | 
+                <span class="stat-count-incorrect">${incorrectCount} Incorrect</span> | 
+                <span>${unattemptedCount} Unattempted</span>
+            `;
+
+            filteredQuestions.forEach((q, displayIdx) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `q-card-${q.id}`;
+
+                const userAnswer = userPracticeAnswers[q.id];
+                const isAttempted = userAnswer !== undefined;
+                const isCorrect = isAttempted && userAnswer === q.correct_answer;
+
+                if (isAttempted) {
+                    card.className += isCorrect ? ' answered-correct' : ' answered-incorrect';
+                }
+
+                // Badges HTML
+                let badgeList = '';
+                if (q.year) badgeList += `<span class="q-badge">${q.year}</span>`;
+                if (q.shift) badgeList += `<span class="q-badge">${q.shift}</span>`;
+                if (q.difficulty) {
+                    badgeList += `<span class="q-badge ${(q.difficulty).toLowerCase()}">${q.difficulty}</span>`;
+                }
+
+                // Media image HTML
+                let questionImgHtml = '';
+                if (q.question_image) {
+                    questionImgHtml = `<div class="media-container"><img src="${q.question_image}" alt="Question Image"></div>`;
+                }
+
+                // Options HTML
+                let optionsHtml = '';
+                const optionImages = [q.option_a_image, q.option_b_image, q.option_c_image, q.option_d_image];
+                
+                optionsHtml = q.options.map((opt, optIdx) => {
+                    const letter = String.fromCharCode(65 + optIdx);
+                    let buttonClass = 'option-button';
+                    
+                    if (isAttempted) {
+                        if (optIdx === q.correct_answer) {
+                            buttonClass += ' correct';
+                        } else if (optIdx === userAnswer) {
+                            buttonClass += ' incorrect';
+                        }
+                    } else {
+                        if (userPracticeAnswers[`temp-${q.id}`] === optIdx) {
+                            buttonClass += ' selected';
+                        }
+                    }
+
+                    let optImgHtml = '';
+                    if (optionImages[optIdx]) {
+                        optImgHtml = `<div class="media-container" style="margin-top: 8px;"><img src="${optionImages[optIdx]}" alt="Option ${letter} Image"></div>`;
+                    }
+
+                    return `
+                        <button class="${buttonClass}" data-q-id="${q.id}" data-opt-idx="${optIdx}" ${isAttempted ? 'disabled' : ''}>
+                            <div class="option-letter">${letter}</div>
+                            <div class="option-content-wrapper">
+                                <div>${opt}</div>
+                                ${optImgHtml}
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+
+                // Explanation content HTML
+                let explanationImgHtml = '';
+                if (q.detailed_answer_image) {
+                    explanationImgHtml = `<div class="media-container" style="margin-top: 12px;"><img src="${q.detailed_answer_image}" alt="Explanation Image"></div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="question-card-header">
+                        <span class="question-number">Question ${displayIdx + 1}</span>
+                        <div class="question-badges">${badgeList}</div>
+                    </div>
+                    <div class="question-body">
+                        <div>${q.question}</div>
+                        ${questionImgHtml}
+                    </div>
+                    <div class="options-grid">
+                        ${optionsHtml}
+                    </div>
+                    <div class="action-row">
+                        <button class="btn-check-answer" id="btn-check-${q.id}" ${isAttempted ? 'disabled' : (userPracticeAnswers[`temp-${q.id}`] !== undefined ? '' : 'disabled')}>
+                            ${isAttempted ? 'Checked' : 'Check Answer'}
+                        </button>
+                    </div>
+                    <div class="explanation-card" id="explanation-${q.id}" style="${isAttempted ? 'display: block;' : ''}">
+                        <div class="explanation-title">✨ Detailed Explanation</div>
+                        <div class="explanation-text">${q.detailed_answer || 'No detailed explanation provided.'}</div>
+                        ${explanationImgHtml}
+                    </div>
+                `;
+
+                // Add option selection click events
+                if (!isAttempted) {
+                    card.querySelectorAll('.option-button').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const optIdx = parseInt(btn.dataset.optIdx);
+                            userPracticeAnswers[`temp-${q.id}`] = optIdx;
+
+                            // Highlight clicked option
+                            card.querySelectorAll('.option-button').forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+
+                            // Enable check answer button
+                            document.getElementById(`btn-check-${q.id}`).disabled = false;
+                        });
+                    });
+
+                    // Check Answer Button Event
+                    card.querySelector('.btn-check-answer').addEventListener('click', async () => {
+                        const selectedIdx = userPracticeAnswers[`temp-${q.id}`];
+                        if (selectedIdx === undefined) return;
+
+                        // Set attempt state
+                        userPracticeAnswers[q.id] = selectedIdx;
+                        delete userPracticeAnswers[`temp-${q.id}`];
+
+                        const isAnswerCorrect = selectedIdx === q.correct_answer;
+
+                        // Apply classes to card
+                        card.className += isAnswerCorrect ? ' answered-correct' : ' answered-incorrect';
+
+                        // Disable option buttons and apply colors
+                        card.querySelectorAll('.option-button').forEach(b => {
+                            b.disabled = true;
+                            const idx = parseInt(b.dataset.optIdx);
+                            if (idx === q.correct_answer) {
+                                b.classList.add('correct');
+                            } else if (idx === selectedIdx) {
+                                b.classList.add('incorrect');
+                            }
+                            b.classList.remove('selected');
+                        });
+
+                        // Disable Check button
+                        const checkBtn = document.getElementById(`btn-check-${q.id}`);
+                        checkBtn.disabled = true;
+                        checkBtn.textContent = 'Checked';
+
+                        // Display solution explanation
+                        document.getElementById(`explanation-${q.id}`).style.display = 'block';
+
+                        // Update top stats toolbar
+                        updateToolbarStats();
+
+                        // Award XP to user for attempt via Supabase profile updates
+                        await awardPracticeXP(isAnswerCorrect);
+                    });
+                }
+
+                containerEl.appendChild(card);
+            });
+        }
+
+        // Live stats update
+        function updateToolbarStats() {
+            const statsEl = document.getElementById('practice-stats-display');
+            let correctCount = 0;
+            let incorrectCount = 0;
+            let answeredCount = 0;
+
+            filteredQuestions.forEach(q => {
+                const userAns = userPracticeAnswers[q.id];
+                if (userAns !== undefined) {
+                    answeredCount++;
+                    if (userAns === q.correct_answer) {
+                        correctCount++;
+                    } else {
+                        incorrectCount++;
+                    }
+                }
+            });
+
+            const unattemptedCount = filteredQuestions.length - answeredCount;
+            statsEl.innerHTML = `
+                Showing ${filteredQuestions.length} question${filteredQuestions.length !== 1 ? 's' : ''} | 
+                <span class="stat-count-correct">${correctCount} Correct</span> | 
+                <span class="stat-count-incorrect">${incorrectCount} Incorrect</span> | 
+                <span>${unattemptedCount} Unattempted</span>
+            `;
+        }
+
+        // Update user XP when answering a question
+        async function awardPracticeXP(isCorrect) {
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+
+                // Read cached profile
+                const cachedProfileStr = localStorage.getItem('learnser_supabase_profile');
+                if (!cachedProfileStr) return;
+
+                const profile = JSON.parse(cachedProfileStr);
+                const xpGain = isCorrect ? 10 : 2; // +10 XP for correct, +2 XP for attempting
+                
+                const updates = {
+                    total_xp: (profile.total_xp || 0) + xpGain,
+                    weekly_xp: (profile.weekly_xp || 0) + xpGain,
+                    total_time_seconds: (profile.total_time_seconds || 0) + 120 // Assume 2 mins per question
+                };
+
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .update(updates)
+                    .eq('id', profile.id)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                if (data) {
+                    // Update cache to sync across tabs
+                    localStorage.setItem('learnser_supabase_profile', JSON.stringify(data));
+                    
+                    // Dispatch event
+                    window.dispatchEvent(new CustomEvent('profileready', { detail: data }));
+                }
+            } catch (e) {
+                console.warn('Failed to update XP after question practice:', e);
+            }
+        }
+
+        // Helper: Escape HTML strings to prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
