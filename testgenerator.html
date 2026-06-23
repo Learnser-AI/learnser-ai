@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Custom Test Generator | Learnser AI</title>
+    <title>Custom Test Generator | Learnser AI</title>
     
     <script src="theme.js?v=2.0"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- KaTeX for high-quality mathematical rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
     <style>
         :root {
@@ -953,6 +957,39 @@
             }
             body.collapsed .sidebar { transform: translateX(0); }
         }
+        /* Strikes Floating Widget styles */
+        .strikes-floating-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(248, 113, 113, 0.4);
+            padding: 12px 18px;
+            border-radius: 12px;
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 30px rgba(248, 113, 113, 0.15);
+            font-weight: 700;
+            color: #f87171;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            pointer-events: none;
+        }
+        .strike-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: rgba(248, 113, 113, 0.2);
+            border: 1px solid rgba(248, 113, 113, 0.5);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .strike-dot.active {
+            background-color: #f87171;
+            box-shadow: 0 0 8px #f87171;
+            transform: scale(1.2);
+        }
     </style>
 </head>
 <body>
@@ -1006,7 +1043,7 @@
                 <div class="section-title">PRACTICE</div>
                 <a href="testgenerator.html" class="menu-item active">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                    <span class="menu-text">AI Test Generator</span>
+                    <span class="menu-text">Test generator</span>
                 </a>
                 <a href="pyq.html" class="menu-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="14" r="1"></circle><path d="M12 11c1.5 0 2-1 2-2s-.5-2-2-2-2 1-2 2"></path></svg>
@@ -1404,6 +1441,16 @@
         </div>
     </div>
 
+    <!-- Strikes Floating Widget -->
+    <div id="strikesWidget" class="strikes-floating-box">
+        <span>STRIKES:</span>
+        <div style="display: flex; gap: 6px; align-items: center;">
+            <div class="strike-dot" id="strike-1"></div>
+            <div class="strike-dot" id="strike-2"></div>
+            <div class="strike-dot" id="strike-3"></div>
+        </div>
+    </div>
+
     <!-- Supabase SDK & Configuration Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
@@ -1751,6 +1798,7 @@
                 // Launch into Exam Mode
                 isExamActive = true;
                 activeQuestionStartTime = Date.now();
+                updateStrikesDisplay();
                 
                 switchView('exam');
                 
@@ -1827,7 +1875,7 @@
             }
 
             // Body
-            let bodyHtml = `<div>${q.question}</div>`;
+            let bodyHtml = `<div>${formatMathText(q.question)}</div>`;
             if (q.question_image) {
                 bodyHtml += `<div class="media-container"><img src="${q.question_image}" alt="Question Image"></div>`;
             }
@@ -1851,12 +1899,16 @@
                     <button class="option-btn-exam ${isSelected ? 'selected' : ''}" onclick="selectExamOption(${idx})">
                         <div class="option-letter-box">${letter}</div>
                         <div class="option-content-wrapper">
-                            <div>${opt}</div>
+                            <div>${formatMathText(opt)}</div>
                             ${optImgHtml}
                         </div>
                     </button>
                 `;
             }).join('');
+
+            // Render mathematical expressions with KaTeX
+            renderMath(document.getElementById('exam-q-body-text'));
+            renderMath(container);
 
             activeQuestionStartTime = Date.now();
         }
@@ -1986,6 +2038,7 @@
         async function submitExam(reason) {
             isExamActive = false;
             if (examTimerInterval) clearInterval(examTimerInterval);
+            updateStrikesDisplay();
 
             // Exit fullscreen
             exitFullscreenMode();
@@ -2133,7 +2186,7 @@
                         <span>Time Spent: ${q.timeSpent}s</span>
                     </div>
                     <div class="solution-text">
-                        <div>${q.questionText}</div>
+                        <div>${formatMathText(q.questionText)}</div>
                         ${qImgHtml}
                     </div>
                     <div class="solution-answers">
@@ -2142,12 +2195,13 @@
                     </div>
                     <div class="solution-explanation">
                         <strong>Detailed Explanation:</strong>
-                        <p style="margin-top: 4px; white-space: pre-line;">${q.detailedAnswer || 'No detailed explanation provided.'}</p>
+                        <p style="margin-top: 4px; white-space: pre-line;">${formatMathText(q.detailedAnswer || 'No detailed explanation provided.')}</p>
                         ${solImgHtml}
                     </div>
                 `;
                 list.appendChild(card);
             });
+            renderMath(list);
         }
 
         // Toggle Results Tabs
@@ -2321,10 +2375,13 @@ Provide:
 
             if (document.visibilityState === 'hidden') {
                 examTabSwitchCount++;
+                updateStrikesDisplay();
                 
                 const warningBadge = document.getElementById('exam-warning-badge');
-                warningBadge.style.display = 'inline-block';
-                warningBadge.textContent = `Tab Switch Warning: ${examTabSwitchCount}/3`;
+                if (warningBadge) {
+                    warningBadge.style.display = 'inline-block';
+                    warningBadge.textContent = `Tab Switch Warning: ${examTabSwitchCount}/3`;
+                }
 
                 alert(`WARNING: Minimizing the test window or switching tabs is restricted! (Switch ${examTabSwitchCount}/3). You will be disqualified on the 3rd switch.`);
 
@@ -2332,6 +2389,126 @@ Provide:
                     alert("Disqualification: Maximum tab switches exceeded. Submitting test immediately.");
                     submitExam('tab_switch');
                 }
+            }
+        }
+
+        // Update strikes display widget
+        function updateStrikesDisplay() {
+            const widget = document.getElementById('strikesWidget');
+            if (!widget) return;
+            
+            // Update dots
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById(`strike-${i}`);
+                if (dot) {
+                    if (i <= examTabSwitchCount) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                }
+            }
+            
+            if (isExamActive) {
+                widget.style.display = 'flex';
+            } else {
+                widget.style.display = 'none';
+            }
+        }
+
+        // prevent copy, cut, inspect
+        document.addEventListener('copy', e => {
+            if (isExamActive) e.preventDefault();
+        });
+        document.addEventListener('cut', e => {
+            if (isExamActive) e.preventDefault();
+        });
+        document.addEventListener('contextmenu', e => {
+            if (isExamActive) e.preventDefault();
+        });
+        document.addEventListener('keydown', e => {
+            if (!isExamActive) return;
+            // Disable F12
+            if (e.key === 'F12' || e.keyCode === 123) {
+                e.preventDefault();
+                return false;
+            }
+            // Disable Ctrl+Shift+I or Cmd+Opt+I (DevTools)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+                e.preventDefault();
+                return false;
+            }
+            // Disable Cmd+Opt+I/J/C (macOS specific)
+            if (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+                e.preventDefault();
+                return false;
+            }
+            // Disable Ctrl+U or Cmd+Opt+U (View Source)
+            if (((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u')) || (e.metaKey && e.altKey && (e.key === 'U' || e.key === 'u'))) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Math Rendering Helpers
+        function formatMathText(text) {
+            if (!text) return '';
+            let processed = text;
+
+            // 1. Protect URLs (so we don't convert http:// to fraction)
+            const urls = [];
+            processed = processed.replace(/https?:\/\/[^\s]+/g, (match) => {
+                urls.push(match);
+                return `__URL_PLACEHOLDER_${urls.length - 1}__`;
+            });
+
+            // 2. Handle superscripts: x^y or x^(y+z)
+            processed = processed.replace(/(\b[a-zA-Z0-9]+|\))\s*\^\s*\(([^)]+)\)/g, '$1^{$2}');
+            processed = processed.replace(/(\b[a-zA-Z0-9]+)\s*\^\s*(\b[a-zA-Z0-9]+)/g, '$1^{$2}');
+
+            // 3. Handle subscripts: x_i or x_(i+1)
+            processed = processed.replace(/(\b[a-zA-Z0-9]+|\))\s*_\s*\(([^)]+)\)/g, '$1_{$2}');
+            processed = processed.replace(/(\b[a-zA-Z0-9]+)\s*_\s*(\b[a-zA-Z0-9]+)/g, '$1_{$2}');
+
+            // 4. Handle square roots: sqrt(x) or \sqrt(x) -> \sqrt{x}
+            processed = processed.replace(/\\?sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
+            processed = processed.replace(/\\?sqrt\{([^}]+)\}/g, '\\sqrt{$1}');
+
+            // 5. Handle fractions: a/b, (a+b)/(c+d)
+            processed = processed.replace(/\(([^)]+)\)\s*\/\s*\(([^)]+)\)/g, '\\frac{$1}{$2}');
+            processed = processed.replace(/\(([^)]+)\)\s*\/\s*([a-zA-Z0-9]+)/g, '\\frac{$1}{$2}');
+            processed = processed.replace(/\b([a-zA-Z0-9]+)\s*\/\s*\(([^)]+)\)/g, '\\frac{$1}{$2}');
+            processed = processed.replace(/\b([a-zA-Z0-9]+)\s*\/\s*([a-zA-Z0-9]+)\b/g, '\\frac{$1}{$2}');
+
+            // 6. Common symbols
+            processed = processed.replace(/\b\+-\b/g, '\\pm');
+            processed = processed.replace(/(\d+)\s*\*+\s*(\d+)/g, '$1 \\times $2');
+            processed = processed.replace(/(\d+)\s*x\s*(10\^{\d+})/gi, '$1 \\times $2');
+
+            // 7. Auto-wrap LaTeX patterns in $...$ if no other delimiters exist
+            if (!text.includes('$') && !text.includes('\\(') && !text.includes('\\[')) {
+                processed = processed.replace(/(\\[a-zA-Z]+(?:\{[^}]*\}|\([^)]*\))*)/g, '$$$1$');
+            }
+
+            // Restore URLs
+            urls.forEach((url, index) => {
+                processed = processed.replace(`__URL_PLACEHOLDER_${index}__`, url);
+            });
+
+            return processed;
+        }
+
+        function renderMath(element) {
+            if (window.renderMathInElement) {
+                renderMathInElement(element, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
             }
         }
 

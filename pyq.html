@@ -840,6 +840,10 @@
             }
         }
     </style>
+    <!-- KaTeX for high-quality mathematical rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
 
@@ -892,7 +896,7 @@
                 <div class="section-title">PRACTICE</div>
                 <a href="testgenerator.html" class="menu-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                    <span class="menu-text">AI Test Generator</span>
+                    <span class="menu-text">Test generator</span>
                 </a>
                 <a href="pyq.html" class="menu-item active">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="14" r="1"></circle><path d="M12 11c1.5 0 2-1 2-2s-.5-2-2-2-2 1-2 2"></path></svg>
@@ -1246,6 +1250,7 @@
                 const supabase = window.supabaseClient;
                 if (!supabase) throw new Error("Supabase client not initialized");
 
+                // Fetch chapters
                 const { data: chapters, error } = await supabase
                     .from('chapters')
                     .select('*')
@@ -1254,16 +1259,47 @@
 
                 if (error) throw error;
 
+                // Fetch questions under this subject to calculate totals and completions
+                const { data: questionsData, error: qError } = await supabase
+                    .from('questions')
+                    .select('id, chapter_id')
+                    .eq('subject', currentSubject);
+
+                if (qError) console.error("Error fetching question counts:", qError);
+
+                // Build mapping for counts
+                const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
+                const totalMap = {};
+                const doneMap = {};
+
+                if (questionsData) {
+                    questionsData.forEach(q => {
+                        const chId = q.chapter_id;
+                        totalMap[chId] = (totalMap[chId] || 0) + 1;
+                        if (localAttempts[q.id] && localAttempts[q.id].userOption !== undefined && localAttempts[q.id].userOption !== -1) {
+                            doneMap[chId] = (doneMap[chId] || 0) + 1;
+                        }
+                    });
+                }
+
                 if (!chapters || chapters.length === 0) {
                     containerEl.innerHTML = `<div class="no-chapters">No chapters found for ${currentSubject} yet.</div>`;
                 } else {
                     chapters.forEach((ch, idx) => {
+                        const totalQs = totalMap[ch.id] || 0;
+                        const doneQs = doneMap[ch.id] || 0;
+                        
                         const row = document.createElement('div');
                         row.className = 'chapter-row';
                         row.innerHTML = `
                             <div class="chapter-info">
                                 <div class="chapter-number">${idx + 1}</div>
-                                <div class="chapter-name">${escapeHtml(ch.name)}</div>
+                                <div>
+                                    <div class="chapter-name">${escapeHtml(ch.name)}</div>
+                                    <div class="chapter-progress-text" style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; font-weight: 500;">
+                                        Questions Done: <span style="color: ${doneQs === totalQs && totalQs > 0 ? 'var(--accent)' : 'var(--text-main)'}; font-weight: 700;">${doneQs}/${totalQs}</span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="chapter-arrow">→</div>
                         `;
@@ -1313,6 +1349,14 @@
                 if (error) throw error;
 
                 allQuestions = questions || [];
+                
+                // Populate userPracticeAnswers from localStorage (learnser_attempts) for this chapter
+                const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
+                allQuestions.forEach(q => {
+                    if (localAttempts[q.id] && localAttempts[q.id].userOption !== undefined && localAttempts[q.id].userOption !== -1) {
+                        userPracticeAnswers[q.id] = localAttempts[q.id].userOption;
+                    }
+                });
                 
                 // Populates filter dropdowns with unique values
                 populateFilters();
@@ -1472,7 +1516,7 @@
                         <button class="${buttonClass}" data-q-id="${q.id}" data-opt-idx="${optIdx}" ${isAttempted ? 'disabled' : ''}>
                             <div class="option-letter">${letter}</div>
                             <div class="option-content-wrapper">
-                                <div>${opt}</div>
+                                <div>${formatMathText(opt)}</div>
                                 ${optImgHtml}
                             </div>
                         </button>
@@ -1491,7 +1535,7 @@
                         <div class="question-badges">${badgeList}</div>
                     </div>
                     <div class="question-body">
-                        <div>${q.question}</div>
+                        <div>${formatMathText(q.question)}</div>
                         ${questionImgHtml}
                     </div>
                     <div class="options-grid">
@@ -1504,7 +1548,7 @@
                     </div>
                     <div class="explanation-card" id="explanation-${q.id}" style="${isAttempted ? 'display: block;' : ''}">
                         <div class="explanation-title">✨ Detailed Explanation</div>
-                        <div class="explanation-text">${q.detailed_answer || 'No detailed explanation provided.'}</div>
+                        <div class="explanation-text">${formatMathText(q.detailed_answer || 'No detailed explanation provided.')}</div>
                         ${explanationImgHtml}
                     </div>
                 `;
@@ -1535,6 +1579,14 @@
                         delete userPracticeAnswers[`temp-${q.id}`];
 
                         const isAnswerCorrect = selectedIdx === q.correct_answer;
+
+                        // Save attempt in localStorage (learnser_attempts)
+                        const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
+                        localAttempts[q.id] = {
+                            correct: isAnswerCorrect,
+                            userOption: selectedIdx
+                        };
+                        localStorage.setItem('learnser_attempts', JSON.stringify(localAttempts));
 
                         // Apply classes to card
                         card.className += isAnswerCorrect ? ' answered-correct' : ' answered-incorrect';
@@ -1569,6 +1621,7 @@
 
                 containerEl.appendChild(card);
             });
+            renderMath(containerEl);
         }
 
         // Live stats update
@@ -1635,6 +1688,67 @@
                 }
             } catch (e) {
                 console.warn('Failed to update XP after question practice:', e);
+            }
+        }
+
+        function formatMathText(text) {
+            if (!text) return '';
+            let processed = text;
+
+            // 1. Protect URLs (so we don't convert http:// to fraction)
+            const urls = [];
+            processed = processed.replace(/https?:\/\/[^\s]+/g, (match) => {
+                urls.push(match);
+                return `__URL_PLACEHOLDER_${urls.length - 1}__`;
+            });
+
+            // 2. Handle superscripts: x^y or x^(y+z)
+            processed = processed.replace(/(\b[a-zA-Z0-9]+|\))\s*\^\s*\(([^)]+)\)/g, '$1^{$2}');
+            processed = processed.replace(/(\b[a-zA-Z0-9]+)\s*\^\s*(\b[a-zA-Z0-9]+)/g, '$1^{$2}');
+
+            // 3. Handle subscripts: x_i or x_(i+1)
+            processed = processed.replace(/(\b[a-zA-Z0-9]+|\))\s*_\s*\(([^)]+)\)/g, '$1_{$2}');
+            processed = processed.replace(/(\b[a-zA-Z0-9]+)\s*_\s*(\b[a-zA-Z0-9]+)/g, '$1_{$2}');
+
+            // 4. Handle square roots: sqrt(x) or \sqrt(x) -> \sqrt{x}
+            processed = processed.replace(/\\?sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
+            processed = processed.replace(/\\?sqrt\{([^}]+)\}/g, '\\sqrt{$1}');
+
+            // 5. Handle fractions: a/b, (a+b)/(c+d)
+            processed = processed.replace(/\(([^)]+)\)\s*\/\s*\(([^)]+)\)/g, '\\frac{$1}{$2}');
+            processed = processed.replace(/\(([^)]+)\)\s*\/\s*([a-zA-Z0-9]+)/g, '\\frac{$1}{$2}');
+            processed = processed.replace(/\b([a-zA-Z0-9]+)\s*\/\s*\(([^)]+)\)/g, '\\frac{$1}{$2}');
+            processed = processed.replace(/\b([a-zA-Z0-9]+)\s*\/\s*([a-zA-Z0-9]+)\b/g, '\\frac{$1}{$2}');
+
+            // 6. Common symbols
+            processed = processed.replace(/\b\+-\b/g, '\\pm');
+            processed = processed.replace(/(\d+)\s*\*+\s*(\d+)/g, '$1 \\times $2');
+            processed = processed.replace(/(\d+)\s*x\s*(10\^{\d+})/gi, '$1 \\times $2');
+
+            // 7. Auto-wrap LaTeX patterns in $...$ if no other delimiters exist
+            if (!text.includes('$') && !text.includes('\\(') && !text.includes('\\[')) {
+                processed = processed.replace(/(\\[a-zA-Z]+(?:\{[^}]*\}|\([^)]*\))*)/g, '$$$1$');
+            }
+
+            // Restore URLs
+            urls.forEach((url, index) => {
+                processed = processed.replace(`__URL_PLACEHOLDER_${index}__`, url);
+            });
+
+            return processed;
+        }
+
+        function renderMath(element) {
+            if (window.renderMathInElement) {
+                renderMathInElement(element, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
             }
         }
 

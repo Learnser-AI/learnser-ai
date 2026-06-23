@@ -440,7 +440,35 @@
             background: rgba(239, 68, 68, 0.2);
             border-color: #f87171;
         }
+        .chapter-row:hover .edit-chapter-pencil {
+            display: inline-flex !important;
+            color: var(--accent) !important;
+        }
+        .edit-chapter-pencil:hover {
+            color: var(--text-main) !important;
+        }
+        .btn-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            padding: 6px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-arrow:hover {
+            background: rgba(129, 140, 248, 0.15) !important;
+            border-color: var(--primary) !important;
+            color: var(--text-main) !important;
+        }
     </style>
+    <!-- KaTeX for high-quality mathematical rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
 
@@ -501,7 +529,7 @@
                 <div class="section-title">PRACTICE</div>
                 <a href="testgenerator.html" class="menu-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                    <span class="menu-text">AI Test Generator</span>
+                    <span class="menu-text">Test generator</span>
                 </a>
                 <a href="pyq.html" class="menu-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="12" cy="14" r="1"></circle><path d="M12 11c1.5 0 2-1 2-2s-.5-2-2-2-2 1-2 2"></path></svg>
@@ -568,6 +596,7 @@
             <button class="tab-btn active" onclick="switchTab('questions')">Questions DB</button>
             <button class="tab-btn" onclick="switchTab('chapters')">Syllabus Chapters</button>
             <button class="tab-btn" onclick="switchTab('exams')">JEE Mock Exams</button>
+            <button id="shiftsTabBtn" class="tab-btn" onclick="switchTab('shifts')">Shifts</button>
             <button id="permissionsTabBtn" class="tab-btn" onclick="switchTab('permissions')" style="display: none;">Permissions & Access</button>
         </div>
 
@@ -610,6 +639,11 @@
                     <div class="form-group form-group-full">
                         <label for="questionText">Question Text *</label>
                         <textarea id="questionText" class="admin-textarea" placeholder="Enter question description text or LaTeX formula..." required></textarea>
+                        <!-- Live Math Preview -->
+                        <div id="questionTextPreviewContainer" style="margin-top: 10px; padding: 16px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--glass-border); border-radius: 12px; display: none;">
+                            <div style="font-size: 0.75rem; font-weight: bold; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Live Mathematics Preview</div>
+                            <div id="questionTextPreview" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6; min-height: 24px; word-break: break-word;"></div>
+                        </div>
                     </div>
 
                     <!-- Drag & Drop Option Images -->
@@ -687,7 +721,9 @@
                         </div>
                         <div class="form-group">
                             <label for="questionShift">Exam Shift</label>
-                            <input type="text" id="questionShift" class="admin-input" placeholder="e.g. Shift 1 / Morning">
+                            <select id="questionShift" class="admin-select">
+                                <option value="">Select Shift</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="questionDifficulty">Difficulty</label>
@@ -698,15 +734,20 @@
                                 <option value="Hard">Hard</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="display: none;">
                             <label for="questionSubtopic">Subtopic</label>
-                            <input type="text" id="questionSubtopic" class="admin-input" placeholder="e.g. Photoelectric Effect">
+                            <input type="text" id="questionSubtopic" class="admin-input" placeholder="e.g. Photoelectric Effect" disabled>
                         </div>
                     </div>
 
                     <div class="form-group form-group-full">
                         <label for="detailedExplanation">Detailed Step-by-Step Explanation</label>
                         <textarea id="detailedExplanation" class="admin-textarea" placeholder="Explain the detailed solution process step-by-step..."></textarea>
+                        <!-- Live Math Preview -->
+                        <div id="detailedExplanationPreviewContainer" style="margin-top: 10px; padding: 16px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--glass-border); border-radius: 12px; display: none;">
+                            <div style="font-size: 0.75rem; font-weight: bold; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Live Mathematics Preview</div>
+                            <div id="detailedExplanationPreview" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6; min-height: 24px; word-break: break-word;"></div>
+                        </div>
                     </div>
 
                     <button type="submit" id="addQuestionBtn" class="btn-generate" style="margin-top: 10px;">Add Question</button>
@@ -785,7 +826,7 @@
                 <form id="addChapterForm" onsubmit="handleAddChapter(event)" class="form-grid" style="align-items: flex-end;">
                     <div class="form-group">
                         <label for="chapterSubject">Subject *</label>
-                        <select id="chapterSubject" class="admin-select" required>
+                        <select id="chapterSubject" class="admin-select" onchange="onChapterSubjectChange()" required>
                             <option value="">Select Subject</option>
                             <option value="physics">Physics</option>
                             <option value="chemistry">Chemistry</option>
@@ -979,6 +1020,81 @@
 
         </div>
 
+        <!-- Tab 5: Shifts Management -->
+        <div id="tab-shifts" class="tab-content">
+            
+            <div class="admin-card">
+                <h3 class="admin-card-title">Manage Exam Shifts</h3>
+                <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 16px; line-height: 1.4;">
+                    Define custom examination shifts (e.g., "Shift 1 / Morning", "Shift 2 / Evening", "27 Jan S1"). 
+                    These will appear in the exam shifts dropdown when creating questions.
+                </p>
+                <form id="addShiftForm" onsubmit="handleAddShift(event)" style="display: flex; gap: 12px; max-width: 500px; margin-bottom: 20px;">
+                    <input type="text" id="shiftNameInput" class="admin-input" placeholder="e.g. 29 Jan Shift 1" required>
+                    <button type="submit" class="btn-generate" style="width: auto; padding: 0 24px; white-space: nowrap;">Add Shift</button>
+                </form>
+                <div class="history-list" id="shiftsList">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Supabase DDL Information Card (Helpful fallback info) -->
+            <div class="admin-card" id="shiftsDdlCard" style="display: none;">
+                <h3 class="admin-card-title" style="color: #f87171;">Supabase Table Setup Required</h3>
+                <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 16px; line-height: 1.4;">
+                    The 'shifts' table was not found or is inaccessible in your Supabase database. Using local fallback shifts list. 
+                    To enable database-backed shift management, run this SQL in your Supabase SQL Editor:
+                </p>
+                <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-family: monospace; color: var(--text-main); font-size: 0.8rem; overflow-x: auto; border: 1px solid var(--glass-border);">
+CREATE TABLE public.shifts (
+    id bigint generated by default as identity primary key,
+    name text not null unique,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.shifts ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for public access (Adjust in production)
+CREATE POLICY "Allow read access for all" ON public.shifts FOR SELECT USING (true);
+CREATE POLICY "Allow write access for all" ON public.shifts FOR ALL USING (true) WITH CHECK (true);</pre>
+            </div>
+
+        </div>
+
+        <!-- Edit Chapter Modal -->
+        <div id="editChapterModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center;">
+            <div class="admin-card" style="width: 100%; max-width: 500px; margin: 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); border: 1px solid var(--glass-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px;">
+                    <h3 class="admin-card-title" style="margin-bottom: 0;">Edit Syllabus Chapter</h3>
+                    <button onclick="closeEditChapterModal()" style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.5rem; line-height: 1;">&times;</button>
+                </div>
+                <form id="editChapterForm" onsubmit="handleEditChapter(event)" style="display: flex; flex-direction: column; gap: 16px;">
+                    <input type="hidden" id="editChapterId">
+                    <div class="form-group">
+                        <label for="editChapterName">Chapter Name *</label>
+                        <input type="text" id="editChapterName" class="admin-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editChapterSubject">Subject *</label>
+                        <select id="editChapterSubject" class="admin-select" required>
+                            <option value="physics">Physics</option>
+                            <option value="chemistry">Chemistry</option>
+                            <option value="mathematics">Mathematics</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editChapterOrder">Display Order Index *</label>
+                        <input type="number" id="editChapterOrder" class="admin-input" required>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+                        <button type="button" class="btn-delete" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--glass-border);" onclick="closeEditChapterModal()">Cancel</button>
+                        <button type="submit" class="btn-generate" style="width: auto; padding: 0 24px;">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </main>
 
     <!-- Supabase SDK & Configuration Scripts -->
@@ -1006,7 +1122,17 @@
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
             document.getElementById('tab-' + tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            if (window.event && window.event.currentTarget) {
+                window.event.currentTarget.classList.add('active');
+            } else {
+                // Fallback to finding the button programmatically
+                const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${tabId}')"]`) || document.getElementById(`${tabId}TabBtn`);
+                if (btn) btn.classList.add('active');
+            }
+
+            if (tabId === 'shifts') {
+                loadShifts();
+            }
         }
 
         // Listen for profile ready event from auth-check.js
@@ -1040,9 +1166,14 @@
             loadExamToggles();
             // Load Feature Toggles
             loadFeatureToggles();
+            // Load Shifts list and dropdown
+            loadShifts();
             
             // Set up Drag and Drop fields
             setupDropzones();
+            
+            // Initialize live mathematical previews
+            initLiveMathPreviews();
             
             // If super admin, load admins list
             if (window.isCurrentUserSuperAdmin) {
@@ -1205,7 +1336,6 @@
             const year = document.getElementById('questionYear').value;
             const shift = document.getElementById('questionShift').value;
             const difficulty = document.getElementById('questionDifficulty').value;
-            const subtopic = document.getElementById('questionSubtopic').value;
             const detailedAnswer = document.getElementById('detailedExplanation').value;
 
             if (!subject || !chapterId || !questionText || !optA || !optB || !optC || !optD || isNaN(correctAnswer)) {
@@ -1222,7 +1352,7 @@
                 year: year || null,
                 shift: shift || null,
                 difficulty: difficulty || null,
-                subtopic: subtopic || null,
+                subtopic: null, // Subtopic disabled
                 detailed_answer: detailedAnswer || null,
                 question_image: questionImageBase64 || null,
                 option_a_image: optAImageBase64 || null,
@@ -1243,10 +1373,24 @@
                 if (error) throw error;
                 
                 alert('Question added successfully!');
-                e.target.reset();
+                
+                // Reset form fields except subject, chapter, year, shift, difficulty
+                document.getElementById('questionText').value = '';
+                document.getElementById('optionA').value = '';
+                document.getElementById('optionB').value = '';
+                document.getElementById('optionC').value = '';
+                document.getElementById('optionD').value = '';
+                document.getElementById('correctAnswer').value = '';
+                document.getElementById('detailedExplanation').value = '';
+                // Reset previews
+                document.getElementById('questionTextPreviewContainer').style.display = 'none';
+                document.getElementById('questionTextPreview').innerHTML = '';
+                document.getElementById('detailedExplanationPreviewContainer').style.display = 'none';
+                document.getElementById('detailedExplanationPreview').innerHTML = '';
                 clearDropzones();
-                document.getElementById('questionChapter').disabled = true;
-                document.getElementById('questionChapter').innerHTML = '<option value="">Select Subject First</option>';
+                
+                // Refresh existing questions list
+                loadExistingQuestions();
             } catch (error) {
                 console.error('Error adding question:', error);
                 alert('Failed to add question: ' + error.message);
@@ -1361,7 +1505,7 @@
                         year: q.year || null,
                         shift: q.shift || null,
                         difficulty: q.difficulty || null,
-                        subtopic: q.subtopic || null,
+                        subtopic: null, // Subtopic disabled
                         detailed_answer: q.detailedAnswer || null,
                         question_image: q.questionImage || null,
                         option_a_image: q.optionAImage || null,
@@ -1435,12 +1579,12 @@
                                 <div style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.5;">
                                     <strong>Year:</strong> ${q.year || 'N/A'} | 
                                     <strong>Shift:</strong> ${q.shift || 'N/A'} | 
-                                    <strong>Difficulty:</strong> ${q.difficulty || 'N/A'} | 
-                                    <strong>Subtopic:</strong> ${q.subtopic || 'N/A'}
+                                    <strong>Difficulty:</strong> ${q.difficulty || 'N/A'}
                                 </div>
                             </div>
                         `;
                     }).join('');
+                    renderMath(questionsList);
                 }
             } catch (error) {
                 console.error('Error loading questions:', error);
@@ -1465,6 +1609,36 @@
         }
 
         // Chapters Tab Logic
+        async function onChapterSubjectChange() {
+            const subject = document.getElementById('chapterSubject').value;
+            if (!subject) {
+                document.getElementById('chapterOrder').value = '';
+                return;
+            }
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+                
+                const { data, error } = await supabase
+                    .from('chapters')
+                    .select('sort_order')
+                    .eq('subject', subject)
+                    .order('sort_order', { ascending: false })
+                    .limit(1);
+                    
+                if (error) throw error;
+                
+                let nextOrder = 1;
+                if (data && data.length > 0) {
+                    nextOrder = (data[0].sort_order || 0) + 1;
+                }
+                document.getElementById('chapterOrder').value = nextOrder;
+            } catch(err) {
+                console.error('Error fetching max order:', err);
+                document.getElementById('chapterOrder').value = 1;
+            }
+        }
+
         async function handleAddChapter(e) {
             e.preventDefault();
             const subject = document.getElementById('chapterSubject').value;
@@ -1485,7 +1659,11 @@
                 if (error) throw error;
                 
                 alert('Chapter added successfully!');
-                e.target.reset();
+                
+                // Clear name field, keep subject same, and set next order (+1)
+                document.getElementById('chapterName').value = '';
+                document.getElementById('chapterOrder').value = order + 1;
+                
                 loadAllChapters();
             } catch (err) {
                 alert('Failed to add chapter: ' + err.message);
@@ -1513,13 +1691,26 @@
                         continue;
                     }
                     
-                    listEl.innerHTML = chapters.map(ch => `
-                        <div class="history-item" style="cursor: default; padding: 12px 16px;">
-                            <div>
-                                <span style="font-weight: 700; font-size: 0.95rem;">${escapeHtml(ch.name)}</span>
+                    listEl.innerHTML = chapters.map((ch, idx) => `
+                        <div class="history-item chapter-row" data-id="${ch.id}" style="cursor: default; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; position: relative;">
+                            <div style="flex-grow: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: 700; font-size: 0.95rem;">${escapeHtml(ch.name)}</span>
+                                    <button class="edit-chapter-pencil" onclick="openEditChapterModal('${ch.id}', '${escapeHtml(ch.name)}', ${ch.sort_order}, '${ch.subject}')" title="Edit Chapter" style="background: none; border: none; padding: 2px; color: var(--text-dim); cursor: pointer; display: none; transition: color 0.2s; align-items: center; justify-content: center;">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                    </button>
+                                </div>
                                 <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">Order Index: ${ch.sort_order}</div>
                             </div>
-                            <button class="btn-delete" style="padding: 4px 10px;" onclick="deleteChapter('${ch.id}', '${escapeHtml(ch.name)}')">Delete</button>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <button class="btn-arrow" onclick="moveChapter('${ch.id}', '${ch.subject}', 'up')" title="Move Up">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                                </button>
+                                <button class="btn-arrow" onclick="moveChapter('${ch.id}', '${ch.subject}', 'down')" title="Move Down">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                <button class="btn-delete" style="padding: 4px 10px; margin-left: 4px;" onclick="deleteChapter('${ch.id}', '${escapeHtml(ch.name)}')">Delete</button>
+                            </div>
                         </div>
                     `).join('');
                 } catch(err) {
@@ -1541,6 +1732,308 @@
                 loadAllChapters();
             } catch(err) {
                 alert('Failed to delete chapter: ' + err.message);
+            }
+        }
+
+        // Move Chapter sorting (Up / Down)
+        async function moveChapter(id, subject, direction) {
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                // Fetch all chapters of this subject sorted by order
+                const { data: chapters, error } = await supabase
+                    .from('chapters')
+                    .select('id, sort_order')
+                    .eq('subject', subject)
+                    .order('sort_order', { ascending: true });
+
+                if (error) throw error;
+                if (!chapters || chapters.length <= 1) return;
+
+                const idx = chapters.findIndex(c => c.id === id);
+                if (idx === -1) return;
+
+                let targetIdx = -1;
+                if (direction === 'up') {
+                    if (idx === 0) return; // Already at the top
+                    targetIdx = idx - 1;
+                } else if (direction === 'down') {
+                    if (idx === chapters.length - 1) return; // Already at the bottom
+                    targetIdx = idx + 1;
+                }
+
+                if (targetIdx === -1) return;
+
+                const currentCh = chapters[idx];
+                const targetCh = chapters[targetIdx];
+
+                let currentOrder = currentCh.sort_order;
+                let targetOrder = targetCh.sort_order;
+
+                // Swap orders
+                if (currentOrder === targetOrder) {
+                    if (direction === 'up') {
+                        currentOrder = targetOrder - 1;
+                    } else {
+                        currentOrder = targetOrder + 1;
+                    }
+                }
+
+                // Swap in Supabase
+                const { error: err1 } = await supabase
+                    .from('chapters')
+                    .update({ sort_order: targetOrder })
+                    .eq('id', currentCh.id);
+
+                const { error: err2 } = await supabase
+                    .from('chapters')
+                    .update({ sort_order: currentOrder })
+                    .eq('id', targetCh.id);
+
+                if (err1) throw err1;
+                if (err2) throw err2;
+
+                loadAllChapters();
+            } catch (err) {
+                console.error('Failed to swap chapter order:', err);
+                alert('Failed to swap chapter order: ' + err.message);
+            }
+        }
+
+        // Edit Chapter Modal Logic
+        function openEditChapterModal(id, name, order, subject) {
+            document.getElementById('editChapterId').value = id;
+            document.getElementById('editChapterName').value = name;
+            document.getElementById('editChapterOrder').value = order;
+            document.getElementById('editChapterSubject').value = subject;
+            document.getElementById('editChapterModal').style.display = 'flex';
+        }
+
+        function closeEditChapterModal() {
+            document.getElementById('editChapterModal').style.display = 'none';
+        }
+
+        async function handleEditChapter(e) {
+            e.preventDefault();
+            const id = document.getElementById('editChapterId').value;
+            const name = document.getElementById('editChapterName').value.trim();
+            const order = parseInt(document.getElementById('editChapterOrder').value);
+            const subject = document.getElementById('editChapterSubject').value;
+
+            if (!name || isNaN(order)) return;
+
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                // Update the chapter
+                const { error: chError } = await supabase
+                    .from('chapters')
+                    .update({
+                        name: name,
+                        sort_order: order,
+                        subject: subject
+                    })
+                    .eq('id', id);
+
+                if (chError) throw chError;
+
+                // Cascade update to questions in this chapter to keep the subject column consistent
+                const { error: qError } = await supabase
+                    .from('questions')
+                    .update({ subject: subject })
+                    .eq('chapter_id', id);
+
+                if (qError) console.warn("Note: Non-critical failure updating questions subject column:", qError.message);
+
+                alert('Chapter updated successfully!');
+                closeEditChapterModal();
+                loadAllChapters();
+            } catch (err) {
+                alert('Failed to update chapter: ' + err.message);
+            }
+        }
+
+        // Shifts Management Logic
+        let activeShifts = [];
+        let isFallbackMode = false;
+
+        async function loadShifts() {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('shifts')
+                    .select('*')
+                    .order('name', { ascending: true });
+
+                if (error) throw error;
+
+                // If loaded successfully, hide DDL warning card
+                const ddlCard = document.getElementById('shiftsDdlCard');
+                if (ddlCard) ddlCard.style.display = 'none';
+
+                isFallbackMode = false;
+                activeShifts = data || [];
+                populateShiftsDropdowns();
+                renderShiftsList();
+            } catch (err) {
+                console.error('Error loading shifts from database:', err.message);
+                
+                // Show DDL warning card since table is not accessible
+                const ddlCard = document.getElementById('shiftsDdlCard');
+                if (ddlCard) ddlCard.style.display = 'block';
+
+                isFallbackMode = true;
+                // Fallback shifts
+                activeShifts = [
+                    { id: 'fb1', name: 'Shift 1' },
+                    { id: 'fb2', name: 'Shift 2' },
+                    { id: 'fb3', name: 'Morning Shift' },
+                    { id: 'fb4', name: 'Evening Shift' }
+                ];
+                populateShiftsDropdowns();
+                renderShiftsList(true); // pass true for fallback read-only list
+            }
+        }
+
+        function populateShiftsDropdowns() {
+            const shiftSelect = document.getElementById('questionShift');
+            if (!shiftSelect) return;
+
+            const currentValue = shiftSelect.value;
+            shiftSelect.innerHTML = '<option value="">Select Shift</option>';
+            activeShifts.forEach(shift => {
+                const opt = document.createElement('option');
+                opt.value = shift.name;
+                opt.textContent = shift.name;
+                shiftSelect.appendChild(opt);
+            });
+            if (currentValue) {
+                shiftSelect.value = currentValue;
+            }
+        }
+
+        function renderShiftsList(isFallback = false) {
+            const listEl = document.getElementById('shiftsList');
+            if (!listEl) return;
+
+            if (activeShifts.length === 0) {
+                listEl.innerHTML = '<div style="color: var(--text-dim); padding: 8px;">No shifts added yet.</div>';
+                return;
+            }
+
+            listEl.innerHTML = activeShifts.map(shift => {
+                return `
+                    <div class="history-item" style="cursor: default; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div>
+                            <span style="font-weight: 700; font-size: 0.95rem;">${escapeHtml(shift.name)}</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-generate" style="padding: 4px 10px; width: auto;" onclick="editShift('${shift.id}', '${escapeHtml(shift.name)}')">Edit</button>
+                            <button class="btn-delete" style="padding: 4px 10px;" onclick="deleteShift('${shift.id}', '${escapeHtml(shift.name)}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function editShift(id, currentName) {
+            const newName = prompt("Enter new shift name:", currentName);
+            if (newName === null) return; // cancelled
+            const trimmedName = newName.trim();
+            if (!trimmedName) {
+                alert("Shift name cannot be empty.");
+                return;
+            }
+
+            try {
+                if (isFallbackMode) {
+                    const idx = activeShifts.findIndex(s => s.id === id);
+                    if (idx !== -1) {
+                        activeShifts[idx].name = trimmedName;
+                        populateShiftsDropdowns();
+                        renderShiftsList(true);
+                    }
+                    return;
+                }
+
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                const { error } = await supabase
+                    .from('shifts')
+                    .update({ name: trimmedName })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                alert('Shift updated successfully!');
+                await loadShifts();
+            } catch (err) {
+                alert('Failed to update shift: ' + err.message);
+            }
+        }
+
+        async function handleAddShift(e) {
+            e.preventDefault();
+            const inputEl = document.getElementById('shiftNameInput');
+            const name = inputEl.value.trim();
+            if (!name) return;
+
+            try {
+                if (isFallbackMode) {
+                    const newId = 'fb-' + Date.now();
+                    activeShifts.push({ id: newId, name: name });
+                    populateShiftsDropdowns();
+                    renderShiftsList(true);
+                    inputEl.value = '';
+                    return;
+                }
+
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                const { error } = await supabase
+                    .from('shifts')
+                    .insert([{ name: name }]);
+
+                if (error) throw error;
+
+                alert('Shift added successfully!');
+                inputEl.value = '';
+                await loadShifts();
+            } catch (err) {
+                alert('Failed to add shift: ' + err.message);
+            }
+        }
+
+        async function deleteShift(id, name) {
+            if (!confirm(`Are you sure you want to delete shift "${name}"?`)) return;
+            try {
+                if (isFallbackMode) {
+                    activeShifts = activeShifts.filter(s => s.id !== id);
+                    populateShiftsDropdowns();
+                    renderShiftsList(true);
+                    return;
+                }
+
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                const { error } = await supabase
+                    .from('shifts')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                alert('Shift deleted successfully!');
+                await loadShifts();
+            } catch (err) {
+                alert('Failed to delete shift: ' + err.message);
             }
         }
 
@@ -1808,6 +2301,109 @@
                 loadAdmins();
             } catch(err) {
                 alert("Failed to revoke admin: " + err.message);
+            }
+        }
+
+        function formatMathText(text) {
+            if (!text) return '';
+            let processed = text;
+
+            // 1. Protect URLs (so we don't convert http:// to fraction)
+            const urls = [];
+            processed = processed.replace(/https?:\/\/[^\s]+/g, (match) => {
+                urls.push(match);
+                return `__URL_PLACEHOLDER_${urls.length - 1}__`;
+            });
+
+            // 2. Handle superscripts: x^y or x^(y+z)
+            processed = processed.replace(/(\b[a-zA-Z0-9]+|\))\s*\^\s*\(([^)]+)\)/g, '$1^{$2}');
+            processed = processed.replace(/(\b[a-zA-Z0-9]+)\s*\^\s*(\b[a-zA-Z0-9]+)/g, '$1^{$2}');
+
+            // 3. Handle subscripts: x_i or x_(i+1)
+            processed = processed.replace(/(\b[a-zA-Z0-9]+|\))\s*_\s*\(([^)]+)\)/g, '$1_{$2}');
+            processed = processed.replace(/(\b[a-zA-Z0-9]+)\s*_\s*(\b[a-zA-Z0-9]+)/g, '$1_{$2}');
+
+            // 4. Handle square roots: sqrt(x) or \sqrt(x) -> \sqrt{x}
+            processed = processed.replace(/\\?sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
+            processed = processed.replace(/\\?sqrt\{([^}]+)\}/g, '\\sqrt{$1}');
+
+            // 5. Handle fractions: a/b, (a+b)/(c+d)
+            processed = processed.replace(/\(([^)]+)\)\s*\/\s*\(([^)]+)\)/g, '\\frac{$1}{$2}');
+            processed = processed.replace(/\(([^)]+)\)\s*\/\s*([a-zA-Z0-9]+)/g, '\\frac{$1}{$2}');
+            processed = processed.replace(/\b([a-zA-Z0-9]+)\s*\/\s*\(([^)]+)\)/g, '\\frac{$1}{$2}');
+            processed = processed.replace(/\b([a-zA-Z0-9]+)\s*\/\s*([a-zA-Z0-9]+)\b/g, '\\frac{$1}{$2}');
+
+            // 6. Common symbols
+            processed = processed.replace(/\b\+-\b/g, '\\pm');
+            processed = processed.replace(/(\d+)\s*\*+\s*(\d+)/g, '$1 \\times $2');
+            processed = processed.replace(/(\d+)\s*x\s*(10\^{\d+})/gi, '$1 \\times $2');
+
+            // 7. Auto-wrap LaTeX patterns in $...$ if no other delimiters exist
+            if (!text.includes('$') && !text.includes('\\(') && !text.includes('\\[')) {
+                processed = processed.replace(/(\\[a-zA-Z]+(?:\{[^}]*\}|\([^)]*\))*)/g, '$$$1$');
+            }
+
+            // Restore URLs
+            urls.forEach((url, index) => {
+                processed = processed.replace(`__URL_PLACEHOLDER_${index}__`, url);
+            });
+
+            return processed;
+        }
+
+        function renderMath(element) {
+            if (window.renderMathInElement) {
+                renderMathInElement(element, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+
+        // Live math preview initialization
+        function initLiveMathPreviews() {
+            const questionText = document.getElementById('questionText');
+            const detailedExplanation = document.getElementById('detailedExplanation');
+
+            if (questionText) {
+                questionText.addEventListener('input', () => {
+                    const inputVal = questionText.value;
+                    const container = document.getElementById('questionTextPreviewContainer');
+                    const preview = document.getElementById('questionTextPreview');
+                    
+                    if (!inputVal.trim()) {
+                        container.style.display = 'none';
+                        preview.innerHTML = '';
+                        return;
+                    }
+                    
+                    container.style.display = 'block';
+                    preview.innerHTML = formatMathText(inputVal).replace(/\n/g, '<br>');
+                    renderMath(preview);
+                });
+            }
+
+            if (detailedExplanation) {
+                detailedExplanation.addEventListener('input', () => {
+                    const inputVal = detailedExplanation.value;
+                    const container = document.getElementById('detailedExplanationPreviewContainer');
+                    const preview = document.getElementById('detailedExplanationPreview');
+                    
+                    if (!inputVal.trim()) {
+                        container.style.display = 'none';
+                        preview.innerHTML = '';
+                        return;
+                    }
+                    
+                    container.style.display = 'block';
+                    preview.innerHTML = formatMathText(inputVal).replace(/\n/g, '<br>');
+                    renderMath(preview);
+                });
             }
         }
 
