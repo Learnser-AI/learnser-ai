@@ -3,6 +3,22 @@
 // Ensure env.js and the Supabase CDN script are loaded before this script.
 
 (function () {
+  // Dynamically load env.js if window.env is not defined
+  if (!window.env) {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", "env.js", false); // Synchronous load
+      xhr.send(null);
+      if (xhr.status === 200 || (xhr.status === 0 && xhr.responseText)) {
+        const fn = new Function(xhr.responseText);
+        fn();
+        console.log("env.js loaded dynamically successfully.");
+      }
+    } catch (e) {
+      console.warn("Failed to load env.js dynamically:", e);
+    }
+  }
+
   const supabaseUrl = window.env?.SUPABASE_URL;
   const supabaseAnonKey = window.env?.SUPABASE_ANON_KEY;
 
