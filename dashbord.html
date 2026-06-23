@@ -838,12 +838,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDK & Configuration Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Supabase SDK & Configuration Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="auth-check.js"></script>
 
     <script>
@@ -895,22 +892,21 @@
             const tableEl = document.getElementById('leaderboard-table');
             const bodyEl = document.getElementById('leaderboard-body');
 
-            const database = window.database;
-            if (!database) {
+            const supabase = window.supabaseClient;
+            if (!supabase) {
                 loadingEl.style.display = 'none';
                 errorEl.style.display = 'block';
                 return;
             }
 
             try {
-                const snapshot = await database.ref('users').orderByChild('weekly_xp').limitToLast(10).once('value');
-                const rawData = [];
-                snapshot.forEach(child => {
-                    rawData.push({ id: child.key, ...child.val() });
-                });
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .order('weekly_xp', { ascending: false })
+                    .limit(10);
                 
-                // orderByChild returns in ascending order, so reverse for podium order
-                const data = rawData.reverse();
+                if (error) throw error;
 
                 bodyEl.innerHTML = '';
 
@@ -1009,8 +1005,8 @@
                 if (errorMsg) errorMsg.style.display = 'none';
                 
                 try {
-                    const database = window.database;
-                    if (!database) throw new Error("Firebase database client is not available.");
+                    const supabase = window.supabaseClient;
+                    if (!supabase) throw new Error("Supabase client is not available.");
                     
                     const newTotalXp = (profile.total_xp || 0) + 10;
                     const newStreak = (profile.streak_days || 0) + 1;
@@ -1022,7 +1018,8 @@
                         weekly_xp: newWeeklyXp
                     };
 
-                    await database.ref('users/' + profile.id).update(updates);
+                    const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id);
+                    if (error) throw error;
                     
                     const updatedProfile = {
                         ...profile,

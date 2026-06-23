@@ -678,12 +678,9 @@
         </div>
     </main>
 
-    <!-- Firebase SDK & Configuration Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Supabase SDK & Configuration Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="auth-check.js"></script>
 
     <script>
@@ -769,22 +766,21 @@
             const tableEl = document.getElementById('leaderboard-table');
             const bodyEl = document.getElementById('leaderboard-body');
 
-            const database = window.database;
-            if (!database) {
+            const supabase = window.supabaseClient;
+            if (!supabase) {
                 loadingEl.style.display = 'none';
                 errorEl.style.display = 'block';
                 return;
             }
 
             try {
-                const snapshot = await database.ref('users').orderByChild('total_xp').limitToLast(10).once('value');
-                const rawData = [];
-                snapshot.forEach(child => {
-                    rawData.push({ id: child.key, ...child.val() });
-                });
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .order('total_xp', { ascending: false })
+                    .limit(10);
                 
-                // orderByChild returns in ascending order, so reverse for top ranks first
-                const data = rawData.reverse();
+                if (error) throw error;
 
                 bodyEl.innerHTML = '';
 

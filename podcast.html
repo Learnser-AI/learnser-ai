@@ -694,12 +694,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDK & Configuration Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Supabase SDK & Configuration Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="auth-check.js"></script>
 
     <script>
@@ -734,25 +731,27 @@
             const listEl = document.getElementById('history-list');
             if (!listEl) return;
             
-            const database = window.database;
-            if (!database) return;
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
             
             try {
-                const snapshot = await database.ref('podcastHistory/' + uid).orderByChild('timestamp').once('value');
+                const { data: items, error } = await supabase
+                    .from('podcast_history')
+                    .select('*')
+                    .eq('user_id', uid)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
                 listEl.innerHTML = '';
                 
-                if (!snapshot.exists()) {
+                if (!items || items.length === 0) {
                     listEl.innerHTML = '<div style="color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px;">No saved podcasts yet. Type a topic and hit generate!</div>';
                     return;
                 }
                 
-                const items = [];
-                snapshot.forEach(child => {
-                    items.push({ id: child.key, ...child.val() });
-                });
-                
-                items.reverse().forEach(item => {
-                    const dateStr = new Date(item.timestamp).toLocaleDateString(undefined, {
+                items.forEach(item => {
+                    const dateStr = new Date(item.created_at).toLocaleDateString(undefined, {
                         month: 'short',
                         day: 'numeric',
                         hour: '2-digit',
@@ -961,13 +960,15 @@ Return strictly valid raw JSON data matching this exact format schema without an
                 loadingStatus.style.display = 'none';
                 playerPanel.style.display = 'flex';
 
-                // Save generated script into Firebase Database for history access
-                if (window.database && activeUserUid) {
-                    await window.database.ref('podcastHistory/' + activeUserUid).push({
+                // Save generated script into Supabase database for history access
+                const supabase = window.supabaseClient;
+                if (supabase && activeUserUid) {
+                    const { error } = await supabase.from('podcast_history').insert([{
+                        user_id: activeUserUid,
                         topic: topic,
-                        script: globalScriptArray,
-                        timestamp: firebase.database.ServerValue.TIMESTAMP
-                    });
+                        script: globalScriptArray
+                    }]);
+                    if (error) console.error("Error saving podcast history:", error);
                     // Refresh history sidebar asynchronously
                     loadPodcastHistory(activeUserUid);
                 }

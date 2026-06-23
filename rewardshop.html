@@ -788,12 +788,9 @@
         </div>
     </main>
 
-    <!-- Firebase SDK & Configuration Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Supabase SDK & Configuration Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="auth-check.js"></script>
 
     <script>
@@ -1055,13 +1052,13 @@
             // Dispatch profileready to redraw the UI instantly
             window.dispatchEvent(new CustomEvent('profileready', { detail: userProfile }));
 
-            // Write to Firebase if authenticated session exists
-            const database = window.database;
-            if (database && userProfile.id) {
+            // Write to Supabase if authenticated session exists
+            const supabase = window.supabaseClient;
+            if (supabase && userProfile.id) {
                 try {
-                    await database.ref('users/' + userProfile.id + '/total_xp').set(userProfile.total_xp);
+                    await supabase.from('profiles').update({ total_xp: userProfile.total_xp }).eq('id', userProfile.id);
                 } catch (err) {
-                    console.warn("Firebase background XP sync failed:", err);
+                    console.warn("Supabase background XP sync failed:", err);
                 }
             }
         };

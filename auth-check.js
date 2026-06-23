@@ -1,5 +1,5 @@
 // auth-check.js
-// Guard middleware script to check authentication and sync user profiles using Firebase.
+// Guard middleware script to check authentication and sync user profiles using Supabase.
 
 (function () {
   // Check if we are on a page that requires authentication
@@ -51,8 +51,8 @@
   }
 
   async function saveTimeSpent(userId, seconds) {
-    const database = window.database;
-    if (!database) return;
+    const supabase = window.supabaseClient;
+    if (!supabase) return;
 
     try {
       // Fetch latest cached profile to ensure we have the most up-to-date baseline
@@ -82,8 +82,26 @@
         console.warn("Failed to write to local analytics backup:", e);
       }
 
-      // Write directly to Firebase
-      await database.ref('users/' + userId + '/total_time_seconds').set(newTotal);
+      // Fetch session token and write directly to Supabase REST endpoint
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const supabaseUrl = window.env?.SUPABASE_URL;
+      const supabaseAnonKey = window.env?.SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseAnonKey) return;
+
+      const url = `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`;
+      fetch(url, {
+        method: 'PATCH',
+        keepalive: true,
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ total_time_seconds: newTotal })
+      }).catch(err => console.warn("Background telemetry fetch aborted or failed:", err));
     } catch (err) {
       console.warn("Time spent tracking write failed:", err);
     }
@@ -91,8 +109,8 @@
 
   // Global doubts solved tracking function
   window.incrementDoubtsSolved = async function () {
-    const database = window.database;
-    if (!database) return;
+    const supabase = window.supabaseClient;
+    if (!supabase) return;
 
     try {
       let profile = null;
@@ -122,8 +140,8 @@
         console.warn("Failed to write to local analytics backup:", e);
       }
 
-      // Write to Firebase
-      await database.ref('users/' + profile.id + '/doubts_solved_count').set(newCount);
+      // Write to Supabase using .update()
+      await supabase.from('profiles').update({ doubts_solved_count: newCount }).eq('id', profile.id);
     } catch (err) {
       console.warn("Failed to increment doubts solved:", err);
     }
@@ -131,8 +149,8 @@
 
   // Global doubts solved reset function
   window.resetDoubtsSolved = async function () {
-    const database = window.database;
-    if (!database) return;
+    const supabase = window.supabaseClient;
+    if (!supabase) return;
 
     try {
       let profile = null;
@@ -146,6 +164,9 @@
       localStorage.setItem('learnser_supabase_profile', JSON.stringify(profile));
       currentProfileState = profile;
 
+      // Dispatch event to redraw any UI element immediately
+      window.dispatchEvent(new CustomEvent('profileready', { detail: profile }));
+
       // Also update the local backup
       try {
         const localAnalyticsStr = localStorage.getItem('learnser_local_analytics');
@@ -156,17 +177,14 @@
         console.warn("Failed to write to local analytics backup:", e);
       }
 
-      // Dispatch event to redraw any UI element immediately
-      window.dispatchEvent(new CustomEvent('profileready', { detail: profile }));
-
-      // Write to Firebase
-      await database.ref('users/' + profile.id + '/doubts_solved_count').set(0);
+      // Write to Supabase
+      await supabase.from('profiles').update({ doubts_solved_count: 0 }).eq('id', profile.id);
     } catch (err) {
       console.warn("Failed to reset doubts solved:", err);
     }
   };
 
-  async function checkAdminPrivileges(user, profile) {
+  async function checkAdminPrivileges(user) {
     let isCurrentUserAdmin = false;
     let isCurrentUserSuperAdmin = false;
 
@@ -176,16 +194,22 @@
       isCurrentUserSuperAdmin = true;
     }
 
-    // 2. Check database admin list (by sanitized email)
+    // 2. Check database admin list
     if (!isCurrentUserSuperAdmin && user.email) {
-      try {
-        const sanitizedEmail = user.email.toLowerCase().replace(/\./g, ',');
-        const adminSnap = await window.database.ref(`admins/${sanitizedEmail}`).once('value');
-        if (adminSnap.exists()) {
-          isCurrentUserAdmin = true;
+      const supabase = window.supabaseClient;
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('admins')
+            .select('email')
+            .eq('email', user.email.toLowerCase())
+            .maybeSingle();
+          if (data) {
+            isCurrentUserAdmin = true;
+          }
+        } catch (err) {
+          console.error('Error checking admin status:', err);
         }
-      } catch (err) {
-        console.error('Error checking admin status:', err);
       }
     }
 
@@ -200,14 +224,23 @@
   }
 
   function checkSession() {
-    const auth = window.auth;
-    if (!auth) {
-      console.warn("Firebase Auth client is not available in auth-check.js.");
+    const supabase = window.supabaseClient;
+    if (!supabase) {
+      console.warn("Supabase client is not available in auth-check.js.");
       return;
     }
 
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) {
+    // Listener for auth state changes
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth State Change Event:", event);
+      if (session) {
+        // Clean URL hash after successful OAuth redirects to prevent token exposures
+        if (window.location.hash && (window.location.hash.includes("access_token=") || window.location.hash.includes("id_token="))) {
+          history.replaceState(null, document.title, window.location.pathname + window.location.search);
+        }
+      }
+
+      if (!session) {
         // No active session
         localStorage.removeItem('learnser_supabase_profile');
         if (requiresAuth) {
@@ -219,14 +252,16 @@
         }
       } else {
         // User is logged in
-        // Fetch or refresh the profile from Firebase Realtime Database
-        let profile = await fetchUserProfile(user.uid);
+        const user = session.user;
+        
+        // Fetch or refresh the profile from profiles table
+        let profile = await fetchUserProfile(user.id);
         
         if (!profile) {
-          // Fallback / Create default profile in Firebase DB
+          // Fallback if trigger hasn't finished or failed
           profile = {
-            id: user.uid,
-            display_name: user.displayName || user.email.split('@')[0],
+            id: user.id,
+            display_name: user.user_metadata?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0],
             email: user.email,
             total_xp: 0,
             weekly_xp: 0,
@@ -236,14 +271,12 @@
             student_class: "",
             board_of_examinations: ""
           };
-          await window.database.ref('users/' + user.uid).set(profile);
-        } else if (!profile.display_name && user.displayName) {
-          // Self-heal: Update database if it lacks a display_name but Firebase Auth has one
-          profile.display_name = user.displayName;
-          await window.database.ref('users/' + user.uid + '/display_name').set(user.displayName);
+          try {
+            await supabase.from('profiles').upsert(profile);
+          } catch (e) {
+            console.error("Failed to upsert profile:", e);
+          }
         }
-
-        profile.id = user.uid;
 
         // Retrieve local analytics data to merge/preserve if database columns don't exist
         try {
@@ -260,11 +293,11 @@
           console.warn("Failed to merge local analytics data:", e);
         }
 
-        // Cache profile data (still using the key other pages read from)
+        // Cache profile data
         localStorage.setItem('learnser_supabase_profile', JSON.stringify(profile));
 
         // Check Admin privileges
-        await checkAdminPrivileges(user, profile);
+        await checkAdminPrivileges(user);
 
         // If user is on auth page, redirect them to dashboard
         if (isAuthPage) {
@@ -288,17 +321,21 @@
   }
 
   async function fetchUserProfile(userId) {
-    const database = window.database;
-    if (!database) return null;
+    const supabase = window.supabaseClient;
+    if (!supabase) return null;
 
     try {
-      const snapshot = await database.ref('users/' + userId).once('value');
-      if (snapshot.exists()) {
-        const val = snapshot.val();
-        val.id = userId;
-        return val;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.warn("Could not fetch profile from public.profiles table:", error.message);
+        return null;
       }
-      return null;
+      return data;
     } catch (e) {
       console.error("Exception fetching profile:", e);
       return null;
@@ -365,11 +402,12 @@
 
   // Global Sign-Out function
   window.signOutUser = async function () {
-    const auth = window.auth;
-    if (!auth) return;
+    const supabase = window.supabaseClient;
+    if (!supabase) return;
 
     try {
-      await auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       localStorage.removeItem('learnser_supabase_profile');
       window.location.href = "auth.html";
     } catch (e) {
@@ -378,10 +416,10 @@
   };
 
   // Run the session verification after initialization
-  if (window.auth) {
+  if (window.supabaseClient) {
     checkSession();
   } else {
-    // Wait for firebase-config.js to load
+    // Wait for supabase-client.js to load
     setTimeout(checkSession, 100);
   }
 })();

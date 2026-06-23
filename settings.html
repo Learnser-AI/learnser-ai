@@ -476,12 +476,9 @@
         </div>
     </main>
 
-    <!-- Firebase SDK & Configuration Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Supabase SDK & Configuration Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="auth-check.js"></script>
 
     <script>
@@ -575,20 +572,19 @@
                 return;
             }
 
-            const auth = window.auth;
-            const database = window.database;
-            if (!auth || !database) {
-                showSaveStatus("Firebase client not initialized.", "error");
+            const supabase = window.supabaseClient;
+            if (!supabase) {
+                showSaveStatus("Supabase client not initialized.", "error");
                 return;
             }
 
-            const currentUser = auth.currentUser;
-            if (!currentUser) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session || !session.user) {
                 showSaveStatus("Session expired. Please log in again.", "error");
                 return;
             }
 
-            const userId = currentUser.uid;
+            const userId = session.user.id;
 
             // Enter loading state
             saveBtn.disabled = true;
@@ -599,16 +595,21 @@
             const boardInput = document.getElementById('setting-board') ? document.getElementById('setting-board').value : "";
 
             try {
-                // 1. Update the database fields in a single transaction
-                await database.ref('users/' + userId).update({
-                    display_name: nameInput,
-                    student_class: classInput,
-                    board_of_examinations: boardInput
-                });
+                // 1. Update the profiles table
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                        display_name: nameInput,
+                        student_class: classInput,
+                        board_of_examinations: boardInput
+                    })
+                    .eq('id', userId);
 
-                // 2. Sync profile display name in Firebase Auth user object
-                await currentUser.updateProfile({
-                    displayName: nameInput
+                if (error) throw error;
+
+                // 2. Also try updating user metadata if needed
+                await supabase.auth.updateUser({
+                    data: { display_name: nameInput }
                 });
 
                 showSaveStatus("Changes saved successfully!", "success");
@@ -662,64 +663,72 @@
         }
 
         // --- GOOGLE LINKING & UNLINKING MANAGEMENT ---
-        function updateLinkedAccountsUI() {
-            const auth = window.auth;
-            if (!auth) return;
-            const currentUser = auth.currentUser;
-            if (!currentUser) return;
+        async function updateLinkedAccountsUI() {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session || !session.user) return;
+            const currentUser = session.user;
 
             const googleEmailEl = document.getElementById('setting-google-email');
             const googleBtn = document.getElementById('btn-link-google');
 
             if (!googleEmailEl || !googleBtn) return;
 
-            // Check if Google is in providerData
-            const googleProfile = currentUser.providerData.find(p => p.providerId === 'google.com');
-            const isGoogleLinked = !!googleProfile;
+            // Fetch identities
+            const identities = currentUser.identities || [];
+            const googleIdentity = identities.find(identity => identity.provider === 'google');
+            const isGoogleLinked = !!googleIdentity;
 
             if (isGoogleLinked) {
-                googleEmailEl.innerText = googleProfile.email || currentUser.email || "Linked";
+                googleEmailEl.innerText = googleIdentity.identity_data?.email || currentUser.email || "Linked";
                 googleBtn.innerText = "Disconnect";
                 googleBtn.style.color = "var(--danger)";
                 googleBtn.style.borderColor = "rgba(239, 68, 68, 0.3)";
-                googleBtn.onclick = handleGoogleLinkToggle;
+                googleBtn.onclick = () => handleGoogleLinkToggle(googleIdentity);
             } else {
                 googleEmailEl.innerText = "Not connected";
                 googleBtn.innerText = "Connect";
                 googleBtn.style.color = "var(--accent)";
                 googleBtn.style.borderColor = "var(--accent)";
-                googleBtn.onclick = handleGoogleLinkToggle;
+                googleBtn.onclick = () => handleGoogleLinkToggle(null);
             }
         }
 
-        async function handleGoogleLinkToggle() {
-            const auth = window.auth;
-            if (!auth || !auth.currentUser) return;
+        async function handleGoogleLinkToggle(googleIdentity) {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session || !session.user) return;
+            const currentUser = session.user;
 
-            const currentUser = auth.currentUser;
-            const googleProfile = currentUser.providerData.find(p => p.providerId === 'google.com');
-            const isGoogleLinked = !!googleProfile;
-
+            const isGoogleLinked = !!googleIdentity;
             const googleBtn = document.getElementById('btn-link-google');
             googleBtn.disabled = true;
             googleBtn.innerText = isGoogleLinked ? "Disconnecting..." : "Connecting...";
 
             try {
                 if (isGoogleLinked) {
-                    // Check if they have another sign-in method
-                    const providersCount = currentUser.providerData.length;
-                    if (providersCount <= 1) {
+                    const identities = currentUser.identities || [];
+                    if (identities.length <= 1) {
                         alert("You cannot disconnect Google because it is your only sign-in method.");
                         return;
                     }
                     if (confirm("Are you sure you want to disconnect your Google account?")) {
-                        await currentUser.unlink('google.com');
+                        const { error } = await supabase.auth.unlinkIdentity(googleIdentity);
+                        if (error) throw error;
                         alert("Google account disconnected successfully.");
+                        window.location.reload();
                     }
                 } else {
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    await currentUser.linkWithPopup(provider);
-                    alert("Google account connected successfully.");
+                    const redirectUrl = window.location.href;
+                    const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: redirectUrl
+                        }
+                    });
+                    if (error) throw error;
                 }
             } catch (err) {
                 console.error("Google account link error:", err);

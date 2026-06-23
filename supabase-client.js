@@ -28,6 +28,10 @@
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
     // Expose it globally
     window.supabaseClient = supabaseClient;
+    window.SUPER_ADMIN_EMAILS = [
+      'aryamansingh2w16@gmail.com',
+      'gk123ganubanu@gmail.com'
+    ];
     console.log("Supabase Client initialized successfully.");
   } catch (error) {
     console.error("Failed to initialize Supabase client:", error);

@@ -981,12 +981,9 @@
 
     </main>
 
-    <!-- Firebase SDK & Configuration Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Supabase SDK & Configuration Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="auth-check.js"></script>
 
     <script>
@@ -1067,14 +1064,24 @@
             }
             
             try {
-                const snapshot = await window.database.ref('chapters/' + subject).orderByChild('order').once('value');
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+                
+                const { data, error } = await supabase
+                    .from('chapters')
+                    .select('*')
+                    .eq('subject', subject)
+                    .order('sort_order', { ascending: true });
+                
+                if (error) throw error;
+                
                 chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
                 
-                if (snapshot.exists()) {
-                    snapshot.forEach(child => {
+                if (data && data.length > 0) {
+                    data.forEach(chap => {
                         const opt = document.createElement('option');
-                        opt.value = child.key;
-                        opt.textContent = child.val().name;
+                        opt.value = chap.id;
+                        opt.textContent = chap.name;
                         chapterSelect.appendChild(opt);
                     });
                     chapterSelect.disabled = false;
@@ -1207,28 +1214,33 @@
             }
 
             const questionData = {
+                chapter_id: chapterId,
+                subject: subject,
                 question: questionText,
                 options: [optA, optB, optC, optD],
-                correctAnswer: correctAnswer,
+                correct_answer: correctAnswer,
                 year: year || null,
                 shift: shift || null,
                 difficulty: difficulty || null,
                 subtopic: subtopic || null,
-                detailedAnswer: detailedAnswer || null,
-                questionImage: questionImageBase64 || null,
-                optionAImage: optAImageBase64 || null,
-                optionBImage: optBImageBase64 || null,
-                optionCImage: optCImageBase64 || null,
-                optionDImage: optDImageBase64 || null,
-                detailedAnswerImage: solutionImageBase64 || null,
-                createdAt: new Date().toISOString()
+                detailed_answer: detailedAnswer || null,
+                question_image: questionImageBase64 || null,
+                option_a_image: optAImageBase64 || null,
+                option_b_image: optBImageBase64 || null,
+                option_c_image: optCImageBase64 || null,
+                option_d_image: optDImageBase64 || null,
+                detailed_answer_image: solutionImageBase64 || null
             };
 
             try {
                 document.getElementById('addQuestionBtn').disabled = true;
                 document.getElementById('addQuestionBtn').textContent = 'Adding...';
                 
-                await window.database.ref('questions/' + subject + '/' + chapterId).push(questionData);
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+                
+                const { error } = await supabase.from('questions').insert([questionData]);
+                if (error) throw error;
                 
                 alert('Question added successfully!');
                 e.target.reset();
@@ -1337,33 +1349,32 @@
                         }
                     }
 
-                    // Push each question to database
-                    const ref = window.database.ref('questions/' + subject + '/' + chapterId);
-                    let successCount = 0;
+                    const supabase = window.supabaseClient;
+                    if (!supabase) throw new Error("Supabase client not initialized");
 
-                    for (const q of questionsArray) {
-                        const questionData = {
-                            question: q.question,
-                            options: q.options,
-                            correctAnswer: q.correctAnswer,
-                            year: q.year || null,
-                            shift: q.shift || null,
-                            difficulty: q.difficulty || null,
-                            subtopic: q.subtopic || null,
-                            detailedAnswer: q.detailedAnswer || null,
-                            questionImage: q.questionImage || null,
-                            optionAImage: q.optionAImage || null,
-                            optionBImage: q.optionBImage || null,
-                            optionCImage: q.optionCImage || null,
-                            optionDImage: q.optionDImage || null,
-                            detailedAnswerImage: q.detailedAnswerImage || null,
-                            createdAt: new Date().toISOString()
-                        };
-                        await ref.push(questionData);
-                        successCount++;
-                    }
+                    const rowsToInsert = questionsArray.map(q => ({
+                        chapter_id: chapterId,
+                        subject: subject,
+                        question: q.question,
+                        options: q.options,
+                        correct_answer: q.correctAnswer,
+                        year: q.year || null,
+                        shift: q.shift || null,
+                        difficulty: q.difficulty || null,
+                        subtopic: q.subtopic || null,
+                        detailed_answer: q.detailedAnswer || null,
+                        question_image: q.questionImage || null,
+                        option_a_image: q.optionAImage || null,
+                        option_b_image: q.optionBImage || null,
+                        option_c_image: q.optionCImage || null,
+                        option_d_image: q.optionDImage || null,
+                        detailed_answer_image: q.detailedAnswerImage || null
+                    }));
 
-                    alert(`Successfully uploaded ${successCount} questions in bulk!`);
+                    const { error } = await supabase.from('questions').insert(rowsToInsert);
+                    if (error) throw error;
+
+                    alert(`Successfully uploaded ${rowsToInsert.length} questions in bulk!`);
                     fileInput.value = '';
                     document.getElementById('bulkSubject').value = '';
                     document.getElementById('bulkChapter').disabled = true;
@@ -1394,37 +1405,22 @@
             questionsList.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 20px;">Searching questions...</div>';
 
             try {
-                let ref = window.database.ref('questions/' + subject);
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                let query = supabase.from('questions').select('*').eq('subject', subject);
                 if (chapterId) {
-                    ref = ref.child(chapterId);
+                    query = query.eq('chapter_id', chapterId);
                 }
 
-                const snapshot = await ref.once('value');
-                const questions = [];
+                const { data: questions, error } = await query.order('created_at', { ascending: false }).limit(100);
+                if (error) throw error;
 
-                snapshot.forEach(childSnapshot => {
-                    if (chapterId) {
-                        questions.push({
-                            id: childSnapshot.key,
-                            chapterId: chapterId,
-                            ...childSnapshot.val()
-                        });
-                    } else {
-                        childSnapshot.forEach(questionSnapshot => {
-                            questions.push({
-                                id: questionSnapshot.key,
-                                chapterId: childSnapshot.key,
-                                ...questionSnapshot.val()
-                            });
-                        });
-                    }
-                });
-
-                if (questions.length === 0) {
+                if (!questions || questions.length === 0) {
                     questionsList.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 20px;">No questions found.</div>';
                 } else {
-                    questionsList.innerHTML = questions.slice(0, 100).map((q, index) => {
-                        let imgBadge = q.questionImage ? '<span style="background: var(--accent); color: #020617; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 8px;">Has Image</span>' : '';
+                    questionsList.innerHTML = questions.map((q, index) => {
+                        let imgBadge = q.question_image ? '<span style="background: var(--accent); color: #020617; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 8px;">Has Image</span>' : '';
                         return `
                             <div class="history-item" style="cursor: default; flex-direction: column; align-items: stretch; gap: 12px;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
@@ -1432,7 +1428,7 @@
                                         Q${index + 1}: ${escapeHtml(q.question.substring(0, 80))}${q.question.length > 80 ? '...' : ''}
                                         ${imgBadge}
                                     </div>
-                                    <button class="btn-delete" onclick="deleteQuestion('${subject}', '${q.chapterId}', '${q.id}')">
+                                    <button class="btn-delete" onclick="deleteQuestion('${q.id}')">
                                         Delete
                                     </button>
                                 </div>
@@ -1452,10 +1448,15 @@
             }
         }
 
-        async function deleteQuestion(subject, chapterId, questionId) {
+        async function deleteQuestion(questionId) {
             if (!confirm('Are you sure you want to delete this question?')) return;
             try {
-                await window.database.ref('questions/' + subject + '/' + chapterId + '/' + questionId).remove();
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+                
+                const { error } = await supabase.from('questions').delete().eq('id', questionId);
+                if (error) throw error;
+                
                 alert('Question deleted successfully!');
                 loadExistingQuestions();
             } catch (err) {
@@ -1473,11 +1474,16 @@
             if (!subject || !name || isNaN(order)) return;
 
             try {
-                await window.database.ref('chapters/' + subject).push({
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+                
+                const { error } = await supabase.from('chapters').insert([{
+                    subject: subject,
                     name: name,
-                    order: order,
-                    createdAt: new Date().toISOString()
-                });
+                    sort_order: order
+                }]);
+                if (error) throw error;
+                
                 alert('Chapter added successfully!');
                 e.target.reset();
                 loadAllChapters();
@@ -1488,16 +1494,21 @@
 
         async function loadAllChapters() {
             const subjects = ['physics', 'chemistry', 'mathematics'];
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+            
             for (const subject of subjects) {
                 try {
-                    const snapshot = await window.database.ref('chapters/' + subject).orderByChild('order').once('value');
-                    const chapters = [];
-                    snapshot.forEach(child => {
-                        chapters.push({ id: child.key, ...child.val() });
-                    });
+                    const { data: chapters, error } = await supabase
+                        .from('chapters')
+                        .select('*')
+                        .eq('subject', subject)
+                        .order('sort_order', { ascending: true });
+                        
+                    if (error) throw error;
                     
                     const listEl = document.getElementById(subject + 'ChaptersList');
-                    if (chapters.length === 0) {
+                    if (!chapters || chapters.length === 0) {
                         listEl.innerHTML = '<div style="color: var(--text-dim); padding: 8px;">No chapters yet.</div>';
                         continue;
                     }
@@ -1506,9 +1517,9 @@
                         <div class="history-item" style="cursor: default; padding: 12px 16px;">
                             <div>
                                 <span style="font-weight: 700; font-size: 0.95rem;">${escapeHtml(ch.name)}</span>
-                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">Order Index: ${ch.order}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">Order Index: ${ch.sort_order}</div>
                             </div>
-                            <button class="btn-delete" style="padding: 4px 10px;" onclick="deleteChapter('${subject}', '${ch.id}', '${escapeHtml(ch.name)}')">Delete</button>
+                            <button class="btn-delete" style="padding: 4px 10px;" onclick="deleteChapter('${ch.id}', '${escapeHtml(ch.name)}')">Delete</button>
                         </div>
                     `).join('');
                 } catch(err) {
@@ -1517,11 +1528,15 @@
             }
         }
 
-        async function deleteChapter(subject, id, name) {
+        async function deleteChapter(id, name) {
             if (!confirm(`Are you sure you want to delete "${name}"? This will delete all questions within this chapter.`)) return;
             try {
-                await window.database.ref('chapters/' + subject + '/' + id).remove();
-                await window.database.ref('questions/' + subject + '/' + id).remove();
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+                
+                const { error } = await supabase.from('chapters').delete().eq('id', id);
+                if (error) throw error;
+                
                 alert('Chapter and its questions deleted successfully!');
                 loadAllChapters();
             } catch(err) {
@@ -1529,7 +1544,7 @@
             }
         }
 
-        // Exams Tab Logic
+        // Exams Tab Logic (Scheduled mock exams)
         async function handleAddExam(e) {
             e.preventDefault();
             const name = document.getElementById('examName').value.trim();
@@ -1540,13 +1555,18 @@
             if (!name || !date || !details) return;
 
             try {
-                await window.database.ref('exams').push({
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+
+                const { error } = await supabase.from('scheduled_exams').insert([{
                     name: name,
-                    date: date,
+                    exam_date: date,
                     details: details,
-                    link: link || '',
-                    createdAt: new Date().toISOString()
-                });
+                    link: link || ''
+                }]);
+                
+                if (error) throw error;
+                
                 alert('Exam scheduled successfully!');
                 e.target.reset();
                 loadAdminExams();
@@ -1560,16 +1580,24 @@
             if (!listEl) return;
             
             try {
-                const snapshot = await window.database.ref('exams').orderByChild('date').once('value');
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+                
+                const { data: exams, error } = await supabase
+                    .from('scheduled_exams')
+                    .select('*')
+                    .order('exam_date', { ascending: true });
+                    
+                if (error) throw error;
+                
                 listEl.innerHTML = '';
                 
-                if (!snapshot.exists()) {
+                if (!exams || exams.length === 0) {
                     listEl.innerHTML = '<div style="color: var(--text-dim); padding: 12px;">No exams added yet.</div>';
                     return;
                 }
                 
-                snapshot.forEach(child => {
-                    const exam = child.val();
+                exams.forEach(exam => {
                     const div = document.createElement('div');
                     div.className = 'history-item';
                     div.style.cursor = 'default';
@@ -1579,10 +1607,10 @@
                     div.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <span style="font-weight: 700; font-size: 1rem; color: var(--text-main);">${escapeHtml(exam.name)}</span>
-                            <button class="btn-delete" onclick="deleteExam('${child.key}', '${escapeHtml(exam.name)}')">Delete</button>
+                            <button class="btn-delete" onclick="deleteExam('${exam.id}', '${escapeHtml(exam.name)}')">Delete</button>
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.5;">
-                            <strong>Date:</strong> ${new Date(exam.date).toLocaleString()}<br>
+                            <strong>Date:</strong> ${new Date(exam.exam_date).toLocaleString()}<br>
                             <strong>Details:</strong> ${escapeHtml(exam.details)}
                             ${exam.link ? `<br><strong>Link:</strong> <a href="${escapeHtml(exam.link)}" target="_blank" style="color: var(--accent); text-decoration: none;">${escapeHtml(exam.link)}</a>` : ''}
                         </div>
@@ -1597,7 +1625,12 @@
         async function deleteExam(id, name) {
             if (!confirm(`Are you sure you want to delete exam "${name}"?`)) return;
             try {
-                await window.database.ref('exams/' + id).remove();
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+                
+                const { error } = await supabase.from('scheduled_exams').delete().eq('id', id);
+                if (error) throw error;
+                
                 alert('Exam deleted successfully!');
                 loadAdminExams();
             } catch(err) {
@@ -1608,12 +1641,19 @@
         // Exam toggles (Practice portal controls)
         async function loadExamToggles() {
             try {
-                const snapshot = await window.database.ref('examToggles').once('value');
-                const toggles = snapshot.val() || {};
-                ['bitsat', 'viteee', 'mhtcet', 'met', 'nda'].forEach(examId => {
-                    const el = document.getElementById('toggle-' + examId);
-                    if (el) el.checked = toggles[examId] === true;
-                });
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+                
+                const { data, error } = await supabase.from('exams').select('*');
+                if (error) throw error;
+                
+                if (data) {
+                    data.forEach(exam => {
+                        const examId = exam.exam_type.toLowerCase();
+                        const el = document.getElementById('toggle-' + examId);
+                        if (el) el.checked = exam.enabled === true;
+                    });
+                }
             } catch (err) {
                 console.warn('loadExamToggles skipped:', err);
             }
@@ -1621,7 +1661,15 @@
 
         async function handleExamToggle(examId, enabled) {
             try {
-                await window.database.ref('examToggles/' + examId).set(enabled);
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+                
+                const { error } = await supabase
+                    .from('exams')
+                    .update({ enabled: enabled })
+                    .eq('exam_type', examId.toUpperCase());
+                    
+                if (error) throw error;
             } catch (err) {
                 console.error('Error saving exam toggle:', err);
                 const el = document.getElementById('toggle-' + examId);
@@ -1632,8 +1680,18 @@
         // Feature Toggles (Global Community Toggles)
         async function loadFeatureToggles() {
             try {
-                const snapshot = await window.database.ref('featureToggles').once('value');
-                const toggles = snapshot.val() || {};
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+                
+                const { data, error } = await supabase.from('feature_toggles').select('*');
+                if (error) throw error;
+                
+                const toggles = {};
+                if (data) {
+                    data.forEach(row => {
+                        toggles[row.name] = row.enabled;
+                    });
+                }
                 
                 const ccToggle = document.getElementById('toggle-communityChat');
                 const apToggle = document.getElementById('toggle-aiPodcast');
@@ -1647,7 +1705,15 @@
 
         async function handleFeatureToggle(featureId, enabled) {
             try {
-                await window.database.ref('featureToggles/' + featureId).set(enabled);
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+                
+                const { error } = await supabase
+                    .from('feature_toggles')
+                    .update({ enabled: enabled, updated_at: new Date().toISOString() })
+                    .eq('name', featureId);
+                    
+                if (error) throw error;
             } catch(err) {
                 console.error("Failed to save feature toggle:", err);
                 alert("Failed to update feature access: " + err.message);
@@ -1662,7 +1728,12 @@
             listEl.innerHTML = '<div style="color: var(--text-dim); padding: 12px;">Loading admin access list...</div>';
             
             try {
-                const snapshot = await window.database.ref('admins').once('value');
+                const supabase = window.supabaseClient;
+                if (!supabase) return;
+                
+                const { data: admins, error } = await supabase.from('admins').select('*').order('added_at', { ascending: true });
+                if (error) throw error;
+                
                 listEl.innerHTML = '';
                 
                 // Show hardcoded super admins first
@@ -1679,10 +1750,9 @@
                     listEl.appendChild(div);
                 });
 
-                if (snapshot.exists()) {
-                    snapshot.forEach(child => {
-                        const data = child.val();
-                        const email = data.email || child.key.replace(/,/g, '.');
+                if (admins) {
+                    admins.forEach(admin => {
+                        const email = admin.email;
                         
                         if (!window.SUPER_ADMIN_EMAILS.includes(email)) {
                             const div = document.createElement('div');
@@ -1693,7 +1763,7 @@
                                     <div style="font-weight: 700; color: var(--text-main);">${escapeHtml(email)}</div>
                                     <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Added by Super Admin</div>
                                 </div>
-                                <button class="btn-delete" style="padding: 4px 10px;" onclick="removeAdmin('${child.key}')">Remove</button>
+                                <button class="btn-delete" style="padding: 4px 10px;" onclick="removeAdmin('${escapeHtml(email)}')">Remove</button>
                             `;
                             listEl.appendChild(div);
                         }
@@ -1710,13 +1780,13 @@
             const email = document.getElementById('adminEmailInput').value.trim();
             if (!email) return;
             
-            const sanitizedEmail = email.toLowerCase().replace(/\./g, ',');
-            
             try {
-                await window.database.ref('admins/' + sanitizedEmail).set({
-                    email: email,
-                    addedAt: firebase.database.ServerValue.TIMESTAMP
-                });
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+                
+                const { error } = await supabase.from('admins').insert([{ email: email.toLowerCase() }]);
+                if (error) throw error;
+                
                 alert(`Admin access granted to: ${email}`);
                 document.getElementById('adminEmailInput').value = '';
                 loadAdmins();
@@ -1725,10 +1795,15 @@
             }
         }
 
-        async function removeAdmin(sanitizedEmail) {
+        async function removeAdmin(email) {
             if (!confirm("Are you sure you want to revoke admin status?")) return;
             try {
-                await window.database.ref('admins/' + sanitizedEmail).remove();
+                const supabase = window.supabaseClient;
+                if (!supabase) throw new Error("Supabase client not initialized");
+                
+                const { error } = await supabase.from('admins').delete().eq('email', email.toLowerCase());
+                if (error) throw error;
+                
                 alert("Admin status revoked successfully.");
                 loadAdmins();
             } catch(err) {

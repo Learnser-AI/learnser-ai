@@ -411,12 +411,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDK Compat -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="auth-check.js"></script>
 
     <script>
@@ -486,9 +483,9 @@
             const spinner = document.getElementById('login-spinner');
             const btnText = document.getElementById('login-btn-text');
 
-            const auth = window.auth;
-            if (!auth) {
-                showAlert("Firebase Auth client not initialized.");
+            const supabase = window.supabaseClient;
+            if (!supabase) {
+                showAlert("Supabase client not initialized.");
                 return;
             }
 
@@ -498,7 +495,11 @@
             btnText.innerText = "Signing In...";
 
             try {
-                await auth.signInWithEmailAndPassword(email, password);
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                if (error) throw error;
 
                 showAlert("Logged in successfully! Redirecting...", "success");
                 
@@ -527,10 +528,9 @@
             const spinner = document.getElementById('signup-spinner');
             const btnText = document.getElementById('signup-btn-text');
 
-            const auth = window.auth;
-            const database = window.database;
-            if (!auth || !database) {
-                showAlert("Firebase client not initialized.");
+            const supabase = window.supabaseClient;
+            if (!supabase) {
+                showAlert("Supabase client not initialized.");
                 return;
             }
 
@@ -545,26 +545,16 @@
             btnText.innerText = "Creating Account...";
 
             try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-
-                // Sync Auth display name
-                await user.updateProfile({
-                    displayName: name
-                });
-
-                // Create Firebase user database profile
-                const profile = {
-                    id: user.uid,
-                    display_name: name,
+                const { data, error } = await supabase.auth.signUp({
                     email: email,
-                    total_xp: 0,
-                    weekly_xp: 0,
-                    streak_days: 0,
-                    total_time_seconds: 0,
-                    doubts_solved_count: 0
-                };
-                await database.ref('users/' + user.uid).set(profile);
+                    password: password,
+                    options: {
+                        data: {
+                            display_name: name
+                        }
+                    }
+                });
+                if (error) throw error;
 
                 showAlert("Account created successfully! Redirecting...", "success");
                 setTimeout(() => {
@@ -584,10 +574,9 @@
         if (googleLoginBtn) {
             googleLoginBtn.addEventListener('click', async () => {
                 alertEl.style.display = 'none';
-                const auth = window.auth;
-                const database = window.database;
-                if (!auth || !database) {
-                    showAlert("Firebase client not initialized.");
+                const supabase = window.supabaseClient;
+                if (!supabase) {
+                    showAlert("Supabase client not initialized.");
                     return;
                 }
 
@@ -599,30 +588,14 @@
                 `;
 
                 try {
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    const result = await auth.signInWithPopup(provider);
-                    const user = result.user;
-
-                    // Fetch profile to verify existence, create if missing
-                    const snapshot = await database.ref('users/' + user.uid).once('value');
-                    if (!snapshot.exists()) {
-                        const profile = {
-                            id: user.uid,
-                            display_name: user.displayName || user.email.split('@')[0],
-                            email: user.email,
-                            total_xp: 0,
-                            weekly_xp: 0,
-                            streak_days: 0,
-                            total_time_seconds: 0,
-                            doubts_solved_count: 0
-                        };
-                        await database.ref('users/' + user.uid).set(profile);
-                    }
-
-                    showAlert("Logged in successfully! Redirecting...", "success");
-                    setTimeout(() => {
-                        window.location.href = "dashbord.html";
-                    }, 1000);
+                    const redirectUrl = new URL('dashbord.html', window.location.href).href;
+                    const { data, error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: redirectUrl
+                        }
+                    });
+                    if (error) throw error;
                 } catch (err) {
                     showAlert(err.message || "An error occurred during Google authentication.");
                     googleLoginBtn.disabled = false;
