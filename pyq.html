@@ -839,6 +839,529 @@
                 transform: translateX(0);
             }
         }
+
+        /* --- COMPACT QUESTION CARDS --- */
+        .compact-q-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .compact-q-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(129, 140, 248, 0.3);
+            box-shadow: 0 8px 30px -8px rgba(129, 140, 248, 0.2);
+        }
+        .compact-q-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+        }
+        .compact-q-number {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .compact-q-body {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.5;
+            color: var(--text-main);
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            text-overflow: ellipsis;
+        }
+        .compact-q-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+        }
+        .compact-q-status {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+        }
+        .compact-q-status.unattempted {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-dim);
+        }
+        .compact-q-status.correct {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+        .compact-q-status.incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+        .compact-q-action-text {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            transition: transform 0.2s;
+        }
+        .compact-q-card:hover .compact-q-action-text {
+            transform: translateX(4px);
+        }
+
+        /* --- DETAILED SOLVER VIEW --- */
+        .detail-navbar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            padding: 14px 24px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 24px;
+        }
+        .btn-back-to-list {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .btn-back-to-list:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .detail-nav-breadcrumbs {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .btn-detail-settings {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .btn-detail-settings:hover {
+            color: var(--text-main);
+        }
+        
+        /* Settings Dropdown & Switch UI */
+        .settings-container {
+            position: relative;
+        }
+        .detail-settings-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            min-width: 260px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .dropdown-item-label {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .3s;
+            border: 1px solid var(--glass-border);
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+        }
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        .slider.round {
+            border-radius: 24px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        .detail-sub-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 0 8px;
+        }
+        .detail-q-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .detail-q-index {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .detail-q-meta {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+        .detail-timer-box {
+            display: flex;
+            align-items: center;
+        }
+        .btn-timer {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-timer:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .btn-timer.ticking {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(45, 212, 191, 0.05);
+        }
+        .btn-flag-question {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .btn-flag-question:hover {
+            color: var(--danger);
+        }
+
+        .detail-question-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .detail-question-body {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .detail-options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 768px) {
+            .detail-options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .detail-option-button {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 18px 24px;
+            color: var(--text-main);
+            font-size: 0.98rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-align: left;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        .detail-option-button:hover:not(:disabled) {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--primary);
+        }
+        .detail-option-button.selected {
+            background: rgba(129, 140, 248, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(129, 140, 248, 0.15);
+        }
+        .detail-option-button.correct {
+            background: rgba(16, 185, 129, 0.12) !important;
+            border-color: var(--success) !important;
+            color: #34d399 !important;
+        }
+        .detail-option-button.incorrect {
+            background: rgba(239, 68, 68, 0.12) !important;
+            border-color: var(--danger) !important;
+            color: #f87171 !important;
+        }
+
+        .detail-option-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .detail-option-button.selected .detail-option-circle {
+            background: var(--primary);
+            color: #020617;
+            border-color: var(--primary);
+        }
+        .detail-option-button.correct .detail-option-circle {
+            background: var(--success);
+            color: #020617;
+            border-color: var(--success);
+        }
+        .detail-option-button.incorrect .detail-option-circle {
+            background: var(--danger);
+            color: #020617;
+            border-color: var(--danger);
+        }
+
+        .detail-tabs-bar {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            gap: 32px;
+            margin-top: 32px;
+            padding: 0 8px;
+        }
+        .detail-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 12px 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .detail-tab-btn:hover {
+            color: var(--text-main);
+        }
+        .detail-tab-btn.active {
+            color: var(--primary);
+        }
+        .detail-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        .detail-tab-content {
+            padding: 24px 8px;
+        }
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+
+        .video-error-box {
+            background: rgba(239, 68, 68, 0.03);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: 16px;
+            padding: 40px 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .video-error-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #f87171;
+        }
+        .video-error-text {
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            max-width: 400px;
+        }
+
+        .detail-solution-text-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+        .detail-solution-text {
+            font-size: 0.98rem;
+            line-height: 1.7;
+            color: var(--text-dim);
+            white-space: pre-line;
+        }
+
+        .detail-bottom-nav {
+            position: sticky;
+            bottom: 0;
+            background: #020617;
+            border-top: 1px solid var(--glass-border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            z-index: 10;
+            margin-top: 40px;
+            margin-left: -32px;
+            margin-right: -32px;
+            margin-bottom: -32px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+        .btn-detail-nav {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-detail-nav:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--text-dim);
+        }
+        .btn-detail-nav:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .btn-detail-nav-action {
+            background: var(--primary);
+            color: #020617;
+            border: none;
+            padding: 12px 36px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(129, 140, 248, 0.2);
+        }
+        .btn-detail-nav-action:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(129, 140, 248, 0.3);
+        }
+        .btn-detail-nav-action:disabled {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-dim);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        .report-error-link {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 24px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .report-error-link:hover {
+            color: var(--danger);
+        }
     </style>
     <!-- KaTeX for high-quality mathematical rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -1128,6 +1651,106 @@
             </div>
         </div>
 
+        <!-- VIEW 5: QUESTION SOLVER DETAIL -->
+        <div id="view-question-detail" class="ui-view">
+            <!-- Navbar -->
+            <div class="detail-navbar">
+                <button class="btn-back-to-list" onclick="closeQuestionDetail()">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </button>
+                <span class="detail-nav-breadcrumbs" id="detail-nav-breadcrumbs">JEE Main &gt;&gt; Quadratic Equation</span>
+                <div style="flex-grow: 1;"></div>
+                <div class="settings-container" style="position: relative;">
+                    <button class="btn-detail-settings" id="btn-detail-settings" onclick="toggleSettingsDropdown(event)">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                    <!-- Settings Dropdown -->
+                    <div class="detail-settings-dropdown" id="detail-settings-dropdown" style="display: none;">
+                        <div class="dropdown-item">
+                            <span class="dropdown-item-label">Start timer automatically</span>
+                            <label class="switch">
+                                <input type="checkbox" id="auto-timer-checkbox">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub Header -->
+            <div class="detail-sub-header">
+                <div class="detail-q-info">
+                    <span class="detail-q-index" id="detail-q-index">Q 1</span>
+                    <span class="detail-q-meta" id="detail-q-meta">JEE Main 2026 (06 April Shift 2)</span>
+                </div>
+                <div class="detail-timer-box">
+                    <button class="btn-timer" id="btn-timer" onclick="toggleTimer()">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="timer-icon" style="margin-right: 4px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span id="timer-display">Start Timer</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question and Options Container -->
+            <div class="detail-question-card">
+                <div class="detail-question-body" id="detail-question-text">
+                    <!-- Loaded dynamically -->
+                </div>
+                <div id="detail-question-image-container" class="media-container" style="display: none;"></div>
+                
+                <div class="detail-options-grid" id="detail-options-grid">
+                    <!-- Loaded dynamically -->
+                </div>
+
+                <!-- Explanation Tabs -->
+                <div class="detail-tabs-bar" id="detail-tabs-bar" style="display: none;">
+                    <button class="detail-tab-btn active" id="btn-tab-solution" onclick="switchDetailTab('solution')">Marks Solution</button>
+                    <button class="detail-tab-btn" id="btn-tab-others" onclick="switchDetailTab('others')">Solutions by Others</button>
+                </div>
+
+                <div class="detail-tab-content" id="detail-tab-content" style="display: none;">
+                    <div id="detail-solution-marks" class="tab-pane active">
+                        <div class="detail-solution-text-title">Solution:</div>
+                        <div class="detail-solution-text" id="detail-solution-text">
+                            <!-- Loaded dynamically -->
+                        </div>
+                        <div id="detail-solution-image-container" class="media-container" style="display: none;"></div>
+                        
+                        <a href="#" class="report-error-link" onclick="reportQuestionError(event); return false;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            Report Error
+                        </a>
+                    </div>
+                    <div id="detail-solution-others" class="tab-pane">
+                        <div class="video-error-box" style="background: rgba(255,255,255,0.01); border-color: rgba(255,255,255,0.05); padding: 48px 24px;">
+                            <p style="color: var(--text-dim); font-size: 0.95rem; font-weight: 600;">No other solutions uploaded yet. Be the first to upload yours!</p>
+                            <button class="btn-detail-nav" style="margin-top: 16px; border-color: var(--primary); color: var(--primary);" onclick="alert('Solution upload is temporarily disabled.');">Upload Solution</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="detail-bottom-nav">
+                <button class="btn-detail-nav" id="btn-prev-question" onclick="navigateQuestion(-1)">Previous</button>
+                <button class="btn-detail-nav-action" id="btn-action-question" onclick="handleDetailAction()">Check Answer</button>
+                <button class="btn-detail-nav" id="btn-next-question" onclick="navigateQuestion(1)">Next</button>
+            </div>
+        </div>
+
     </main>
 
     <!-- Supabase SDK & Configuration Scripts -->
@@ -1155,6 +1778,25 @@
         window.addEventListener('load', () => {
             loadExamStatuses();
             setupClickHandlers();
+            
+            // Initialize auto-timer checkbox state and listener
+            const checkbox = document.getElementById('auto-timer-checkbox');
+            if (checkbox) {
+                const autoStart = localStorage.getItem('learnser_auto_start_timer') !== 'false';
+                checkbox.checked = autoStart;
+                checkbox.addEventListener('change', (e) => {
+                    localStorage.setItem('learnser_auto_start_timer', e.target.checked);
+                });
+            }
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('detail-settings-dropdown');
+                const settingsBtn = document.getElementById('btn-detail-settings');
+                if (dropdown && dropdown.style.display !== 'none' && !dropdown.contains(e.target) && !settingsBtn.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
         });
 
         // Query Supabase to see which exams are toggled/enabled
@@ -1353,8 +1995,12 @@
                 // Populate userPracticeAnswers from localStorage (learnser_attempts) for this chapter
                 const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
                 allQuestions.forEach(q => {
-                    if (localAttempts[q.id] && localAttempts[q.id].userOption !== undefined && localAttempts[q.id].userOption !== -1) {
-                        userPracticeAnswers[q.id] = localAttempts[q.id].userOption;
+                    if (localAttempts[q.id]) {
+                        if (localAttempts[q.id].userOption !== undefined && localAttempts[q.id].userOption !== -1) {
+                            userPracticeAnswers[q.id] = localAttempts[q.id].userOption;
+                        } else if (localAttempts[q.id].userAnswerVal !== undefined) {
+                            userPracticeAnswers[q.id] = localAttempts[q.id].userAnswerVal;
+                        }
                     }
                 });
                 
@@ -1415,6 +2061,26 @@
         }
 
         // Render practice list
+        // Detailed Question View state
+        let currentQuestionIdx = -1;
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let timerIsRunning = false;
+        let selectedOptionIdx = -1;
+
+        function getNiceExamName(examId) {
+            const names = {
+                'jee': 'JEE Main',
+                'bitsat': 'BITSAT',
+                'viteee': 'VITEEE',
+                'mhtcet': 'MHTCET',
+                'met': 'MET',
+                'nda': 'NDA'
+            };
+            return names[examId.toLowerCase()] || examId.toUpperCase();
+        }
+
+        // Render compact list
         function renderQuestionsList() {
             const containerEl = document.getElementById('questions-list-container');
             const statsEl = document.getElementById('practice-stats-display');
@@ -1444,7 +2110,9 @@
                 const userAns = userPracticeAnswers[q.id];
                 if (userAns !== undefined) {
                     answeredCount++;
-                    if (userAns === q.correct_answer) {
+                    const qType = q.q_type || 'mcq';
+                    const isCorrect = qType === 'mcq' ? (userAns === q.correct_answer) : isNumericalAnswerCorrect(userAns, q.correct_answer_text);
+                    if (isCorrect) {
                         correctCount++;
                     } else {
                         incorrectCount++;
@@ -1462,15 +2130,19 @@
 
             filteredQuestions.forEach((q, displayIdx) => {
                 const card = document.createElement('div');
-                card.className = 'question-card';
+                card.className = 'compact-q-card';
                 card.id = `q-card-${q.id}`;
 
                 const userAnswer = userPracticeAnswers[q.id];
                 const isAttempted = userAnswer !== undefined;
-                const isCorrect = isAttempted && userAnswer === q.correct_answer;
+                const qType = q.q_type || 'mcq';
+                const isCorrect = isAttempted && (qType === 'mcq' ? (userAnswer === q.correct_answer) : isNumericalAnswerCorrect(userAnswer, q.correct_answer_text));
 
+                let statusClass = 'unattempted';
+                let statusText = 'Unattempted';
                 if (isAttempted) {
-                    card.className += isCorrect ? ' answered-correct' : ' answered-incorrect';
+                    statusClass = isCorrect ? 'correct' : 'incorrect';
+                    statusText = isCorrect ? 'Correct' : 'Incorrect';
                 }
 
                 // Badges HTML
@@ -1481,148 +2153,530 @@
                     badgeList += `<span class="q-badge ${(q.difficulty).toLowerCase()}">${q.difficulty}</span>`;
                 }
 
-                // Media image HTML
-                let questionImgHtml = '';
-                if (q.question_image) {
-                    questionImgHtml = `<div class="media-container"><img src="${q.question_image}" alt="Question Image"></div>`;
-                }
-
-                // Options HTML
-                let optionsHtml = '';
-                const optionImages = [q.option_a_image, q.option_b_image, q.option_c_image, q.option_d_image];
-                
-                optionsHtml = q.options.map((opt, optIdx) => {
-                    const letter = String.fromCharCode(65 + optIdx);
-                    let buttonClass = 'option-button';
-                    
-                    if (isAttempted) {
-                        if (optIdx === q.correct_answer) {
-                            buttonClass += ' correct';
-                        } else if (optIdx === userAnswer) {
-                            buttonClass += ' incorrect';
-                        }
-                    } else {
-                        if (userPracticeAnswers[`temp-${q.id}`] === optIdx) {
-                            buttonClass += ' selected';
-                        }
-                    }
-
-                    let optImgHtml = '';
-                    if (optionImages[optIdx]) {
-                        optImgHtml = `<div class="media-container" style="margin-top: 8px;"><img src="${optionImages[optIdx]}" alt="Option ${letter} Image"></div>`;
-                    }
-
-                    return `
-                        <button class="${buttonClass}" data-q-id="${q.id}" data-opt-idx="${optIdx}" ${isAttempted ? 'disabled' : ''}>
-                            <div class="option-letter">${letter}</div>
-                            <div class="option-content-wrapper">
-                                <div>${formatMathText(opt)}</div>
-                                ${optImgHtml}
-                            </div>
-                        </button>
-                    `;
-                }).join('');
-
-                // Explanation content HTML
-                let explanationImgHtml = '';
-                if (q.detailed_answer_image) {
-                    explanationImgHtml = `<div class="media-container" style="margin-top: 12px;"><img src="${q.detailed_answer_image}" alt="Explanation Image"></div>`;
-                }
-
                 card.innerHTML = `
-                    <div class="question-card-header">
-                        <span class="question-number">Question ${displayIdx + 1}</span>
+                    <div class="compact-q-header">
+                        <span class="compact-q-number">Question ${displayIdx + 1}</span>
                         <div class="question-badges">${badgeList}</div>
                     </div>
-                    <div class="question-body">
-                        <div>${formatMathText(q.question)}</div>
-                        ${questionImgHtml}
+                    <div class="compact-q-body">
+                        ${formatMathText(q.question)}
                     </div>
-                    <div class="options-grid">
-                        ${optionsHtml}
-                    </div>
-                    <div class="action-row">
-                        <button class="btn-check-answer" id="btn-check-${q.id}" ${isAttempted ? 'disabled' : (userPracticeAnswers[`temp-${q.id}`] !== undefined ? '' : 'disabled')}>
-                            ${isAttempted ? 'Checked' : 'Check Answer'}
-                        </button>
-                    </div>
-                    <div class="explanation-card" id="explanation-${q.id}" style="${isAttempted ? 'display: block;' : ''}">
-                        <div class="explanation-title">✨ Detailed Explanation</div>
-                        <div class="explanation-text">${formatMathText(q.detailed_answer || 'No detailed explanation provided.')}</div>
-                        ${explanationImgHtml}
+                    <div class="compact-q-footer">
+                        <span class="compact-q-status ${statusClass}">${statusText}</span>
+                        <span class="compact-q-action-text">Solve Question →</span>
                     </div>
                 `;
 
-                // Add option selection click events
-                if (!isAttempted) {
-                    card.querySelectorAll('.option-button').forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            const optIdx = parseInt(btn.dataset.optIdx);
-                            userPracticeAnswers[`temp-${q.id}`] = optIdx;
-
-                            // Highlight clicked option
-                            card.querySelectorAll('.option-button').forEach(b => b.classList.remove('selected'));
-                            btn.classList.add('selected');
-
-                            // Enable check answer button
-                            document.getElementById(`btn-check-${q.id}`).disabled = false;
-                        });
-                    });
-
-                    // Check Answer Button Event
-                    card.querySelector('.btn-check-answer').addEventListener('click', async () => {
-                        const selectedIdx = userPracticeAnswers[`temp-${q.id}`];
-                        if (selectedIdx === undefined) return;
-
-                        // Set attempt state
-                        userPracticeAnswers[q.id] = selectedIdx;
-                        delete userPracticeAnswers[`temp-${q.id}`];
-
-                        const isAnswerCorrect = selectedIdx === q.correct_answer;
-
-                        // Save attempt in localStorage (learnser_attempts)
-                        const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
-                        localAttempts[q.id] = {
-                            correct: isAnswerCorrect,
-                            userOption: selectedIdx
-                        };
-                        localStorage.setItem('learnser_attempts', JSON.stringify(localAttempts));
-
-                        // Apply classes to card
-                        card.className += isAnswerCorrect ? ' answered-correct' : ' answered-incorrect';
-
-                        // Disable option buttons and apply colors
-                        card.querySelectorAll('.option-button').forEach(b => {
-                            b.disabled = true;
-                            const idx = parseInt(b.dataset.optIdx);
-                            if (idx === q.correct_answer) {
-                                b.classList.add('correct');
-                            } else if (idx === selectedIdx) {
-                                b.classList.add('incorrect');
-                            }
-                            b.classList.remove('selected');
-                        });
-
-                        // Disable Check button
-                        const checkBtn = document.getElementById(`btn-check-${q.id}`);
-                        checkBtn.disabled = true;
-                        checkBtn.textContent = 'Checked';
-
-                        // Display solution explanation
-                        document.getElementById(`explanation-${q.id}`).style.display = 'block';
-
-                        // Update top stats toolbar
-                        updateToolbarStats();
-
-                        // Award XP to user for attempt via Supabase profile updates
-                        await awardPracticeXP(isAnswerCorrect);
-                    });
-                }
+                card.addEventListener('click', () => {
+                    openQuestionDetail(displayIdx);
+                });
 
                 containerEl.appendChild(card);
             });
             renderMath(containerEl);
         }
+
+        // Open Detailed Solver view
+        function openQuestionDetail(idx) {
+            currentQuestionIdx = idx;
+            switchView('question-detail');
+            
+            // Enter distraction-free fullscreen mode
+            document.body.classList.add('fullscreen-mode');
+            
+            // Reset timer
+            resetTimer();
+            // Start timer automatically when the question is opened if preference is enabled
+            const autoStart = localStorage.getItem('learnser_auto_start_timer') !== 'false';
+            if (autoStart) {
+                toggleTimer();
+            }
+            
+            // Render question details
+            renderQuestionDetailView();
+        }
+
+        function toggleSettingsDropdown(event) {
+            if (event) event.stopPropagation();
+            const dropdown = document.getElementById('detail-settings-dropdown');
+            if (dropdown) {
+                const isHidden = dropdown.style.display === 'none';
+                dropdown.style.display = isHidden ? 'flex' : 'none';
+            }
+        }
+
+        async function reportQuestionError(event) {
+            if (event) event.preventDefault();
+            const supabase = window.supabaseClient;
+            if (!supabase) {
+                alert("Database connection not available.");
+                return;
+            }
+
+            const q = questions[currentQuestionIdx];
+            if (!q) return;
+
+            let userId = null;
+            const cachedProfile = localStorage.getItem('learnser_supabase_profile');
+            if (cachedProfile) {
+                try {
+                    userId = JSON.parse(cachedProfile).id;
+                } catch (e) {}
+            }
+
+            // If we don't have it, let's try getting session
+            if (!userId) {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && session.user) {
+                    userId = session.user.id;
+                }
+            }
+
+            try {
+                const { error } = await supabase.from('reported_errors').insert({
+                    question_id: q.id,
+                    user_id: userId || null,
+                    status: 'unseen'
+                });
+
+                if (error) throw error;
+
+                alert("Thank you for reporting this error. Our administrators will review the question shortly.");
+            } catch (err) {
+                console.error("Error reporting question error:", err);
+                alert("Failed to submit the report. Please try again later.");
+            }
+        }
+
+        // Close Detailed Solver view
+        function closeQuestionDetail() {
+            // Exit distraction-free fullscreen mode
+            document.body.classList.remove('fullscreen-mode');
+            
+            // Stop timer
+            stopTimer();
+            
+            // Switch back to practice list
+            switchView('practice');
+            
+            // Refresh question list to show updated status
+            renderQuestionsList();
+        }
+
+        // Timer actions
+        function toggleTimer() {
+            const timerBtn = document.getElementById('btn-timer');
+            
+            if (timerIsRunning) {
+                // Pause
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerIsRunning = false;
+                timerBtn.classList.remove('ticking');
+            } else {
+                // Start
+                timerIsRunning = true;
+                timerBtn.classList.add('ticking');
+                timerInterval = setInterval(() => {
+                    timerSeconds++;
+                    document.getElementById('timer-display').textContent = formatTimerTime(timerSeconds);
+                }, 1000);
+            }
+        }
+
+        function formatTimerTime(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerSeconds = 0;
+            timerIsRunning = false;
+            
+            const timerBtn = document.getElementById('btn-timer');
+            timerBtn.classList.remove('ticking');
+            document.getElementById('timer-display').textContent = 'Start Timer';
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerIsRunning = false;
+        }
+
+        // Mock percentages for option statistics
+        function getMockPercentages(qId, correctIndex) {
+            let hash = 0;
+            for (let i = 0; i < qId.length; i++) {
+                hash = qId.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const seed = Math.abs(hash);
+            
+            const percentages = [0, 0, 0, 0];
+            percentages[correctIndex] = 45 + (seed % 20); // 45% to 64%
+            
+            let remaining = 100 - percentages[correctIndex];
+            const indices = [0, 1, 2, 3].filter(idx => idx !== correctIndex);
+            
+            percentages[indices[0]] = Math.round(remaining * (0.4 + (seed % 10) / 100));
+            remaining -= percentages[indices[0]];
+            percentages[indices[1]] = Math.round(remaining * (0.5 + ((seed >> 2) % 10) / 100));
+            remaining -= percentages[indices[1]];
+            percentages[indices[2]] = remaining;
+            
+            return percentages;
+        }
+
+        // Render question details
+        function renderQuestionDetailView() {
+            const q = filteredQuestions[currentQuestionIdx];
+            if (!q) return;
+
+            selectedOptionIdx = -1;
+            typedNumericalAnswer = '';
+
+            // Breadcrumbs
+            const niceExam = getNiceExamName(currentExam);
+            document.getElementById('detail-nav-breadcrumbs').innerHTML = `${niceExam} &gt;&gt; ${escapeHtml(currentChapterName)}`;
+
+            // Question Header
+            document.getElementById('detail-q-index').textContent = `Q ${currentQuestionIdx + 1}`;
+            
+            let metaText = niceExam;
+            if (q.year) metaText += ` ${q.year}`;
+            if (q.shift) metaText += ` (${q.shift})`;
+            document.getElementById('detail-q-meta').textContent = metaText;
+
+            // Question Text
+            const textEl = document.getElementById('detail-question-text');
+            textEl.innerHTML = formatMathText(q.question);
+
+            // Question Image
+            const imgContainer = document.getElementById('detail-question-image-container');
+            if (q.question_image) {
+                imgContainer.innerHTML = `<img src="${q.question_image}" alt="Question Image">`;
+                imgContainer.style.display = 'block';
+            } else {
+                imgContainer.innerHTML = '';
+                imgContainer.style.display = 'none';
+            }
+
+            // Options
+            const userAnswer = userPracticeAnswers[q.id];
+            const isAttempted = userAnswer !== undefined;
+            const qType = q.q_type || 'mcq';
+
+            const optionsGrid = document.getElementById('detail-options-grid');
+            optionsGrid.innerHTML = '';
+
+            if (qType === 'numerical') {
+                const isCorrect = isAttempted && isNumericalAnswerCorrect(userAnswer, q.correct_answer_text);
+                const mockStats = getMockPercentages(q.id, 0);
+
+                let borderStyle = 'rgba(255,255,255,0.1)';
+                if (isAttempted) {
+                    borderStyle = isCorrect ? 'var(--accent)' : 'var(--danger)';
+                }
+
+                let badgeHtml = '';
+                if (isAttempted) {
+                    badgeHtml = `
+                        <div style="position: absolute; right: 24px; top: -12px; display: flex; align-items: center; gap: 8px; background: #020617; padding: 0 8px;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: ${isCorrect ? 'var(--accent)' : 'var(--danger)'};">
+                                ${isCorrect ? 'Correct ✓' : 'You Marked'}
+                            </span>
+                            ${!isCorrect ? `
+                                <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--danger); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 0.75rem;">
+                                    ✗
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="position: absolute; right: 24px; bottom: -12px; font-size: 0.85rem; font-weight: 700; color: var(--text-dim); background: #020617; padding: 0 8px;">
+                            ${mockStats[0]}% Got it correct
+                        </div>
+                    `;
+                }
+
+                optionsGrid.innerHTML = `
+                    <div class="numerical-answer-container" style="position: relative; width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+                        <label style="font-size: 0.95rem; font-weight: bold; color: var(--text-dim);">Numerical</label>
+                        <div style="position: relative; width: 100%; border: 2px solid ${borderStyle}; border-radius: 12px; padding: 4px; background: rgba(0,0,0,0.2); transition: border-color 0.3s ease;">
+                            <input type="text" id="numerical-answer-input" 
+                                style="width: 100%; background: transparent; border: none; outline: none; padding: 12px 16px; color: var(--text-main); font-size: 1.1rem; font-weight: 600;" 
+                                placeholder="Type your answer here..." 
+                                value="${isAttempted ? userAnswer : ''}" 
+                                ${isAttempted ? 'disabled' : ''}
+                                oninput="onNumericalInput(this.value)"
+                            />
+                            ${badgeHtml}
+                        </div>
+                        ${isAttempted && !isCorrect ? `
+                            <div style="font-size: 1rem; font-weight: bold; color: var(--accent); margin-top: 4px;">
+                                Correct Answer: ${q.correct_answer_text}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                // Wire input enter key to action
+                const inputEl = document.getElementById('numerical-answer-input');
+                if (inputEl) {
+                    inputEl.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter' && !isAttempted && inputEl.value.trim()) {
+                            handleDetailAction();
+                        }
+                    });
+                }
+
+                // If not attempted, enable check answer button based on input value
+                const actionBtn = document.getElementById('btn-action-question');
+                if (isAttempted) {
+                    actionBtn.textContent = 'Show Solution';
+                    actionBtn.disabled = false;
+                } else {
+                    actionBtn.textContent = 'Check Answer';
+                    actionBtn.disabled = !inputEl.value.trim();
+                }
+                
+                return;
+            }
+
+            const isCorrect = isAttempted && userAnswer === q.correct_answer;
+            const optionImages = [q.option_a_image, q.option_b_image, q.option_c_image, q.option_d_image];
+            const mockStats = getMockPercentages(q.id, q.correct_answer);
+
+            q.options.forEach((opt, optIdx) => {
+                const letter = String.fromCharCode(65 + optIdx);
+                const optContainer = document.createElement('div');
+                optContainer.className = 'option-container';
+
+                let btnClass = 'detail-option-button';
+                let circleContent = letter;
+
+                if (isAttempted) {
+                    circleContent = `${mockStats[optIdx]}%`;
+                    if (optIdx === q.correct_answer) {
+                        btnClass += ' correct';
+                    } else if (optIdx === userAnswer) {
+                        btnClass += ' incorrect';
+                    }
+                }
+
+                let optImgHtml = '';
+                if (optionImages[optIdx]) {
+                    optImgHtml = `<div class="media-container" style="margin-top: 8px;"><img src="${optionImages[optIdx]}" alt="Option ${letter} Image"></div>`;
+                }
+
+                let badgeHtml = '';
+                if (isAttempted && optIdx === userAnswer) {
+                    badgeHtml = `<div class="marked-badge ${isCorrect ? 'correct' : 'incorrect'}">You Marked ${isCorrect ? '✓' : '✗'}</div>`;
+                }
+
+                optContainer.innerHTML = `
+                    ${badgeHtml}
+                    <button class="${btnClass}" data-opt-idx="${optIdx}" ${isAttempted ? 'disabled' : ''}>
+                        <div class="detail-option-circle">${circleContent}</div>
+                        <div class="option-content-wrapper">
+                            <div>${formatMathText(opt)}</div>
+                            ${optImgHtml}
+                        </div>
+                    </button>
+                `;
+
+                if (!isAttempted) {
+                    optContainer.querySelector('.detail-option-button').addEventListener('click', () => {
+                        selectDetailOption(optIdx);
+                    });
+                }
+
+                optionsGrid.appendChild(optContainer);
+            });
+
+            // Solution Tabs & Content
+            const tabsBar = document.getElementById('detail-tabs-bar');
+            const tabContent = document.getElementById('detail-tab-content');
+            
+            if (isAttempted) {
+                tabsBar.style.display = 'flex';
+                tabContent.style.display = 'block';
+                
+                // Set Marks Solution as active
+                switchDetailTab('solution');
+
+                // Render Explanation
+                document.getElementById('detail-solution-text').innerHTML = formatMathText(q.detailed_answer || 'No detailed explanation provided.');
+                
+                const solImgContainer = document.getElementById('detail-solution-image-container');
+                if (q.detailed_answer_image) {
+                    solImgContainer.innerHTML = `<img src="${q.detailed_answer_image}" alt="Explanation Image">`;
+                    solImgContainer.style.display = 'block';
+                } else {
+                    solImgContainer.innerHTML = '';
+                    solImgContainer.style.display = 'none';
+                }
+            } else {
+                tabsBar.style.display = 'none';
+                tabContent.style.display = 'none';
+            }
+
+            // Bottom Navigation Buttons
+            document.getElementById('btn-prev-question').disabled = (currentQuestionIdx === 0);
+            document.getElementById('btn-next-question').disabled = (currentQuestionIdx === filteredQuestions.length - 1);
+
+            const actionBtn = document.getElementById('btn-action-question');
+            if (isAttempted) {
+                actionBtn.textContent = 'Show Solution';
+                actionBtn.disabled = false;
+            } else {
+                actionBtn.textContent = 'Check Answer';
+                actionBtn.disabled = true;
+            }
+
+            // Render Math in Detail card
+            renderMath(document.getElementById('view-question-detail'));
+            
+            // Scroll content to top
+            document.getElementById('view-question-detail').scrollTop = 0;
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+
+        function selectDetailOption(optIdx) {
+            const q = filteredQuestions[currentQuestionIdx];
+            if (userPracticeAnswers[q.id] !== undefined) return; // already attempted
+
+            selectedOptionIdx = optIdx;
+
+            // Highlight selected option
+            document.querySelectorAll('.detail-option-button').forEach((btn, idx) => {
+                if (idx === optIdx) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+
+            // Enable check answer button
+            document.getElementById('btn-action-question').disabled = false;
+        }
+
+        async function handleDetailAction() {
+            const q = filteredQuestions[currentQuestionIdx];
+            const userAnswer = userPracticeAnswers[q.id];
+
+            if (userAnswer === undefined) {
+                // Stop timer
+                stopTimer();
+
+                const qType = q.q_type || 'mcq';
+                let isAnswerCorrect = false;
+
+                if (qType === 'mcq') {
+                    if (selectedOptionIdx === -1) return;
+
+                    isAnswerCorrect = selectedOptionIdx === q.correct_answer;
+                    userPracticeAnswers[q.id] = selectedOptionIdx;
+
+                    const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
+                    localAttempts[q.id] = {
+                        correct: isAnswerCorrect,
+                        userOption: selectedOptionIdx
+                    };
+                    localStorage.setItem('learnser_attempts', JSON.stringify(localAttempts));
+                } else {
+                    const ans = typedNumericalAnswer.trim();
+                    if (!ans) return;
+
+                    isAnswerCorrect = isNumericalAnswerCorrect(ans, q.correct_answer_text);
+                    userPracticeAnswers[q.id] = ans;
+
+                    const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
+                    localAttempts[q.id] = {
+                        correct: isAnswerCorrect,
+                        userAnswerVal: ans
+                    };
+                    localStorage.setItem('learnser_attempts', JSON.stringify(localAttempts));
+                }
+
+                // Re-render view to display correctness and solution
+                renderQuestionDetailView();
+
+                // Award XP
+                await awardPracticeXP(isAnswerCorrect);
+                
+                // Update toolbar stats in background
+                updateToolbarStats();
+                
+                // Smooth scroll to explanation tabs
+                setTimeout(() => {
+                    const tabsEl = document.getElementById('detail-tabs-bar');
+                    if (tabsEl) {
+                        tabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 300);
+
+            } else {
+                // Scroll toggle: if viewing details, scroll to solution or question
+                const actionBtn = document.getElementById('btn-action-question');
+                if (actionBtn.textContent === 'Show Question') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    const tabContent = document.getElementById('detail-tab-content');
+                    if (tabContent && tabContent.style.display !== 'none') {
+                        tabContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            }
+        }
+
+        // Switch explanation tab view
+        function switchDetailTab(tabId) {
+            document.querySelectorAll('.detail-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+
+            if (tabId === 'solution') {
+                document.getElementById('btn-tab-solution').classList.add('active');
+                document.getElementById('detail-solution-marks').classList.add('active');
+            } else {
+                document.getElementById('btn-tab-others').classList.add('active');
+                document.getElementById('detail-solution-others').classList.add('active');
+            }
+        }
+
+        // Navigate between questions (prev/next)
+        function navigateQuestion(direction) {
+            const nextIdx = currentQuestionIdx + direction;
+            if (nextIdx >= 0 && nextIdx < filteredQuestions.length) {
+                // Reset timer and load next
+                openQuestionDetail(nextIdx);
+            }
+        }
+
+        // Scroll listener to update middle action button text
+        window.addEventListener('scroll', () => {
+            const detailView = document.getElementById('view-question-detail');
+            if (detailView && detailView.classList.contains('active')) {
+                const q = filteredQuestions[currentQuestionIdx];
+                if (q && userPracticeAnswers[q.id] !== undefined) {
+                    const actionBtn = document.getElementById('btn-action-question');
+                    const tabContent = document.getElementById('detail-tab-content');
+                    if (tabContent && tabContent.style.display !== 'none') {
+                        const rect = tabContent.getBoundingClientRect();
+                        if (rect.top < window.innerHeight / 2) {
+                            actionBtn.textContent = 'Show Question';
+                        } else {
+                            actionBtn.textContent = 'Show Solution';
+                        }
+                    }
+                }
+            }
+        });
 
         // Live stats update
         function updateToolbarStats() {
@@ -1635,7 +2689,9 @@
                 const userAns = userPracticeAnswers[q.id];
                 if (userAns !== undefined) {
                     answeredCount++;
-                    if (userAns === q.correct_answer) {
+                    const qType = q.q_type || 'mcq';
+                    const isCorrect = qType === 'mcq' ? (userAns === q.correct_answer) : isNumericalAnswerCorrect(userAns, q.correct_answer_text);
+                    if (isCorrect) {
                         correctCount++;
                     } else {
                         incorrectCount++;
@@ -1693,7 +2749,7 @@
 
         function formatMathText(text) {
             if (!text) return '';
-            let processed = text;
+            let processed = text.replace(/\\\\/g, '\\');
 
             // 1. Protect URLs (so we don't convert http:// to fraction)
             const urls = [];
@@ -1750,6 +2806,28 @@
                     throwOnError: false
                 });
             }
+        }
+
+        let typedNumericalAnswer = '';
+        function onNumericalInput(val) {
+            typedNumericalAnswer = val;
+            const actionBtn = document.getElementById('btn-action-question');
+            if (actionBtn) {
+                actionBtn.disabled = !val.trim();
+            }
+        }
+
+        function isNumericalAnswerCorrect(userAnswer, correctAnswerText) {
+            if (!userAnswer || !correctAnswerText) return false;
+            const u = userAnswer.trim();
+            const c = correctAnswerText.trim();
+            if (u === c) return true;
+            const uf = parseFloat(u);
+            const cf = parseFloat(c);
+            if (!isNaN(uf) && !isNaN(cf)) {
+                return uf === cf;
+            }
+            return false;
         }
 
         // Helper: Escape HTML strings to prevent XSS
