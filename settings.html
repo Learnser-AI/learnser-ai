@@ -370,8 +370,8 @@
                             <button class="btn btn-outline" id="btn-link-google" style="transition: 0.2s;">Checking...</button>
                         </div>
                         <div class="form-row">
-                            <div class="row-info"><h4>GitHub</h4><p>Not connected</p></div>
-                            <button class="btn btn-outline" style="opacity: 0.5; cursor: not-allowed;" disabled>Connect</button>
+                            <div class="row-info"><h4>GitHub</h4><p id="setting-github-email">Loading...</p></div>
+                            <button class="btn btn-outline" id="btn-link-github" style="transition: 0.2s;">Checking...</button>
                         </div>
                     </div>
 
@@ -680,6 +680,7 @@
         }
 
         // --- GOOGLE LINKING & UNLINKING MANAGEMENT ---
+        // --- OAUTH PROVIDERS LINKING & UNLINKING MANAGEMENT ---
         async function updateLinkedAccountsUI() {
             const supabase = window.supabaseClient;
             if (!supabase) return;
@@ -690,60 +691,85 @@
             // Load passkeys list
             loadPasskeys();
 
-            const googleEmailEl = document.getElementById('setting-google-email');
-            const googleBtn = document.getElementById('btn-link-google');
-
-            if (!googleEmailEl || !googleBtn) return;
-
             // Fetch identities
             const identities = currentUser.identities || [];
-            const googleIdentity = identities.find(identity => identity.provider === 'google');
-            const isGoogleLinked = !!googleIdentity;
 
-            if (isGoogleLinked) {
-                googleEmailEl.innerText = googleIdentity.identity_data?.email || currentUser.email || "Linked";
-                googleBtn.innerText = "Disconnect";
-                googleBtn.style.color = "var(--danger)";
-                googleBtn.style.borderColor = "rgba(239, 68, 68, 0.3)";
-                googleBtn.onclick = () => handleGoogleLinkToggle(googleIdentity);
-            } else {
-                googleEmailEl.innerText = "Not connected";
-                googleBtn.innerText = "Connect";
-                googleBtn.style.color = "var(--accent)";
-                googleBtn.style.borderColor = "var(--accent)";
-                googleBtn.onclick = () => handleGoogleLinkToggle(null);
+            // Google Link Check
+            const googleEmailEl = document.getElementById('setting-google-email');
+            const googleBtn = document.getElementById('btn-link-google');
+            if (googleEmailEl && googleBtn) {
+                const googleIdentity = identities.find(identity => identity.provider === 'google');
+                const isGoogleLinked = !!googleIdentity;
+
+                if (isGoogleLinked) {
+                    googleEmailEl.innerText = googleIdentity.identity_data?.email || currentUser.email || "Linked";
+                    googleBtn.innerText = "Disconnect";
+                    googleBtn.style.color = "var(--danger)";
+                    googleBtn.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                    googleBtn.onclick = () => handleLinkToggle('google', googleIdentity);
+                } else {
+                    googleEmailEl.innerText = "Not connected";
+                    googleBtn.innerText = "Connect";
+                    googleBtn.style.color = "var(--accent)";
+                    googleBtn.style.borderColor = "var(--accent)";
+                    googleBtn.onclick = () => handleLinkToggle('google', null);
+                }
+            }
+
+            // GitHub Link Check
+            const githubEmailEl = document.getElementById('setting-github-email');
+            const githubBtn = document.getElementById('btn-link-github');
+            if (githubEmailEl && githubBtn) {
+                const githubIdentity = identities.find(identity => identity.provider === 'github');
+                const isGitHubLinked = !!githubIdentity;
+
+                if (isGitHubLinked) {
+                    githubEmailEl.innerText = githubIdentity.identity_data?.email || githubIdentity.identity_data?.user_name || "Linked";
+                    githubBtn.innerText = "Disconnect";
+                    githubBtn.style.color = "var(--danger)";
+                    githubBtn.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                    githubBtn.onclick = () => handleLinkToggle('github', githubIdentity);
+                } else {
+                    githubEmailEl.innerText = "Not connected";
+                    githubBtn.innerText = "Connect";
+                    githubBtn.style.color = "var(--accent)";
+                    githubBtn.style.borderColor = "var(--accent)";
+                    githubBtn.onclick = () => handleLinkToggle('github', null);
+                }
             }
         }
 
-        async function handleGoogleLinkToggle(googleIdentity) {
+        async function handleLinkToggle(provider, identity) {
             const supabase = window.supabaseClient;
             if (!supabase) return;
             const { data: { session } } = await supabase.auth.getSession();
             if (!session || !session.user) return;
             const currentUser = session.user;
 
-            const isGoogleLinked = !!googleIdentity;
-            const googleBtn = document.getElementById('btn-link-google');
-            googleBtn.disabled = true;
-            googleBtn.innerText = isGoogleLinked ? "Disconnecting..." : "Connecting...";
+            const isLinked = !!identity;
+            const btn = document.getElementById(`btn-link-${provider}`);
+            if (!btn) return;
+            btn.disabled = true;
+            btn.innerText = isLinked ? "Disconnecting..." : "Connecting...";
 
             try {
-                if (isGoogleLinked) {
+                if (isLinked) {
                     const identities = currentUser.identities || [];
                     if (identities.length <= 1) {
-                        alert("You cannot disconnect Google because it is your only sign-in method.");
+                        alert(`You cannot disconnect ${provider === 'google' ? 'Google' : 'GitHub'} because it is your only sign-in method.`);
                         return;
                     }
-                    if (confirm("Are you sure you want to disconnect your Google account?")) {
-                        const { error } = await supabase.auth.unlinkIdentity(googleIdentity);
+                    const niceName = provider === 'google' ? 'Google' : 'GitHub';
+                    if (confirm(`Are you sure you want to disconnect your ${niceName} account?`)) {
+                        const { error } = await supabase.auth.unlinkIdentity(identity);
                         if (error) throw error;
-                        alert("Google account disconnected successfully.");
+                        alert(`${niceName} account disconnected successfully.`);
                         window.location.reload();
                     }
                 } else {
                     const redirectUrl = window.location.href;
                     const { error } = await supabase.auth.signInWithOAuth({
-                        provider: 'google',
+                        provider: provider,
                         options: {
                             redirectTo: redirectUrl
                         }
@@ -751,10 +777,10 @@
                     if (error) throw error;
                 }
             } catch (err) {
-                console.error("Google account link error:", err);
-                alert(err.message || "An error occurred while linking/unlinking Google account.");
+                console.error(`${provider} account link error:`, err);
+                alert(err.message || `An error occurred while linking/unlinking ${provider} account.`);
             } finally {
-                googleBtn.disabled = false;
+                btn.disabled = false;
                 updateLinkedAccountsUI();
             }
         }
