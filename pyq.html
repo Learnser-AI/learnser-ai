@@ -2307,28 +2307,7 @@
             timerIsRunning = false;
         }
 
-        // Mock percentages for option statistics
-        function getMockPercentages(qId, correctIndex) {
-            let hash = 0;
-            for (let i = 0; i < qId.length; i++) {
-                hash = qId.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const seed = Math.abs(hash);
-            
-            const percentages = [0, 0, 0, 0];
-            percentages[correctIndex] = 45 + (seed % 20); // 45% to 64%
-            
-            let remaining = 100 - percentages[correctIndex];
-            const indices = [0, 1, 2, 3].filter(idx => idx !== correctIndex);
-            
-            percentages[indices[0]] = Math.round(remaining * (0.4 + (seed % 10) / 100));
-            remaining -= percentages[indices[0]];
-            percentages[indices[1]] = Math.round(remaining * (0.5 + ((seed >> 2) % 10) / 100));
-            remaining -= percentages[indices[1]];
-            percentages[indices[2]] = remaining;
-            
-            return percentages;
-        }
+
 
         // Render question details
         function renderQuestionDetailView() {
@@ -2374,7 +2353,6 @@
 
             if (qType === 'numerical') {
                 const isCorrect = isAttempted && isNumericalAnswerCorrect(userAnswer, q.correct_answer_text);
-                const mockStats = getMockPercentages(q.id, 0);
 
                 let borderStyle = 'rgba(255,255,255,0.1)';
                 if (isAttempted) {
@@ -2393,9 +2371,6 @@
                                     ✗
                                 </div>
                             ` : ''}
-                        </div>
-                        <div style="position: absolute; right: 24px; bottom: -12px; font-size: 0.85rem; font-weight: 700; color: var(--text-dim); background: #020617; padding: 0 8px;">
-                            ${mockStats[0]}% Got it correct
                         </div>
                     `;
                 }
@@ -2446,7 +2421,6 @@
 
             const isCorrect = isAttempted && userAnswer === q.correct_answer;
             const optionImages = [q.option_a_image, q.option_b_image, q.option_c_image, q.option_d_image];
-            const mockStats = getMockPercentages(q.id, q.correct_answer);
 
             q.options.forEach((opt, optIdx) => {
                 const letter = String.fromCharCode(65 + optIdx);
@@ -2457,7 +2431,6 @@
                 let circleContent = letter;
 
                 if (isAttempted) {
-                    circleContent = `${mockStats[optIdx]}%`;
                     if (optIdx === q.correct_answer) {
                         btnClass += ' correct';
                     } else if (optIdx === userAnswer) {

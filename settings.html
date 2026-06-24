@@ -374,6 +374,23 @@
                             <button class="btn btn-outline" style="opacity: 0.5; cursor: not-allowed;" disabled>Connect</button>
                         </div>
                     </div>
+
+                    <div class="setting-card">
+                        <div class="card-title">Passkeys (WebAuthn)</div>
+                        <div class="card-desc">Register up to 3 passkeys for secure, passwordless authentication.</div>
+                        <div id="passkeys-list-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px; margin-bottom: 20px;">
+                            <div class="form-row" style="border-bottom: none; padding: 12px 0; justify-content: center; color: var(--text-dim);">
+                                Loading passkeys...
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border); padding-top: 16px;">
+                            <span id="passkeys-count" style="font-size: 0.85rem; color: var(--text-dim); font-weight: 600;">0 / 3 Passkeys registered</span>
+                            <button class="btn btn-primary" id="btn-add-passkey" onclick="registerNewPasskey()" style="display: flex; align-items: center; gap: 8px;">
+                                <span class="spinner" id="add-passkey-spinner" style="display: none;"></span>
+                                Add a Passkey
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="tab-ai" class="settings-panel">
@@ -670,6 +687,9 @@
             if (!session || !session.user) return;
             const currentUser = session.user;
 
+            // Load passkeys list
+            loadPasskeys();
+
             const googleEmailEl = document.getElementById('setting-google-email');
             const googleBtn = document.getElementById('btn-link-google');
 
@@ -749,6 +769,136 @@
             if (classSelect) classSelect.value = profile.student_class || "";
             if (boardSelect) boardSelect.value = profile.board_of_examinations || "";
         });
+
+        // --- PASSKEYS MANAGEMENT ---
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#039;');
+        }
+
+        async function loadPasskeys() {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+
+            const listContainer = document.getElementById('passkeys-list-container');
+            const countEl = document.getElementById('passkeys-count');
+            if (!listContainer || !countEl) return;
+
+            try {
+                const { data: passkeys, error } = await supabase.auth.passkey.list();
+                if (error) throw error;
+
+                const count = passkeys ? passkeys.length : 0;
+                countEl.innerText = `${count} / 3 Passkeys registered`;
+
+                if (count === 0) {
+                    listContainer.innerHTML = `
+                        <div class="form-row" style="border-bottom: none; padding: 12px 0; justify-content: center; color: var(--text-dim);">
+                            No passkeys registered yet. Add one to enable passwordless sign-in.
+                        </div>
+                    `;
+                    return;
+                }
+
+                listContainer.innerHTML = '';
+                passkeys.forEach(pk => {
+                    const date = pk.created_at ? new Date(pk.created_at).toLocaleDateString() : 'Unknown';
+                    const row = document.createElement('div');
+                    row.className = 'form-row';
+                    row.style.alignItems = 'center';
+                    row.innerHTML = `
+                        <div class="row-info">
+                            <h4 style="display: flex; align-items: center; gap: 8px;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 0-7.778 7.778 5.5 5.5 0 0 0 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                                </svg>
+                                ${escapeHtml(pk.friendly_name || 'Unnamed Passkey')}
+                            </h4>
+                            <p>Created on ${date}</p>
+                        </div>
+                        <button class="btn btn-outline" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); font-size: 0.85rem; padding: 6px 12px;" onclick="deletePasskey('${pk.id}', '${escapeHtml(pk.friendly_name)}')">Delete</button>
+                    `;
+                    listContainer.appendChild(row);
+                });
+
+            } catch (err) {
+                console.error("Error loading passkeys:", err);
+                listContainer.innerHTML = `
+                    <div class="form-row" style="border-bottom: none; padding: 12px 0; justify-content: center; color: var(--danger);">
+                        Failed to load passkeys: ${err.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function registerNewPasskey() {
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+
+            try {
+                // Check limit first
+                const { data: passkeys, error: listError } = await supabase.auth.passkey.list();
+                if (listError) throw listError;
+                if (passkeys && passkeys.length >= 3) {
+                    alert("You have reached the maximum limit of 3 passkeys per account. Please delete an existing passkey before adding a new one.");
+                    return;
+                }
+
+                const keyName = prompt("Enter a name for this passkey (e.g. Work Laptop, Personal Phone):");
+                if (keyName === null) return; // user cancelled
+                const nameToUse = keyName.trim() || `Passkey ${(passkeys ? passkeys.length : 0) + 1}`;
+
+                const spinner = document.getElementById('add-passkey-spinner');
+                const btn = document.getElementById('btn-add-passkey');
+                if (spinner) spinner.style.display = 'inline-block';
+                if (btn) btn.disabled = true;
+
+                const { data, error } = await supabase.auth.registerPasskey();
+                if (error) throw error;
+
+                if (data && data.id) {
+                    // Update friendly name
+                    const { error: renameError } = await supabase.auth.passkey.update({
+                        passkeyId: data.id,
+                        friendlyName: nameToUse
+                    });
+                    if (renameError) console.warn("Failed to rename passkey:", renameError);
+                }
+
+                alert("Passkey registered successfully!");
+                loadPasskeys();
+            } catch (err) {
+                console.error("Passkey registration error:", err);
+                alert(err.message || "An error occurred during passkey registration.");
+            } finally {
+                const spinner = document.getElementById('add-passkey-spinner');
+                const btn = document.getElementById('btn-add-passkey');
+                if (spinner) spinner.style.display = 'none';
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function deletePasskey(passkeyId, name) {
+            if (!confirm(`Are you sure you want to delete the passkey "${name}"?`)) return;
+
+            const supabase = window.supabaseClient;
+            if (!supabase) return;
+
+            try {
+                const { error } = await supabase.auth.passkey.delete({ passkeyId });
+                if (error) throw error;
+
+                alert("Passkey deleted successfully.");
+                loadPasskeys();
+            } catch (err) {
+                console.error("Error deleting passkey:", err);
+                alert(err.message || "An error occurred while deleting the passkey.");
+            }
+        }
 
         // Initialize linking UI on load if user is already resolved
         setTimeout(updateLinkedAccountsUI, 1000);

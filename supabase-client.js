@@ -41,7 +41,13 @@
 
   try {
     // Initialize Supabase Client
-    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        experimental: {
+          passkey: true
+        }
+      }
+    });
     // Expose it globally
     window.supabaseClient = supabaseClient;
     window.SUPER_ADMIN_EMAILS = [

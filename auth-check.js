@@ -415,11 +415,21 @@
     }
   };
 
-  // Run the session verification after initialization
+  // Run the session verification after initialization with robust retry polling
   if (window.supabaseClient) {
     checkSession();
   } else {
-    // Wait for supabase-client.js to load
-    setTimeout(checkSession, 100);
+    let attempts = 0;
+    const maxAttempts = 50; // Up to 5 seconds
+    const interval = setInterval(() => {
+      attempts++;
+      if (window.supabaseClient) {
+        clearInterval(interval);
+        checkSession();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        console.error("Supabase client failed to initialize in auth-check.js after 5 seconds.");
+      }
+    }, 100);
   }
 })();
