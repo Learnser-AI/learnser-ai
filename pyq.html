@@ -1362,7 +1362,139 @@
         .report-error-link:hover {
             color: var(--danger);
         }
-    </style>
+    
+        /* --- MOBILE/TABLET RESPONSIVE STYLE OVERRIDES --- */
+        @media (max-width: 1024px) {
+            body {
+                grid-template-columns: 1fr !important;
+                grid-template-rows: 76px 1fr !important;
+            }
+            body.collapsed {
+                --sidebar-width: 0px !important;
+                --left-sidebar-width: 0px !important;
+            }
+
+            .top-navbar-main {
+                grid-column: 1 / 3 !important;
+                grid-row: 1 / 2 !important;
+                width: 100% !important;
+                justify-content: center !important;
+                padding: 0 !important;
+            }
+
+            .top-navbar-corner {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                height: 76px !important;
+                background: transparent !important;
+                border: none !important;
+                backdrop-filter: none !important;
+                z-index: 1001 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                padding: 0 16px !important;
+                pointer-events: none !important;
+                width: 100% !important;
+            }
+
+            .top-navbar-corner button, 
+            .top-navbar-corner .user-profile {
+                pointer-events: auto !important;
+            }
+
+            .top-navbar-corner .user-details {
+                display: none !important;
+            }
+
+            .top-navbar-corner .pfp {
+                margin-right: 0 !important;
+                width: 36px !important;
+                height: 36px !important;
+            }
+
+            .main-content {
+                grid-column: 1 / 3 !important;
+                grid-row: 2 / 3 !important;
+                padding: 24px 16px !important;
+            }
+
+            .sidebar {
+                position: fixed !important;
+                top: 0 !important;
+                left: -280px !important;
+                width: 280px !important;
+                height: 100vh !important;
+                z-index: 2000 !important;
+                transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
+                border-right: 1px solid var(--glass-border) !important;
+                border-left: none !important;
+                box-shadow: 20px 0 50px rgba(0, 0, 0, 0.8) !important;
+                transform: translateX(0) !important;
+            }
+
+            body.mobile-sidebar-open .sidebar {
+                transform: translateX(280px) !important;
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                background: rgba(2, 6, 23, 0.7) !important;
+                backdrop-filter: blur(4px) !important;
+                z-index: 1999 !important;
+            }
+
+            body.mobile-sidebar-open .sidebar-overlay {
+                display: block !important;
+            }
+
+            .sidebar-menu {
+                gap: 24px !important;
+            }
+            .menu-item {
+                padding: 12px 16px !important;
+            }
+            .menu-text {
+                opacity: 1 !important;
+                width: auto !important;
+                display: inline-block !important;
+            }
+            .section-title {
+                opacity: 1 !important;
+                height: auto !important;
+                margin-bottom: 8px !important;
+                display: block !important;
+            }
+
+            .dashboard-header h2 {
+                font-size: 1.6rem !important;
+                line-height: 1.3 !important;
+            }
+            .view-title {
+                font-size: 1.6rem !important;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+                margin: 16px 0 24px 0 !important;
+            }
+            .stat-card {
+                padding: 16px !important;
+            }
+            .dashboard-columns {
+                grid-template-columns: 1fr !important;
+                gap: 24px !important;
+            }
+        }
+</style>
     <!-- KaTeX for high-quality mathematical rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -1554,7 +1686,7 @@
         <!-- VIEW 2: SUBJECT SELECTION -->
         <div id="view-subjects" class="ui-view">
             <div class="page-header">
-                <button class="btn-back-link" onclick="switchView('exams')">← Back to Exams</button>
+                <button class="btn-back-link" onclick="currentExam=null;currentSubject=null;currentChapterId=null;currentQuestionIdx=-1;switchView('exams');updateURL();">← Back to Exams</button>
                 <h2 class="view-title" id="subject-view-title">Select Subject</h2>
             </div>
             <p class="view-subtitle" id="subject-view-subtitle">Practice past paper questions categorized by subject</p>
@@ -1592,7 +1724,7 @@
         <!-- VIEW 3: CHAPTER LIST -->
         <div id="view-chapters" class="ui-view">
             <div class="page-header">
-                <button class="btn-back-link" onclick="switchView('subjects')">← Back to Subjects</button>
+                <button class="btn-back-link" onclick="currentSubject=null;currentChapterId=null;currentQuestionIdx=-1;switchView('subjects');updateURL();">← Back to Subjects</button>
                 <h2 class="view-title" id="chapters-view-title">Syllabus Chapters</h2>
             </div>
             <p class="view-subtitle" id="chapters-view-subtitle">Select a chapter to see its previous years questions</p>
@@ -1611,7 +1743,7 @@
         <!-- VIEW 4: QUESTION PRACTICE -->
         <div id="view-practice" class="ui-view">
             <div class="page-header">
-                <button class="btn-back-link" onclick="switchView('chapters')">← Back to Chapters</button>
+                <button class="btn-back-link" onclick="currentChapterId=null;currentQuestionIdx=-1;switchView('chapters');updateURL();">← Back to Chapters</button>
                 <h2 class="view-title" id="practice-view-title">Question Practice</h2>
             </div>
             
@@ -1760,7 +1892,7 @@
 
     <script>
         // Global navigation state
-        let currentExam = 'jee';
+        let currentExam = '';
         let currentSubject = '';
         let currentChapterId = '';
         let currentChapterName = '';
@@ -1769,15 +1901,114 @@
         let filteredQuestions = [];
         let userPracticeAnswers = {}; // questionId -> optionIdx
 
-        // Sidebar Toggle
-        document.getElementById('sidebar-toggle').addEventListener('click', () => {
-            document.body.classList.toggle('collapsed');
+        function updateURL() {
+            const params = new URLSearchParams();
+            if (currentExam) params.set('exam', currentExam);
+            if (currentSubject) params.set('subject', currentSubject);
+            if (currentChapterId) params.set('chapter', currentChapterId);
+            if (currentQuestionIdx !== -1 && filteredQuestions[currentQuestionIdx]) {
+                params.set('question', filteredQuestions[currentQuestionIdx].id);
+            }
+            
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
+
+        async function initFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const examParam = urlParams.get('exam');
+            const subjectParam = urlParams.get('subject');
+            const chapterParam = urlParams.get('chapter');
+            const questionParam = urlParams.get('question');
+
+            if (examParam) {
+                currentExam = examParam;
+                const niceExam = getNiceExamName(examParam);
+                document.getElementById('subject-view-title').textContent = `${niceExam} Subjects`;
+                document.getElementById('subject-view-subtitle').textContent = `Practice past paper questions from ${niceExam}`;
+                
+                if (subjectParam) {
+                    currentSubject = subjectParam;
+                    const subjectName = subjectParam.charAt(0).toUpperCase() + subjectParam.slice(1);
+                    document.getElementById('chapters-view-title').textContent = `${subjectName} Chapters`;
+                    
+                    if (chapterParam) {
+                        currentChapterId = chapterParam;
+                        
+                        await loadChapters();
+                        
+                        const matchingChapter = await fetchChapterName(currentChapterId);
+                        if (matchingChapter) {
+                            currentChapterName = matchingChapter;
+                        }
+                        
+                        document.getElementById('practice-view-title').textContent = `${currentSubject.charAt(0).toUpperCase() + currentSubject.slice(1)} | ${currentChapterName || 'Chapter'}`;
+                        
+                        await loadQuestions();
+                        
+                        if (questionParam) {
+                            const qIdx = filteredQuestions.findIndex(q => q.id === questionParam);
+                            if (qIdx !== -1) {
+                                openQuestionDetail(qIdx);
+                            } else {
+                                switchView('practice');
+                            }
+                        } else {
+                            switchView('practice');
+                        }
+                    } else {
+                        switchView('chapters');
+                        loadChapters();
+                    }
+                } else {
+                    switchView('subjects');
+                }
+            } else {
+                switchView('exams');
+            }
+        }
+
+        async function fetchChapterName(chapterId) {
+            try {
+                const supabase = window.supabaseClient;
+                if (!supabase) return '';
+                const { data, error } = await supabase.from('chapters').select('name').eq('id', chapterId).single();
+                if (data) return data.name;
+            } catch(e) {
+                console.error(e);
+            }
+            return '';
+        }
+        
+        // Universal mobile sidebar setup
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', () => {
+            document.body.classList.remove('mobile-sidebar-open');
         });
+
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            if (window.innerWidth <= 1024) {
+                document.body.classList.toggle('mobile-sidebar-open');
+            } else {
+                document.body.classList.toggle('collapsed');
+            }
+        });
+
+        // Close mobile sidebar on link navigation
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.body.classList.remove('mobile-sidebar-open');
+            });
+        });
+
 
         // Initialize exam details on window load
         window.addEventListener('load', () => {
             loadExamStatuses();
             setupClickHandlers();
+            initFromURL();
             
             // Initialize auto-timer checkbox state and listener
             const checkbox = document.getElementById('auto-timer-checkbox');
@@ -1851,6 +2082,7 @@
                     document.getElementById('subject-view-subtitle').textContent = `Practice past paper questions from ${examName}`;
                     
                     switchView('subjects');
+                    updateURL();
                 });
             });
 
@@ -1864,6 +2096,7 @@
                     
                     switchView('chapters');
                     loadChapters();
+                    updateURL();
                 });
             });
         }
@@ -1952,6 +2185,7 @@
                             document.getElementById('practice-view-title').textContent = `${currentSubject.charAt(0).toUpperCase() + currentSubject.slice(1)} | ${ch.name}`;
                             switchView('practice');
                             loadQuestions();
+                            updateURL();
                         });
 
                         containerEl.appendChild(row);
@@ -2194,6 +2428,7 @@
             
             // Render question details
             renderQuestionDetailView();
+            updateURL();
         }
 
         function toggleSettingsDropdown(event) {
@@ -2259,8 +2494,11 @@
             // Switch back to practice list
             switchView('practice');
             
+            currentQuestionIdx = -1;
+            
             // Refresh question list to show updated status
             renderQuestionsList();
+            updateURL();
         }
 
         // Timer actions

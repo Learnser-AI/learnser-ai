@@ -875,10 +875,6 @@
 
         /* --- RESPONSIVENESS AND MEDIA QUERIES --- */
         @media (max-width: 1024px) {
-            body {
-                --left-sidebar-width: 90px;
-            }
-
             .chat-container {
                 padding: 24px;
             }
@@ -886,9 +882,7 @@
             .ds-input-wrapper {
                 padding: 16px 20px 24px;
             }
-        }
 
-        @media (max-width: 768px) {
             body {
                 grid-template-columns: 0px 1fr 0px;
             }
@@ -1866,7 +1860,7 @@ You must ALWAYS format your answers using this exact structure, including the he
 
         // UI Event Listeners
         document.getElementById('sidebar-toggle').addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 1024) {
                 document.body.classList.toggle('left-open-mobile');
                 document.body.classList.remove('collapsed'); // Reset collapsed on mobile
             } else {
@@ -1892,7 +1886,7 @@ You must ALWAYS format your answers using this exact structure, including the he
 
         // Close sidebar if clicking outside on mobile
         document.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 1024) {
                 const sidebar = document.querySelector('.sidebar');
                 const toggle = document.getElementById('sidebar-toggle');
 
