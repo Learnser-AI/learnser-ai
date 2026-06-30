@@ -2526,7 +2526,7 @@ CREATE POLICY "Public Read/Write Access" ON public.reported_errors FOR ALL USING
 
         function formatMathText(text) {
             if (!text) return '';
-            let processed = text.replace(/\\\\/g, '\\');
+            let processed = text;
 
             // 1. Protect URLs (so we don't convert http:// to fraction)
             const urls = [];

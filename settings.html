@@ -927,7 +927,9 @@
         }
 
         // Initialize linking UI on load if user is already resolved
-        setTimeout(updateLinkedAccountsUI, 1000);
+        setTimeout(async () => {
+            updateLinkedAccountsUI();
+        }, 1000);
     </script>
 </body>
 </html>
