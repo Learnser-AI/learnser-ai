@@ -387,6 +387,12 @@
                     <label for="signup-password">Password</label>
                     <input type="password" id="signup-password" required placeholder="Min. 6 characters" minlength="6">
                 </div>
+                <div class="form-group" style="flex-direction: row; align-items: flex-start; gap: 10px; margin-bottom: 20px;">
+                    <input type="checkbox" id="signup-privacy" required style="width: auto; margin-top: 3px; cursor: pointer; height: 16px; min-height: 16px;">
+                    <label for="signup-privacy" style="text-transform: none; font-size: 0.85rem; font-weight: 500; letter-spacing: normal; cursor: pointer; color: var(--text-dim); line-height: 1.4;">
+                        I agree to the <a href="privacy_policy.txt" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">Privacy & Terms Policy</a>
+                    </label>
+                </div>
                 <button type="submit" class="btn-submit" id="signup-submit-btn">
                     <span class="spinner" id="signup-spinner"></span>
                     <span id="signup-btn-text">Create Account</span>
@@ -553,6 +559,12 @@
                 return;
             }
 
+            const privacyChecked = document.getElementById('signup-privacy').checked;
+            if (!privacyChecked) {
+                showAlert("You must accept the Privacy Policy & Terms to sign up.");
+                return;
+            }
+
             // Enter loading state
             submitBtn.disabled = true;
             spinner.style.display = 'block';
@@ -564,7 +576,8 @@
                     password: password,
                     options: {
                         data: {
-                            display_name: name
+                            display_name: name,
+                            privacy_accepted: true
                         }
                     }
                 });

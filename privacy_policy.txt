@@ -1,0 +1,25 @@
+LEARNSER AI - PRIVACY POLICY & TERMS AND CONDITIONS
+Last Updated: July 5, 2026
+
+Welcome to Learnser AI. Your privacy is of paramount importance to us. Please read this document carefully before using our services.
+
+1. INFORMATION WE COLLECT
+To provide you with an optimized, intelligent learning environment, we collect and store the following user-provided information in our database:
+- Your Name: Used to personalize your study experience and profile dashboard.
+- Your Grade/Class: Used to recommend age-appropriate study material and mock test questions.
+- Your Exam Board (e.g., CBSE, ICSE, JEE Main): Used to tailor study guides and past year questions (PYQs) to your target syllabus.
+
+2. DATA STORAGE AND SECURITY
+All collected information is stored securely in our database. We implement industry-standard encryption, access controls, and security practices to protect your data from unauthorized access, disclosure, alteration, or destruction.
+
+3. DATA SHARING POLICY
+Your name, grade, and exam board information is NOT shared with any third party, advertiser, or external service provider for now. Your data is strictly used for internal personalization and platform functionality.
+
+4. FUTURE CHANGES
+Our data sharing policies may be updated in the future as we scale and add new features. If any changes are made to how we collect, store, or share your data:
+- We will update this document.
+- We will notify you explicitly via a dashboard banner, email, or modal pop-up on the website.
+- You will be required to review and accept the updated terms to continue using the service.
+
+5. ACCEPTANCE OF TERMS
+By checking the box during sign-up or clicking "Accept & Continue" on the privacy prompt, you consent to the collection, storage, and processing of your personal information as detailed in this document.
