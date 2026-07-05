@@ -465,9 +465,6 @@
       document.head.appendChild(style);
     }
 
-    // Disable scrolling on body
-    document.body.style.overflow = 'hidden';
-
     // Inject Modal HTML
     const overlay = document.createElement('div');
     overlay.className = 'privacy-overlay';
@@ -506,6 +503,7 @@
     // Helper function to append to body safely when DOM is ready
     const appendModal = () => {
       if (!document.getElementById('privacy-consent-overlay')) {
+        document.body.style.overflow = 'hidden';
         document.body.appendChild(overlay);
         
         // Add event listeners
