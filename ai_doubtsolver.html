@@ -1564,7 +1564,29 @@
         // ==========================================
         //  AI BRAIN CONFIGURATION & SYSTEM PROMPT
         // ==========================================
-        const SARVAM_API_KEY = "sk_1km8d1xx_755YkVgKcYtrFGcmP6naIMAn";
+        function getSarvamRequestConfig() {
+            const isLocal = window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1' || 
+                            window.location.protocol === 'file:';
+            const localKey = window.env?.SARVAM_API_KEY;
+            
+            if (isLocal && localKey) {
+                return {
+                    url: "https://api.sarvam.ai/v1/chat/completions",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "api-subscription-key": localKey
+                    }
+                };
+            } else {
+                return {
+                    url: "/.netlify/functions/sarvam-proxy",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                };
+            }
+        }
 
         const SYSTEM_PROMPT = `You are Learnser AI, an expert academic tutor who genuinely cares about the student's success. You are warm, encouraging, and incredibly patient, just like a favorite teacher. Your goal is to build confidence and deep intuition. You never make the student feel bad for asking a question.
 
@@ -1910,12 +1932,10 @@ You must ALWAYS format your answers using this exact structure, including the he
             document.getElementById('typing-status').style.display = 'block';
 
             try {
-                const res = await fetch("https://api.sarvam.ai/v1/chat/completions", {
+                const config = getSarvamRequestConfig();
+                const res = await fetch(config.url, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "api-subscription-key": SARVAM_API_KEY
-                    },
+                    headers: config.headers,
                     body: JSON.stringify({
                         model: "sarvam-30b",
                         messages: chatHistory,

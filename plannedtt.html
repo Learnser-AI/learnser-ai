@@ -1004,7 +1004,29 @@
         }
 
         // --- TIMETABLE GENERATION PROCESSOR ---
-        const SARVAM_API_KEY = "sk_1km8d1xx_755YkVgKcYtrFGcmP6naIMAn";
+        function getSarvamRequestConfig() {
+            const isLocal = window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1' || 
+                            window.location.protocol === 'file:';
+            const localKey = window.env?.SARVAM_API_KEY;
+            
+            if (isLocal && localKey) {
+                return {
+                    url: "https://api.sarvam.ai/v1/chat/completions",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "api-subscription-key": localKey
+                    }
+                };
+            } else {
+                return {
+                    url: "/.netlify/functions/sarvam-proxy",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                };
+            }
+        }
         let generatedProtocol = null;
 
         async function generateTimetableWithAI(data) {
@@ -1040,12 +1062,10 @@ Provide at least 12 detailed revision tasks, distributed across Math, Physics, a
 ]`;
 
             try {
-                const res = await fetch("https://api.sarvam.ai/v1/chat/completions", {
+                const config = getSarvamRequestConfig();
+                const res = await fetch(config.url, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "api-subscription-key": SARVAM_API_KEY
-                    },
+                    headers: config.headers,
                     body: JSON.stringify({
                         model: "sarvam-30b",
                         messages: [

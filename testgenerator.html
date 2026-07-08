@@ -774,7 +774,7 @@
             flex-wrap: wrap;
             gap: 16px;
         }
-        .nav-left, .nav-right { display: flex; gap: 12px; }
+        .exam-nav-left, .exam-nav-right { display: flex; gap: 12px; }
 
         .btn-exam-nav {
             padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; border: none;
@@ -837,21 +837,198 @@
 
         /* Fullscreen Blocker Overlay */
         .fullscreen-blocker-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.95);
-            backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 99999;
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            background: rgba(11, 15, 25, 0.75); /* bg-slate-950/70 equivalent */
+            backdrop-filter: blur(8px); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 99999;
+            animation: fadeInOverlay 0.3s ease-out;
         }
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         .blocker-card {
-            background: var(--bg); border: 1px solid var(--glass-border); padding: 40px; border-radius: 24px;
-            max-width: 500px; width: 90%; text-align: center; display: flex; flex-direction: column; gap: 16px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            background: #0f172a; /* Solid deep slate grey */
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 32px; 
+            border-radius: 16px; /* rounded-2xl */
+            max-w-md: 480px; 
+            width: 90%; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeInCard 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .blocker-icon { font-size: 3rem; animation: pulse-warning 2s infinite; }
-        @keyframes pulse-warning {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
+        @keyframes fadeInCard {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .blocker-card h2 { font-size: 1.6rem; font-weight: 800; color: var(--text-main); }
-        .blocker-card p { font-size: 0.9rem; color: var(--text-dim); line-height: 1.6; }
+
+        /* Border themes */
+        .blocker-card.amber-theme {
+            border: 1px solid rgba(245, 158, 11, 0.3); /* border-amber-500/30 */
+        }
+        .blocker-card.red-theme {
+            border: 1px solid rgba(239, 68, 68, 0.4); /* border-red-500/40 */
+        }
+
+        .blocker-icon-wrapper {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+        }
+        
+        .amber-theme .blocker-icon-wrapper {
+            background: rgba(245, 158, 11, 0.08);
+            color: #f59e0b; /* text-amber-500 */
+            border: 1px solid rgba(245, 158, 11, 0.15);
+        }
+
+        .red-theme .blocker-icon-wrapper {
+            background: rgba(239, 68, 68, 0.08);
+            color: #ef4444; /* text-red-500 */
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+
+        .blocker-icon-container {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+            background: rgba(245, 158, 11, 0.08);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.15);
+        }
+
+        .blocker-card h1, .blocker-card h2 {
+            font-size: 1.35rem; /* text-xl/text-2xl */
+            font-weight: 600; /* font-semibold */
+            color: #ffffff; /* crisp white */
+            letter-spacing: -0.025em; /* tracking-tight */
+            margin: 0;
+            line-height: 1.25;
+        }
+
+        .blocker-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .blocker-card p {
+            font-size: 0.875rem; /* text-sm */
+            color: #94a3b8; /* muted slate */
+            line-height: 1.625; /* leading-relaxed */
+            margin: 0;
+            font-weight: 400;
+        }
+
+        /* Status Badge */
+        .infraction-badge-container {
+            display: flex;
+            justify-content: center;
+            margin: 4px 0;
+        }
+
+        .infraction-badge {
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 600; /* font-semibold */
+            text-transform: uppercase; /* uppercase */
+            letter-spacing: 0.05em; /* tracking-wider */
+            padding: 4px 12px;
+            border-radius: 9999px;
+        }
+
+        .amber-theme .infraction-badge {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .red-theme .infraction-badge {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .infraction-note {
+            font-size: 0.8rem !important;
+            font-weight: 500 !important;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .amber-theme .infraction-note {
+            color: #fcd34d !important;
+        }
+
+        .red-theme .infraction-note {
+            color: #fca5a5 !important;
+            font-weight: 600 !important;
+        }
+
+        /* Action Buttons */
+        .blocker-card button {
+            width: 100%; /* w-full */
+            padding: 12px 16px !important; /* py-3 px-4 */
+            font-size: 0.875rem !important; /* text-sm */
+            font-weight: 600 !important; /* font-semibold */
+            border-radius: 8px !important; /* rounded-lg */
+            border: none !important;
+            cursor: pointer !important;
+            height: auto !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            margin-top: 12px;
+        }
+
+        /* Fullscreen blocker button (uses indigo) */
+        .blocker-card button, .amber-theme button {
+            background: #4f46e5 !important; /* bg-indigo-600 */
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .blocker-card button:hover, .amber-theme button:hover {
+            background: #4338ca !important; /* hover:bg-indigo-700 */
+            transform: none !important;
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+        }
+
+        .red-theme button {
+            background: #ef4444 !important; /* bg-red-600 */
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+        }
+
+        .red-theme button:hover {
+            background: #dc2626 !important; /* hover:bg-red-700 */
+            transform: none !important;
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+        }
+
+        .blocker-card button:focus {
+            outline: none !important;
+            box-shadow: 0 0 0 2px #0f172a, 0 0 0 4px #4f46e5 !important;
+        }
 
         /* --- VIEW 3: TEST RESULTS PAGE --- */
         .metrics-grid {
@@ -946,7 +1123,251 @@
         .user-ans-wrong { color: var(--danger); }
         .solution-explanation { background: rgba(255,255,255,0.02); border-radius: 10px; padding: 14px; font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin-top: 4px; }
 
-        .results-actions-bar { margin-top: 12px; }
+        .results-actions-bar { margin-top: 24px; display: flex; justify-content: center; }
+        
+        .btn-take-another {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 36px !important;
+            font-size: 1.02rem !important;
+            font-weight: 700 !important;
+            color: #ffffff !important;
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            cursor: pointer !important;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            text-decoration: none;
+            height: auto !important;
+        }
+
+        .btn-take-another:hover {
+            transform: translateY(-3px) scale(1.03) !important;
+            box-shadow: 0 12px 35px rgba(59, 130, 246, 0.45) !important;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+        }
+
+        .btn-take-another:active {
+            transform: translateY(-1px) scale(0.98) !important;
+        }
+
+        /* Diagnostic Dashboard Styling */
+        .diagnostic-panel {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .strengths-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .strengths-star {
+            display: inline-block;
+            font-size: 1.25rem;
+            color: #fbbf24;
+            animation: rotate-star 4s infinite linear;
+        }
+        
+        @keyframes rotate-star {
+            0% { transform: rotate(0); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .strengths-header h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+        
+        .strengths-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        
+        .strength-pill {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .strength-pill:hover {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.03);
+            transform: translateY(-2px);
+        }
+        
+        .strength-icon {
+            font-size: 1.8rem;
+        }
+        
+        .strength-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .strength-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+        
+        .strength-desc {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+        
+        .diagnostic-grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 24px;
+            align-items: start;
+        }
+        
+        @media (max-width: 868px) {
+            .diagnostic-grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .diagnostic-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .diagnostic-card-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .diagnostic-card-header h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+        
+        .header-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        
+        .scatterplot-container {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.3);
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .scatterplot-legend {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.78rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .legend-dot.correct { background: #10b981; }
+        .legend-dot.incorrect { background: #ef4444; }
+        
+        .legend-line.optimal {
+            width: 12px;
+            height: 2px;
+            background: #818cf8;
+        }
+        
+        .insights-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 380px;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        
+        .insight-item {
+            display: flex;
+            gap: 14px;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.3);
+            border-left: 4px solid #64748b;
+        }
+        
+        .insight-item.success { border-left-color: #10b981; }
+        .insight-item.info { border-left-color: #3b82f6; }
+        .insight-item.warning { border-left-color: #fbbf24; }
+        .insight-item.error { border-left-color: #ef4444; }
+        .insight-item.fatigue { border-left-color: #a855f7; }
+        
+        .insight-badge-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        
+        .insight-item.success .insight-badge-icon::before { content: '🎯'; }
+        .insight-item.info .insight-badge-icon::before { content: '💡'; }
+        .insight-item.warning .insight-badge-icon::before { content: '⏳'; }
+        .insight-item.error .insight-badge-icon::before { content: '⚠️'; }
+        .insight-item.fatigue .insight-badge-icon::before { content: '🔋'; }
+        
+        .insight-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .insight-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        
+        .insight-desc {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
 
         /* Mobile responsive */
         @media (max-width: 1024px) {
@@ -1399,14 +1820,17 @@
 
                 <!-- Question Count Section -->
                 <div class="wizard-section">
-                    <h3>Number of Qs per subject</h3>
-                    <div class="count-pills-grid">
-                        <div class="count-pill" data-count="5" onclick="selectQuestionCount(5)">5 Qs</div>
-                        <div class="count-pill" data-count="10" onclick="selectQuestionCount(10)">10 Qs</div>
-                        <div class="count-pill" data-count="15" onclick="selectQuestionCount(15)">15 Qs</div>
-                        <div class="count-pill" data-count="20" onclick="selectQuestionCount(20)">20 Qs</div>
-                        <div class="count-pill" data-count="25" onclick="selectQuestionCount(25)">25 Qs</div>
-                        <div class="count-pill active" data-count="30" onclick="selectQuestionCount(30)">30 Qs</div>
+                    <h3>Number of Questions per subject</h3>
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <input type="number" id="wizard-q-count-input" style="width: 100px; font-weight: 800; font-size: 1.2rem; text-align: center; color: var(--accent); background: rgba(2, 6, 23, 0.4); border: 1px solid var(--glass-border); padding: 10px; border-radius: 10px;" value="30" min="1" max="100" oninput="handleQuestionCountInput(this.value)">
+                        <div class="count-pills-grid">
+                            <div class="count-pill" data-count="5" onclick="selectQuestionCount(5)">5 Qs</div>
+                            <div class="count-pill" data-count="10" onclick="selectQuestionCount(10)">10 Qs</div>
+                            <div class="count-pill" data-count="15" onclick="selectQuestionCount(15)">15 Qs</div>
+                            <div class="count-pill" data-count="20" onclick="selectQuestionCount(20)">20 Qs</div>
+                            <div class="count-pill" data-count="25" onclick="selectQuestionCount(25)">25 Qs</div>
+                            <div class="count-pill active" data-count="30" onclick="selectQuestionCount(30)">30 Qs</div>
+                        </div>
                     </div>
                     <div class="wizard-summary-text" id="wizard-total-qs-text">Total Questions: 0 (30 Qs x 0 Subjects)</div>
                 </div>
@@ -1414,13 +1838,16 @@
                 <!-- Test Duration Section -->
                 <div class="wizard-section">
                     <h3>Test Duration</h3>
-                    <div class="duration-control-container">
-                        <button class="duration-btn" onclick="adjustDuration(-5)">-</button>
-                        <div class="duration-display">
-                            <span class="duration-value" id="duration-value">180</span>
-                            <span class="duration-unit">min</span>
+                    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                        <div class="duration-control-container">
+                            <button class="duration-btn" onclick="adjustDuration(-5)">-</button>
+                            <input type="number" id="duration-input-field" style="width: 100px; font-weight: 800; font-size: 1.2rem; text-align: center; color: var(--accent); background: rgba(2, 6, 23, 0.4); border: 1px solid var(--glass-border); padding: 10px; border-radius: 10px;" value="180" min="5" max="300" oninput="handleDurationInput(this.value)">
+                            <button class="duration-btn" onclick="adjustDuration(5)">+</button>
                         </div>
-                        <button class="duration-btn" onclick="adjustDuration(5)">+</button>
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; user-select: none; font-size: 0.9rem;">
+                            <input type="checkbox" id="wizard-duration-auto-toggle" onchange="toggleAutoCalculateDuration(this.checked)" checked style="accent-color: var(--primary); width: 18px; height: 18px;">
+                            <span>Auto-Calculate (2 min / Q)</span>
+                        </label>
                     </div>
                     <div class="wizard-recommendation" id="wizard-duration-rec">Recommended Time: 0 min</div>
                 </div>
@@ -1515,11 +1942,11 @@
                     </div>
 
                     <div class="exam-navigation-bar">
-                        <div class="nav-left">
+                        <div class="exam-nav-left">
                             <button class="btn-exam-nav btn-danger-outline" onclick="clearExamResponse()">Clear Response</button>
                             <button class="btn-exam-nav btn-warning-outline" onclick="markExamForReview()">Mark for Review</button>
                         </div>
-                        <div class="nav-right">
+                        <div class="exam-nav-right">
                             <button class="btn-exam-nav btn-secondary-outline" onclick="navigateExamQuestion(-1)">← Previous</button>
                             <button class="btn-exam-nav btn-primary" onclick="saveAndNextExamQuestion()">Save & Next →</button>
                         </div>
@@ -1583,6 +2010,7 @@
             <div class="results-tab-container">
                 <div class="results-tabs">
                     <button class="results-tab-btn active" id="btn-tab-ai" onclick="switchResultsTab('ai')">🤖 AI Assessment</button>
+                    <button class="results-tab-btn" id="btn-tab-diagnostics" onclick="switchResultsTab('diagnostics')">📊 Diagnostic Analytics</button>
                     <button class="results-tab-btn" id="btn-tab-solutions" onclick="switchResultsTab('solutions')">📝 Questions & Solutions</button>
                 </div>
 
@@ -1594,6 +2022,45 @@
                     </div>
                     <div class="ai-review-body" id="results-ai-content">
                         Generating AI review of your performance...
+                    </div>
+                </div>
+
+                <!-- Tab content: Advanced Diagnostics Dashboard -->
+                <div id="tab-results-diagnostics" style="display: none; width: 100%;">
+                    <!-- Highlights Panel (Top Strengths) -->
+                    <div class="diagnostic-panel" id="diag-highlights-panel" style="display: none;">
+                        <!-- Loaded dynamically -->
+                    </div>
+                    
+                    <!-- 2 Column Layout for Pacing Scatterplot & Actionable Insights -->
+                    <div class="diagnostic-grid-layout">
+                        <!-- Column 1: Pacing Scatterplot -->
+                        <div class="diagnostic-card">
+                            <div class="diagnostic-card-header">
+                                <h3>Pacing Scatterplot</h3>
+                                <span class="header-desc">Question Time vs. Difficulty</span>
+                            </div>
+                            <div class="scatterplot-container" id="scatterplot-wrapper">
+                                <canvas id="pacing-scatterplot" width="400" height="280"></canvas>
+                            </div>
+                            <div class="scatterplot-legend">
+                                <div class="legend-dot correct"></div><span>Correct</span>
+                                <div class="legend-dot incorrect"></div><span>Incorrect</span>
+                                <div style="width: 2px; height: 12px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
+                                <div class="legend-line optimal"></div><span>Optimal Pace Limit</span>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Actionable Insights -->
+                        <div class="diagnostic-card">
+                            <div class="diagnostic-card-header">
+                                <h3>Actionable Insights</h3>
+                                <span class="header-desc">Proctoring Metrics & Audits</span>
+                            </div>
+                            <div class="insights-list" id="diag-insights-list">
+                                <!-- Loaded dynamically -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1612,19 +2079,52 @@
             </div>
 
             <div class="results-actions-bar">
-                <button class="btn-primary" onclick="backToWizard()">Take Another Test</button>
+                <button class="btn-take-another" onclick="backToWizard()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 18px; height: 18px; margin-right: 8px; display: inline-block; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
+                    <span>Take Another Test</span>
+                </button>
             </div>
         </div>
 
     </main>
 
     <!-- Fullscreen Blocker Overlay -->
-    <div id="fullscreenBlocker" class="fullscreen-blocker-overlay" style="display: none;">
+    <div id="fullscreenBlocker" class="fullscreen-blocker-overlay" role="dialog" aria-modal="true" style="display: none;">
         <div class="blocker-card">
-            <div class="blocker-icon">⚠️</div>
+            <div class="blocker-icon-container">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 28px; height: 28px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
             <h2>Fullscreen Required</h2>
             <p>To maintain exam integrity, this test can only be attempted in fullscreen mode. Any attempt to exit fullscreen or resize the window is restricted.</p>
-            <button class="btn-primary" onclick="enterFullscreenAndResume()">Go Fullscreen & Resume</button>
+            <button onclick="enterFullscreenAndResume()">Go Fullscreen & Resume</button>
+        </div>
+    </div>
+
+    <!-- Tab Switch Blocker Overlay -->
+    <div id="tabSwitchBlocker" class="fullscreen-blocker-overlay" role="dialog" aria-modal="true" style="display: none;">
+        <div class="blocker-card amber-theme" id="tab-switch-card">
+            <div id="tab-switch-icon-wrapper" class="blocker-icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 28px; height: 28px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <header>
+                <h1 id="tab-switch-title">Warning: Window Switch Detected</h1>
+            </header>
+            <div class="blocker-content">
+                <p id="tab-switch-msg-main">The proctoring system has detected an attempt to switch tabs, minimize the browser, or open another window. Leaving the active test window is strictly prohibited during the examination. Your activity has been logged.</p>
+                <div class="infraction-badge-container">
+                    <span id="tab-switch-badge" class="infraction-badge">Navigation Warning: 1 / 3</span>
+                </div>
+                <p id="tab-switch-msg-sub" class="infraction-note">Important: A third violation will result in the automatic submission of your exam paper. You will not be able to resume.</p>
+            </div>
+            <footer>
+                <button id="btn-tab-switch-resume" onclick="dismissTabSwitchWarning()">Acknowledge and Return to Test</button>
+            </footer>
         </div>
     </div>
 
@@ -1642,6 +2142,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
     <script src="auth-check.js"></script>
+    <script src="test-analytics.js"></script>
 
     <script>
         // Global wizard variables
@@ -1715,22 +2216,23 @@
         }
 
         // Fetch all syllabus chapters from Supabase
+        // Fetch all syllabus chapters from Supabase view (jee_chapters)
         async function loadWizardChapters() {
             try {
                 const supabase = window.supabaseClient;
                 if (!supabase) return;
 
                 const { data: chapters, error } = await supabase
-                    .from('chapters')
+                    .from('jee_chapters')
                     .select('*')
-                    .order('sort_order', { ascending: true });
+                    .order('chapter', { ascending: true });
 
                 if (error) throw error;
 
-                if (data = chapters) {
-                    // Group by subject
+                if (chapters) {
+                    // Group by subject case-insensitively
                     ['physics', 'chemistry', 'mathematics'].forEach(sub => {
-                        wizardChapters[sub] = chapters.filter(c => c.subject === sub);
+                        wizardChapters[sub] = chapters.filter(c => (c.subject || '').toLowerCase() === sub.toLowerCase());
                         renderChaptersGrid(sub);
                     });
                 }
@@ -1754,8 +2256,8 @@
                 const label = document.createElement('label');
                 label.className = 'chapter-cb-label';
                 label.innerHTML = `
-                    <input type="checkbox" value="${ch.id}" class="chapter-cb-${subject}" onchange="handleChapterCheckboxChange('${subject}')">
-                    <span>${escapeHtml(ch.name)}</span>
+                    <input type="checkbox" value="${escapeHtml(ch.chapter)}" class="chapter-cb-${subject}" onchange="handleChapterCheckboxChange('${subject}')">
+                    <span>${escapeHtml(ch.chapter)}</span>
                 `;
                 grid.appendChild(label);
             });
@@ -1793,23 +2295,65 @@
             document.querySelector(`.source-card[data-source="${source}"]`).classList.add('active');
         }
 
-        // Toggle question count pills
-        function selectQuestionCount(count) {
+        // Question count inputs and pills
+        function handleQuestionCountInput(value) {
+            let count = parseInt(value) || 0;
+            if (count < 1) count = 1;
             selectedQuestionCountOption = count;
+            
+            // Sync active class on count pills
             document.querySelectorAll('.count-pill').forEach(pill => {
-                pill.classList.remove('active');
+                if (parseInt(pill.dataset.count) === count) {
+                    pill.classList.add('active');
+                } else {
+                    pill.classList.remove('active');
+                }
             });
-            document.querySelector(`.count-pill[data-count="${count}"]`).classList.add('active');
+            
             updateWizardSummary();
         }
 
-        // Adjust Duration stepper
+        function selectQuestionCount(count) {
+            selectedQuestionCountOption = count;
+            const inputField = document.getElementById('wizard-q-count-input');
+            if (inputField) inputField.value = count;
+            
+            document.querySelectorAll('.count-pill').forEach(pill => {
+                pill.classList.remove('active');
+            });
+            const pill = document.querySelector(`.count-pill[data-count="${count}"]`);
+            if (pill) pill.classList.add('active');
+            
+            updateWizardSummary();
+        }
+
+        // Duration inputs
+        function handleDurationInput(value) {
+            let mins = parseInt(value) || 0;
+            if (mins < 5) mins = 5;
+            if (mins > 300) mins = 300;
+            testDurationValue = mins;
+            
+            const autoToggle = document.getElementById('wizard-duration-auto-toggle');
+            if (autoToggle) autoToggle.checked = false;
+        }
+
+        function toggleAutoCalculateDuration(checked) {
+            if (checked) {
+                updateWizardSummary();
+            }
+        }
+
         function adjustDuration(amount) {
             testDurationValue += amount;
             if (testDurationValue < 5) testDurationValue = 5;
             if (testDurationValue > 300) testDurationValue = 300;
 
-            document.getElementById('duration-value').textContent = testDurationValue;
+            const durationField = document.getElementById('duration-input-field');
+            if (durationField) durationField.value = testDurationValue;
+            
+            const autoToggle = document.getElementById('wizard-duration-auto-toggle');
+            if (autoToggle) autoToggle.checked = false;
         }
 
         // Toggle Year selection cards
@@ -1854,20 +2398,24 @@
             const recommendedTime = totalQs * 2;
             document.getElementById('wizard-duration-rec').textContent = `Recommended Time: ${recommendedTime} min`;
 
-            // Auto-adjust default duration value to match recommended time on load
-            testDurationValue = recommendedTime > 0 ? recommendedTime : 180;
-            document.getElementById('duration-value').textContent = testDurationValue;
+            // Auto-adjust default duration value to match recommended time if auto-calculate is active
+            const autoChecked = document.getElementById('wizard-duration-auto-toggle')?.checked;
+            if (autoChecked) {
+                testDurationValue = recommendedTime > 0 ? recommendedTime : 180;
+                const durationField = document.getElementById('duration-input-field');
+                if (durationField) durationField.value = testDurationValue;
+            }
         }
 
         // --- BALANCING & GENERATING CUSTOM TEST ---
         async function generateAndStartTest() {
             let selectedSubjects = [];
-            let chapterIdsToQuery = [];
+            let chapterNamesToQuery = [];
 
             ['physics', 'chemistry', 'mathematics'].forEach(sub => {
                 if (wizardSelectedChapters[sub].length > 0) {
                     selectedSubjects.push(sub);
-                    chapterIdsToQuery = [...chapterIdsToQuery, ...wizardSelectedChapters[sub]];
+                    chapterNamesToQuery = [...chapterNamesToQuery, ...wizardSelectedChapters[sub]];
                 }
             });
 
@@ -1884,22 +2432,67 @@
                 const localBookmarks = JSON.parse(localStorage.getItem('learnser_bookmarks') || '{}');
                 const localAttempts = JSON.parse(localStorage.getItem('learnser_attempts') || '{}');
 
-                // Query chapters questions
-                const { data: questions, error } = await supabase
-                    .from('questions')
-                    .select('*')
-                    .in('chapter_id', chapterIdsToQuery);
+                // Determine total questions limit requested
+                const totalLimit = selectedSubjects.length * selectedQuestionCountOption;
+
+                console.log("[Test Generator debug] Chapter names to query:", chapterNamesToQuery);
+                console.log("[Test Generator debug] Total limit:", totalLimit);
+
+                // 1. Fetch difficulty-balanced questions via custom Stored Procedure (RPC)
+                const { data: questions, error } = await window.getRandomBalancedQuestions(
+                    chapterNamesToQuery,
+                    totalLimit
+                );
+
+                console.log("[Test Generator debug] Returned questions:", questions);
+                console.log("[Test Generator debug] Returned error:", error);
 
                 if (error) throw error;
 
                 if (!questions || questions.length === 0) {
-                    alert("No questions found for the selected chapters in the database!");
+                    alert("No questions found matching the criteria in the database!");
                     return;
                 }
 
-                // Apply Out-Of-Syllabus filters
+                // 2. Map schema to conform with frontend expectations
+                let mappedQs = questions.map(q => {
+                    const isMCQ = q.options && q.options.length > 0;
+                    
+                    let mappedCorrectAnswer;
+                    if (isMCQ) {
+                        // Extract index of correct answer (A -> 0, B -> 1, etc.)
+                        let correctAnsIdx = 0;
+                        if (q.correct_answer) {
+                            const ansStr = String(q.correct_answer).trim().toUpperCase();
+                            if (ansStr.includes('A') || ansStr === '0') correctAnsIdx = 0;
+                            else if (ansStr.includes('B') || ansStr === '1') correctAnsIdx = 1;
+                            else if (ansStr.includes('C') || ansStr === '2') correctAnsIdx = 2;
+                            else if (ansStr.includes('D') || ansStr === '3') correctAnsIdx = 3;
+                        }
+                        mappedCorrectAnswer = correctAnsIdx;
+                    } else {
+                        // For numerical, keep raw string
+                        mappedCorrectAnswer = q.correct_answer ? String(q.correct_answer).trim() : "";
+                    }
+
+                    return {
+                        id: q.id,
+                        subject: q.subject,
+                        chapter: q.chapter,
+                        topic: q.topic || "",
+                        difficulty: q.difficulty || "Medium",
+                        year: q.year || 0,
+                        question: q.question_text || "",
+                        options: q.options || [],
+                        correct_answer: mappedCorrectAnswer,
+                        detailed_answer: q.explanation || "",
+                        is_mcq: isMCQ
+                    };
+                });
+
+                // Apply Out-Of-Syllabus filters (in case any slip through or for compatibility)
                 const excludeOutOfSyllabus = document.getElementById('wizard-syllabus-toggle').checked;
-                let filteredQs = questions.filter(q => {
+                let filteredQs = mappedQs.filter(q => {
                     if (excludeOutOfSyllabus && (q.outOfSyllabus === true || q.syllabus === 'out')) return false;
                     return true;
                 });
@@ -1907,75 +2500,20 @@
                 // Apply Source Filter (Incorrect, Unattempted, Bookmarked)
                 filteredQs = filteredQs.filter(q => {
                     if (selectedTestSourceOption === 'incorrect') {
-                        // User had wrong attempt
                         return localAttempts[q.id] && localAttempts[q.id].correct === false;
                     } else if (selectedTestSourceOption === 'unattempted') {
-                        // User has never attempted this question
                         return !localAttempts[q.id];
                     } else if (selectedTestSourceOption === 'bookmarked') {
-                        // Bookmarked questions
                         return localBookmarks[q.id] === true;
                     }
                     return true; // All Qs
                 });
 
-                // Apply Years Filter
-                let yearsFilterList = [];
-                if (selectedYearsOption !== 'all' && selectedYearsOption !== 'custom') {
-                    const currentYear = new Date().getFullYear();
-                    const limit = parseInt(selectedYearsOption);
-                    for (let i = 0; i < limit; i++) {
-                        yearsFilterList.push(String(currentYear - i));
-                    }
-                } else if (selectedYearsOption === 'custom') {
-                    yearsFilterList = customYearsSelected;
-                }
-
-                if (yearsFilterList.length > 0) {
-                    filteredQs = filteredQs.filter(q => q.year && yearsFilterList.includes(String(q.year)));
-                }
-
-                // Balance Questions (30% Easy, 50% Medium, 20% Hard) per subject
-                examQuestions = [];
-
-                selectedSubjects.forEach(subject => {
-                    const subQs = filteredQs.filter(q => q.subject === subject);
-                    if (subQs.length === 0) return;
-
-                    const easyPool = subQs.filter(q => (q.difficulty || '').toLowerCase() === 'easy');
-                    const mediumPool = subQs.filter(q => (q.difficulty || '').toLowerCase() === 'medium' || !q.difficulty);
-                    const hardPool = subQs.filter(q => (q.difficulty || '').toLowerCase() === 'hard');
-
-                    const targetEasy = Math.round(selectedQuestionCountOption * 0.3);
-                    const targetMedium = Math.round(selectedQuestionCountOption * 0.5);
-                    const targetHard = selectedQuestionCountOption - targetEasy - targetMedium;
-
-                    const drawRandom = (arr, count) => {
-                        const shuffled = [...arr].sort(() => 0.5 - Math.random());
-                        return shuffled.slice(0, count);
-                    };
-
-                    let selected = [
-                        ...drawRandom(easyPool, targetEasy),
-                        ...drawRandom(mediumPool, targetMedium),
-                        ...drawRandom(hardPool, targetHard)
-                    ];
-
-                    // Backfill if not enough balanced questions
-                    if (selected.length < selectedQuestionCountOption && subQs.length > selected.length) {
-                        const selectedIds = new Set(selected.map(q => q.id));
-                        const remainingPool = subQs.filter(q => !selectedIds.has(q.id));
-                        const extraNeeded = selectedQuestionCountOption - selected.length;
-                        selected = [...selected, ...drawRandom(remainingPool, extraNeeded)];
-                    }
-
-                    // Shuffle
-                    selected.sort(() => 0.5 - Math.random());
-                    examQuestions = [...examQuestions, ...selected];
-                });
+                // Assign to global questions array
+                examQuestions = filteredQs;
 
                 if (examQuestions.length === 0) {
-                    alert("No questions found matching your filter criteria. Try selecting more chapters or widening your year filters.");
+                    alert("No questions found matching your filter criteria. Try selecting more chapters or widening your filters.");
                     return;
                 }
 
@@ -2018,8 +2556,10 @@
                 renderExamPalette();
 
             } catch (err) {
+                isExamActive = false;
                 console.error("Error setting up custom test:", err);
-                alert("Failed to configure test. Check database/connection.");
+                const errMsg = err.message || err.details || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+                alert("Failed to configure test: " + errMsg);
             }
         }
 
@@ -2092,27 +2632,43 @@
             // Options
             const container = document.getElementById('exam-options-container');
             const userAnswer = examAnswers[q.id];
-            const optionImages = [q.option_a_image, q.option_b_image, q.option_c_image, q.option_d_image];
 
-            container.innerHTML = q.options.map((opt, idx) => {
-                const letter = String.fromCharCode(65 + idx);
-                const isSelected = userAnswer === idx;
-                
-                let optImgHtml = '';
-                if (optionImages[idx]) {
-                    optImgHtml = `<div class="media-container" style="margin-top: 8px;"><img src="${optionImages[idx]}" alt="Option Image"></div>`;
-                }
+            if (q.is_mcq) {
+                const optionImages = [q.option_a_image, q.option_b_image, q.option_c_image, q.option_d_image];
+                container.innerHTML = q.options.map((opt, idx) => {
+                    const letter = String.fromCharCode(65 + idx);
+                    const isSelected = userAnswer === idx;
+                    
+                    let optImgHtml = '';
+                    if (optionImages[idx]) {
+                        optImgHtml = `<div class="media-container" style="margin-top: 8px;"><img src="${optionImages[idx]}" alt="Option Image"></div>`;
+                    }
 
-                return `
-                    <button class="option-btn-exam ${isSelected ? 'selected' : ''}" onclick="selectExamOption(${idx})">
-                        <div class="option-letter-box">${letter}</div>
-                        <div class="option-content-wrapper">
-                            <div>${formatMathText(opt)}</div>
-                            ${optImgHtml}
+                    return `
+                        <button class="option-btn-exam ${isSelected ? 'selected' : ''}" onclick="selectExamOption(${idx})">
+                            <div class="option-letter-box">${letter}</div>
+                            <div class="option-content-wrapper">
+                                <div>${formatMathText(opt)}</div>
+                                ${optImgHtml}
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+            } else {
+                container.innerHTML = `
+                    <div class="numerical-answer-container" style="position: relative; width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+                        <label style="font-size: 0.95rem; font-weight: bold; color: var(--text-dim);">Numerical Answer</label>
+                        <div style="position: relative; width: 100%; border: 2px solid var(--glass-border); border-radius: 12px; padding: 4px; background: rgba(0,0,0,0.2); transition: border-color 0.3s ease;">
+                            <input type="text" id="exam-numerical-input" 
+                                style="width: 100%; background: transparent; border: none; outline: none; padding: 12px 16px; color: var(--text-main); font-size: 1.1rem; font-weight: 600;" 
+                                placeholder="Type your numeric answer here..." 
+                                value="${userAnswer !== undefined ? escapeHtml(userAnswer) : ''}" 
+                                oninput="handleNumericalInput(this.value)"
+                            />
                         </div>
-                    </button>
+                    </div>
                 `;
-            }).join('');
+            }
 
             // Render mathematical expressions with KaTeX
             renderMath(document.getElementById('exam-q-body-text'));
@@ -2208,6 +2764,9 @@
             delete examAnswers[q.id];
             examQuestionStatuses[currentExamQuestionIndex] = 'unanswered';
 
+            const numInput = document.getElementById('exam-numerical-input');
+            if (numInput) numInput.value = '';
+
             document.querySelectorAll('.option-btn-exam').forEach(btn => btn.classList.remove('selected'));
             renderExamPalette();
         }
@@ -2270,11 +2829,21 @@
 
             examQuestions.forEach((q, idx) => {
                 const userAns = examAnswers[q.id];
-                const isCorrect = userAns === q.correct_answer;
+                const isAttempted = userAns !== undefined;
+                
+                let isCorrect = false;
+                if (isAttempted) {
+                    if (q.is_mcq) {
+                        isCorrect = userAns === q.correct_answer;
+                    } else {
+                        isCorrect = isNumericalAnswerCorrect(String(userAns), String(q.correct_answer));
+                    }
+                }
+                
                 const timeSpent = examQuestionTimes[q.id] || 0;
                 totalTimeSpent += timeSpent;
 
-                if (userAns === undefined) {
+                if (!isAttempted) {
                     unattemptedCount++;
                 } else if (isCorrect) {
                     correctCount++;
@@ -2286,8 +2855,8 @@
 
                 // Store attempt details locally for custom source query matching
                 localAttempts[q.id] = {
-                    correct: userAns !== undefined ? isCorrect : false,
-                    userOption: userAns !== undefined ? userAns : -1
+                    correct: isCorrect,
+                    userOption: isAttempted ? userAns : -1
                 };
 
                 questionDetailsList.push({
@@ -2301,8 +2870,11 @@
                     optionImages: [q.option_a_image, q.option_b_image, q.option_c_image, q.option_d_image],
                     detailedAnswer: q.detailed_answer || '',
                     solutionImage: q.detailed_answer_image || null,
-                    userOption: userAns !== undefined ? userAns : -1,
-                    correctOption: q.correct_answer
+                    userOption: userAns,
+                    correctOption: q.correct_answer,
+                    isCorrect: isCorrect,
+                    isAttempted: isAttempted,
+                    is_mcq: q.is_mcq
                 });
             });
 
@@ -2336,6 +2908,14 @@
 
             // Award XP based on custom test completion
             await awardTestCompletionXP(correctCount, totalTimeSpent);
+
+            // Generate detailed TestAnalytics object using the newly implemented utility
+            const testAnalytics = generateTestAnalytics(examQuestions, examAnswers, examQuestionTimes);
+            console.log("Generated TestAnalytics:", testAnalytics);
+            localStorage.setItem('learnser_last_test_analytics', JSON.stringify(testAnalytics));
+
+            // Populate the Advanced Diagnostics Dashboard
+            populateDiagnosticsDashboard(testAnalytics);
         }
 
         // Render solutions tab list
@@ -2355,9 +2935,9 @@
             });
 
             const filtered = resultsSolutionsCached.filter(q => {
-                if (filter === 'correct') return q.userOption === q.correctOption;
-                if (filter === 'incorrect') return q.userOption !== -1 && q.userOption !== q.correctOption;
-                if (filter === 'unattempted') return q.userOption === -1;
+                if (filter === 'correct') return q.isAttempted && q.isCorrect;
+                if (filter === 'incorrect') return q.isAttempted && !q.isCorrect;
+                if (filter === 'unattempted') return !q.isAttempted;
                 return true;
             });
 
@@ -2367,17 +2947,31 @@
             }
 
             filtered.forEach((q, idx) => {
-                const isCorrect = q.userOption === q.correctOption;
-                const isUnattempted = q.userOption === -1;
+                const isCorrect = q.isCorrect;
+                const isUnattempted = !q.isAttempted;
                 
                 let cardClass = 'solution-card';
                 let userAnsText = "Unattempted";
-                if (isCorrect) {
-                    cardClass += ' correct';
-                    userAnsText = `Your Answer: Option ${String.fromCharCode(65 + q.userOption)} (Correct)`;
-                } else if (!isUnattempted) {
-                    cardClass += ' incorrect';
-                    userAnsText = `Your Answer: Option ${String.fromCharCode(65 + q.userOption)} (Incorrect)`;
+                let correctAnsText = "";
+
+                if (q.is_mcq) {
+                    correctAnsText = `Option ${String.fromCharCode(65 + q.correctOption)}`;
+                    if (isCorrect) {
+                        cardClass += ' correct';
+                        userAnsText = `Your Answer: Option ${String.fromCharCode(65 + q.userOption)} (Correct)`;
+                    } else if (!isUnattempted) {
+                        cardClass += ' incorrect';
+                        userAnsText = `Your Answer: Option ${String.fromCharCode(65 + q.userOption)} (Incorrect)`;
+                    }
+                } else {
+                    correctAnsText = String(q.correctOption);
+                    if (isCorrect) {
+                        cardClass += ' correct';
+                        userAnsText = `Your Answer: ${q.userOption} (Correct)`;
+                    } else if (!isUnattempted) {
+                        cardClass += ' incorrect';
+                        userAnsText = `Your Answer: ${q.userOption} (Incorrect)`;
+                    }
                 }
 
                 let qImgHtml = '';
@@ -2399,7 +2993,7 @@
                     </div>
                     <div class="solution-answers">
                         <span class="${isCorrect ? 'user-ans-correct' : (isUnattempted ? '' : 'user-ans-wrong')}">${userAnsText}</span>
-                        <span>Correct Answer: Option ${String.fromCharCode(65 + q.correctOption)}</span>
+                        <span>Correct Answer: ${correctAnsText}</span>
                     </div>
                     <div class="solution-explanation">
                         <strong>Detailed Explanation:</strong>
@@ -2417,13 +3011,259 @@
             document.querySelectorAll('.results-tabs .results-tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-tab-${tabId}`).classList.add('active');
 
+            document.getElementById('tab-results-ai').style.display = 'none';
+            document.getElementById('tab-results-solutions').style.display = 'none';
+            document.getElementById('tab-results-diagnostics').style.display = 'none';
+
             if (tabId === 'ai') {
                 document.getElementById('tab-results-ai').style.display = 'flex';
-                document.getElementById('tab-results-solutions').style.display = 'none';
-            } else {
-                document.getElementById('tab-results-ai').style.display = 'none';
+            } else if (tabId === 'solutions') {
                 document.getElementById('tab-results-solutions').style.display = 'block';
+            } else if (tabId === 'diagnostics') {
+                document.getElementById('tab-results-diagnostics').style.display = 'block';
+                // Trigger scatterplot rendering when diagnostics tab is selected
+                renderPacingScatterplot();
             }
+        }
+
+        let currentAnalyticsData = null; // cache analytics for chart resize/redraw
+
+        function populateDiagnosticsDashboard(analytics) {
+            currentAnalyticsData = analytics;
+            
+            // 1. Render Highlights Panel (Top Strengths)
+            const highlightsPanel = document.getElementById('diag-highlights-panel');
+            if (highlightsPanel) {
+                if (analytics.topStrengths && analytics.topStrengths.length > 0) {
+                    let strengthsHtml = `
+                        <div class="strengths-header">
+                            <span class="strengths-star">⭐</span>
+                            <h4>Top Performance Highlights</h4>
+                        </div>
+                        <div class="strengths-cards-container">
+                    `;
+                    analytics.topStrengths.forEach(s => {
+                        const icon = s.type === 'micro_skill' ? '🏆' : '⚡';
+                        strengthsHtml += `
+                            <div class="strength-pill">
+                                <span class="strength-icon">${icon}</span>
+                                <div class="strength-details">
+                                    <div class="strength-name">${s.name}</div>
+                                    <div class="strength-desc">${s.description}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    strengthsHtml += `</div>`;
+                    highlightsPanel.innerHTML = strengthsHtml;
+                    highlightsPanel.style.display = 'block';
+                } else {
+                    highlightsPanel.innerHTML = `
+                        <div class="strengths-header">
+                            <span class="strengths-star">⭐</span>
+                            <h4>Top Performance Highlights</h4>
+                        </div>
+                        <p style="color: var(--text-dim); font-size: 0.9rem; margin-top: 8px;">Keep practicing to build your micro-skill strengths. Try answering more questions per topic to establish mastery data.</p>
+                    `;
+                    highlightsPanel.style.display = 'block';
+                }
+            }
+
+            // 2. Render Actionable Insights (Flags to human-readable advice)
+            const insightsList = document.getElementById('diag-insights-list');
+            if (insightsList) {
+                insightsList.innerHTML = '';
+                
+                const insights = [];
+
+                // Pacing & Time-Sinks Insights
+                const sinks = analytics.diagnostics.timeSinks;
+                if (sinks && sinks.length > 0) {
+                    const incorrectSinksCount = sinks.filter(s => s.type === 'Time Sink - Incorrect').length;
+                    const correctSinksCount = sinks.filter(s => s.type === 'Time Sink - Correct').length;
+
+                    if (incorrectSinksCount > 0) {
+                        insights.push({
+                            type: 'warning',
+                            title: 'Pacing Drain: High Investment, No Yield',
+                            description: `You spent more than 3x the average cohort duration on ${incorrectSinksCount} question(s) that were ultimately marked incorrect. Action: Set a hard cut-off limit (e.g. 3 minutes). If a question is not solved by then, bookmark it and move on.`
+                        });
+                    }
+                    if (correctSinksCount > 0) {
+                        insights.push({
+                            type: 'info',
+                            title: 'Pacing Cost: Correct but Inefficient',
+                            description: `You spent more than 3x the average cohort duration on ${correctSinksCount} question(s) that you solved correctly. Action: While accurate, these speed-traps reduce overall assessment time. Practice speed drills on these topics to optimize your execution.`
+                        });
+                    }
+                }
+
+                // Careless Errors Insights
+                const careless = analytics.diagnostics.carelessErrors;
+                if (careless && careless.length > 0) {
+                    careless.forEach(c => {
+                        insights.push({
+                            type: 'error',
+                            title: `Careless Errors Flag: ${c.topic}`,
+                            description: `You achieved high accuracy on Hard questions (${c.hardAccuracy}%) but failed on Easy questions (${c.easyAccuracy}%) in this topic. Action: Slow down and verify your arithmetic on basic problems. Avoid over-complicating questions that have straightforward solutions.`
+                        });
+                    });
+                }
+
+                // Fatigue Insights
+                const fatigue = analytics.diagnostics.fatigue;
+                if (fatigue && fatigue.fatigueDetected) {
+                    insights.push({
+                        type: 'fatigue',
+                        title: 'Performance Fade: Fatigue Detected',
+                        description: `${fatigue.message} Action: To combat cognitive fatigue, simulate real exam conditions and practice taking a 20-second breathing break halfway through to reset your attention.`
+                    });
+                }
+
+                // Default Insight if none
+                if (insights.length === 0) {
+                    insights.push({
+                        type: 'success',
+                        title: 'Solid Assessment Execution',
+                        description: 'No pacing anomalies, careless error patterns, or fatigue degradations were flagged. Your focus and pacing remained consistent throughout the exam.'
+                    });
+                }
+
+                insights.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = `insight-item ${item.type}`;
+                    div.innerHTML = `
+                        <div class="insight-badge-icon"></div>
+                        <div class="insight-body">
+                            <div class="insight-title">${item.title}</div>
+                            <div class="insight-desc">${item.description}</div>
+                        </div>
+                    `;
+                    insightsList.appendChild(div);
+                });
+            }
+        }
+
+        function renderPacingScatterplot() {
+            if (!currentAnalyticsData) return;
+            
+            const canvas = document.getElementById('pacing-scatterplot');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            
+            // Adjust canvas resolution for high DPI displays
+            const dpr = window.devicePixelRatio || 1;
+            const container = document.getElementById('scatterplot-wrapper');
+            const width = container.clientWidth || 400;
+            const height = 280;
+            
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            ctx.scale(dpr, dpr);
+
+            const points = currentAnalyticsData.timeAllocation || [];
+            
+            // Determine maximum time spent for scaling X-axis
+            const maxTime = Math.max(180, ...points.map(p => p.timeSpent), ...points.map(p => p.cohortAverageTime));
+            const xLimit = Math.ceil(maxTime / 60) * 60; // round up to nearest minute
+
+            // Map difficulties to Y-coordinates
+            const diffMap = { 'easy': 1, 'medium': 2, 'hard': 3 };
+            const diffLabels = { 1: 'Easy', 2: 'Medium', 3: 'Hard' };
+
+            // Chart margins
+            const margin = { top: 20, right: 30, bottom: 40, left: 60 };
+            const chartWidth = width - margin.left - margin.right;
+            const chartHeight = height - margin.top - margin.bottom;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw grid lines & axes labels
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '500 11px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+
+            // Y-axis grid and labels (Difficulty)
+            for (let val = 1; val <= 3; val++) {
+                const y = margin.top + chartHeight - ((val - 1) / 2) * chartHeight;
+                
+                // Draw grid line
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(margin.left + chartWidth, y);
+                ctx.stroke();
+
+                // Draw label
+                ctx.fillText(diffLabels[val], margin.left - 12, y);
+            }
+
+            // X-axis grid and labels (Time)
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const xStep = xLimit / 4;
+            for (let val = 0; val <= xLimit; val += xStep) {
+                const x = margin.left + (val / xLimit) * chartWidth;
+                
+                // Draw vertical grid line
+                ctx.beginPath();
+                ctx.moveTo(x, margin.top);
+                ctx.lineTo(x, margin.top + chartHeight);
+                ctx.stroke();
+
+                // Draw label
+                ctx.fillText(`${val}s`, x, margin.top + chartHeight + 8);
+            }
+
+            // X-axis main title
+            ctx.fillStyle = '#64748b';
+            ctx.font = '600 10px sans-serif';
+            ctx.fillText('Time Spent (seconds)', margin.left + chartWidth / 2, margin.top + chartHeight + 24);
+
+            // Draw "Optimal Time Limit" vertical line
+            // Calculate optimal time limit: average time across all questions difficulty
+            const totalCohortAvg = points.reduce((acc, curr) => acc + curr.cohortAverageTime, 0);
+            const optimalLimit = points.length > 0 ? (totalCohortAvg / points.length) : 120; // fallback to 120s
+            const optX = margin.left + (optimalLimit / xLimit) * chartWidth;
+
+            ctx.strokeStyle = 'rgba(129, 140, 248, 0.4)'; // Indigo/Optimal line
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(optX, margin.top);
+            ctx.lineTo(optX, margin.top + chartHeight);
+            ctx.stroke();
+            ctx.setLineDash([]); // reset
+
+            // Draw scatter points
+            points.forEach((p, idx) => {
+                const valY = diffMap[String(p.difficulty).toLowerCase()] || 2;
+                const x = margin.left + (p.timeSpent / xLimit) * chartWidth;
+                const y = margin.top + chartHeight - ((valY - 1) / 2) * chartHeight;
+
+                // Color codes: Correct = Emerald Green, Incorrect = Crimson Red
+                ctx.fillStyle = p.isCorrect ? '#10b981' : '#ef4444';
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Point border for readability
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Question number text inside or next to the point
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 9px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(String(idx + 1), x, y);
+            });
         }
 
         // Request Feedback from Sarvam AI Chat completions
@@ -2435,10 +3275,43 @@
             const studentName = cachedProfile ? JSON.parse(cachedProfile).display_name : "Student";
 
             try {
-                const systemPrompt = `You are an expert academic coach and test analyst for JEE Mains. Your job is to analyze a student's custom exam performance and give a detailed review. Focus on time taken per question relative to its difficulty (Easy, Medium, Hard). Identify questions where they wasted time, qualitative insights on their preparation, and clear, actionable steps for improvement. Use markdown format.`;
+                // Pre-summarize data to keep prompt short, preventing model truncation and keeping reasoning short
+                const diffStats = {
+                    Easy: { total: 0, correct: 0, time: 0 },
+                    Medium: { total: 0, correct: 0, time: 0 },
+                    Hard: { total: 0, correct: 0, time: 0 }
+                };
+                const timeSinks = [];
+                const incorrectList = [];
+
+                questionDetails.forEach((q, idx) => {
+                    const diff = q.difficulty ? (q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1).toLowerCase()) : 'Medium';
+                    const stats = diffStats[diff] || diffStats['Medium'];
+                    stats.total++;
+                    if (q.isCorrect) stats.correct++;
+                    stats.time += q.timeSpent;
+
+                    // Fetch cohort average for comparison
+                    const cohortAvg = getCohortAverageTime(q.difficulty);
+                    if (q.timeSpent > cohortAvg * 2.5) {
+                        timeSinks.push(`- Q${idx+1} (${q.subject} - ${diff}): Spent ${q.timeSpent}s vs avg ${cohortAvg}s (${q.isCorrect ? 'Correct' : 'Incorrect'})`);
+                    }
+                    if (!q.isCorrect && q.isAttempted) {
+                        const userAnsChar = q.is_mcq ? String.fromCharCode(65 + q.userOption) : q.userOption;
+                        const correctAnsChar = q.is_mcq ? String.fromCharCode(65 + q.correctOption) : q.correctOption;
+                        incorrectList.push(`- Q${idx+1} (${q.subject} - ${diff}): Selected "${userAnsChar}" (Correct is "${correctAnsChar}"), Time spent: ${q.timeSpent}s`);
+                    }
+                });
+
+                const diffSummary = Object.entries(diffStats).map(([diff, stats]) => {
+                    const avgTime = stats.total > 0 ? Math.round(stats.time / stats.total) : 0;
+                    return `- ${diff} Questions: ${stats.correct}/${stats.total} Correct. Average Time: ${avgTime}s`;
+                }).join('\n');
+
+                const systemPrompt = `You are an expert academic coach and test analyst for JEE Mains. Analyze the student's exam performance metrics and provide a structured, professional review. Focus on time allocation, strengths/weaknesses, and actionable steps. Return only the final detailed assessment. Do not include planning, drafting, or scratchpad steps.`;
                 
                 const userPrompt = `
-Analyze the following student test attempt:
+Analyze the student test attempt:
 Student Name: ${studentName}
 Score: ${score} (JEE Format: +4 for correct, -1 for incorrect)
 Correct Answers: ${correct}
@@ -2448,18 +3321,19 @@ Accuracy: ${accuracy}%
 Total Time Taken: ${Math.floor(timeSpent / 60)}m ${timeSpent % 60}s
 Exam Termination Reason: ${reason}
 
-Question Breakdown Details:
-${questionDetails.map((q, idx) => `
-Q${idx+1}: Subject: ${q.subject}, Difficulty: ${q.difficulty}
-User Answer: ${q.userOption === -1 ? 'Unattempted' : String.fromCharCode(65 + q.userOption)}, Correct Answer: ${String.fromCharCode(65 + q.correctOption)}
-Result: ${q.userOption === -1 ? 'Unattempted' : (q.userOption === q.correctOption ? 'Correct' : 'Incorrect')}
-Time Spent: ${q.timeSpent} seconds
-`).join('')}
+Performance Summary by Difficulty:
+${diffSummary}
+
+Pacing Issues (Spent > 2.5x average):
+${timeSinks.length > 0 ? timeSinks.join('\n') : '- None'}
+
+Incorrect Questions Detail:
+${incorrectList.length > 0 ? incorrectList.join('\n') : '- None'}
 
 Provide:
 1. Difficulty-to-Time Analysis: Focus on whether the student spent too much time on Easy or Medium questions vs Hard questions, and if it cost them score.
 2. Strengths and Weaknesses: Highlight subjects and difficulties they succeeded in and where they struggled.
-3. Time Management Review: Point out any specific questions where they spent an excessive amount of time (e.g. over 150 seconds).
+3. Time Management Review: Point out any specific questions where they spent an excessive amount of time.
 4. Actionable Steps: Specific recommendations for their next custom test attempt.
 `;
 
@@ -2480,7 +3354,23 @@ Provide:
 
                 if (response.ok) {
                     const res = await response.json();
-                    aiBody.innerHTML = res?.choices?.[0]?.message?.content || "Failed to generate AI review.";
+                    const message = res?.choices?.[0]?.message;
+                    const rawContent = message?.content || message?.reasoning_content || "";
+                    
+                    if (rawContent) {
+                        // Safe basic formatting of simple markdown for the HTML container
+                        const formatted = rawContent
+                            .replace(/&/g, "&amp;")
+                            .replace(/</g, "&lt;")
+                            .replace(/>/g, "&gt;")
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                            .replace(/\n\n/g, '<br><br>')
+                            .replace(/\n/g, '<br>');
+                        aiBody.innerHTML = formatted;
+                    } else {
+                        aiBody.innerHTML = "Failed to generate AI review.";
+                    }
                 } else {
                     aiBody.textContent = "AI analytics review service is temporarily unavailable.";
                 }
@@ -2529,6 +3419,56 @@ Provide:
         // Return to setup wizard
         function backToWizard() {
             switchView('wizard');
+        }
+
+        // Switch active views
+        function switchView(viewId) {
+            document.querySelectorAll('.ui-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            
+            // Scroll main content to top on view change
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) mainContent.scrollTop = 0;
+        }
+
+        // Numerical input handler
+        function handleNumericalInput(value) {
+            const q = examQuestions[currentExamQuestionIndex];
+            if (value.trim() !== '') {
+                examAnswers[q.id] = value;
+                if (examQuestionStatuses[currentExamQuestionIndex] !== 'review') {
+                    examQuestionStatuses[currentExamQuestionIndex] = 'answered';
+                }
+            } else {
+                delete examAnswers[q.id];
+                if (examQuestionStatuses[currentExamQuestionIndex] !== 'review') {
+                    examQuestionStatuses[currentExamQuestionIndex] = 'unanswered';
+                }
+            }
+            renderExamPalette();
+        }
+
+        // Check typed numerical answer correctness against database value
+        function isNumericalAnswerCorrect(userAnswer, correctAnswerText) {
+            if (!userAnswer || !correctAnswerText) return false;
+            
+            const cleanUser = userAnswer.trim().replace(/\s+/g, '');
+            const cleanCorrect = correctAnswerText.trim().replace(/\s+/g, '');
+            
+            if (cleanUser === cleanCorrect) return true;
+            
+            // Try numeric comparison
+            const userNum = parseFloat(cleanUser);
+            const correctNum = parseFloat(cleanCorrect);
+            
+            if (!isNaN(userNum) && !isNaN(correctNum)) {
+                // Allow a small tolerance for rounding differences (e.g. 2.0 vs 2)
+                return Math.abs(userNum - correctNum) < 0.01;
+            }
+            
+            return false;
         }
 
         // --- FULLSCREEN CONTROLLER ---
@@ -2591,12 +3531,89 @@ Provide:
                     warningBadge.textContent = `Tab Switch Warning: ${examTabSwitchCount}/3`;
                 }
 
-                alert(`WARNING: Minimizing the test window or switching tabs is restricted! (Switch ${examTabSwitchCount}/3). You will be disqualified on the 3rd switch.`);
+                // Pause timer
+                if (examTimerInterval) clearInterval(examTimerInterval);
 
-                if (examTabSwitchCount >= 3) {
-                    alert("Disqualification: Maximum tab switches exceeded. Submitting test immediately.");
-                    submitExam('tab_switch');
+                const blocker = document.getElementById('tabSwitchBlocker');
+                const card = document.getElementById('tab-switch-card');
+                const iconWrapper = document.getElementById('tab-switch-icon-wrapper');
+                const titleEl = document.getElementById('tab-switch-title');
+                const badge = document.getElementById('tab-switch-badge');
+                const msgSub = document.getElementById('tab-switch-msg-sub');
+                const btnEl = document.getElementById('btn-tab-switch-resume');
+
+                // Clean SVGs for states
+                const WARNING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 28px; height: 28px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
+                const SECURITY_SVG = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 28px; height: 28px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`;
+
+                if (blocker) {
+                    blocker.style.display = 'flex';
+                    
+                    // Reset class themes
+                    if (card) {
+                        card.className = 'blocker-card';
+                    }
+
+                    if (examTabSwitchCount === 1) {
+                        if (card) card.classList.add('amber-theme');
+                        if (iconWrapper) iconWrapper.innerHTML = WARNING_SVG;
+                        if (titleEl) titleEl.textContent = "Warning: Window Switch Detected";
+                        if (badge) {
+                            badge.textContent = "Navigation Warning: 1 / 3";
+                        }
+                        if (msgSub) {
+                            msgSub.textContent = "Important: A third violation will result in the automatic submission of your exam paper. You will not be able to resume.";
+                        }
+                        if (btnEl) {
+                            btnEl.style.display = 'block';
+                            btnEl.textContent = "Acknowledge and Return to Test";
+                        }
+                    } else if (examTabSwitchCount === 2) {
+                        if (card) card.classList.add('red-theme');
+                        if (iconWrapper) iconWrapper.innerHTML = SECURITY_SVG;
+                        if (titleEl) titleEl.textContent = "Security Alert: Final Warning";
+                        if (badge) {
+                            badge.textContent = "Final Warning: 2 / 3";
+                        }
+                        if (msgSub) {
+                            msgSub.textContent = "Attention: This is your final warning. Any further window switch will submit your exam paper immediately.";
+                        }
+                        if (btnEl) {
+                            btnEl.style.display = 'block';
+                            btnEl.textContent = "Acknowledge and Return to Test";
+                        }
+                    } else if (examTabSwitchCount >= 3) {
+                        if (card) card.classList.add('red-theme');
+                        if (iconWrapper) iconWrapper.innerHTML = SECURITY_SVG;
+                        if (titleEl) titleEl.textContent = "Exam Terminated: Limit Exceeded";
+                        if (badge) {
+                            badge.textContent = "Disqualified";
+                        }
+                        if (msgSub) {
+                            msgSub.textContent = "You have exceeded the maximum allowed window switches. Your exam is being submitted and your session is terminated.";
+                        }
+                        if (btnEl) {
+                            btnEl.style.display = 'none';
+                        }
+
+                        setTimeout(() => {
+                            dismissTabSwitchWarning();
+                            submitExam('tab_switch');
+                        }, 2500);
+                    }
                 }
+            }
+        }
+
+        // Dismiss the custom tab switch warning overlay and resume the timer
+        function dismissTabSwitchWarning() {
+            const blocker = document.getElementById('tabSwitchBlocker');
+            if (blocker) blocker.style.display = 'none';
+            
+            // Resume timer if not disqualified and browser is in fullscreen
+            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+            if (isExamActive && examTabSwitchCount < 3 && isFullscreen) {
+                startExamTimer();
             }
         }
 

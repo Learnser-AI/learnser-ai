@@ -1,0 +1,15 @@
+# netlify.toml
+# Netlify configuration file for build and serverless functions settings
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+  command = "echo \"window.env = { SUPABASE_URL: '$SUPABASE_URL', SUPABASE_ANON_KEY: '$SUPABASE_ANON_KEY' };\" > env.js"
+
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/sarvam-proxy"
+  status = 200
+
+[functions]
+  node_compatibility = "v18"

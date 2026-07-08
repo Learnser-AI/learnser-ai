@@ -7,8 +7,10 @@
   const isAuthPage = path.endsWith("auth.html");
   const isLandingPage = path.endsWith("index.html") || path === "/" || path === "";
   
-  // Pages requiring login
-  const requiresAuth = !isAuthPage && !isLandingPage;
+  // Pages requiring login (bypassed on localhost for testgenerator to ease local development)
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const hasBypassParam = window.location.search.includes('bypass_auth=true');
+  const requiresAuth = !isAuthPage && !isLandingPage && !(isLocalhost && (path.endsWith("testgenerator.html") || hasBypassParam));
 
   // Analytics & Engagement Telemetry State variables
   let trackingInitialized = false;
