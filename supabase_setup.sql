@@ -19,21 +19,37 @@ CREATE TABLE IF NOT EXISTS jee_questions (
 );
 
 -- Enable Read-Only Row Level Security (RLS) for anonymous access
-ALTER TABLE jee_questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.jee_questions ENABLE ROW LEVEL SECURITY;
 
+-- If you have an unsafe "Allow anon insert" policy, drop it:
+DROP POLICY IF EXISTS "Allow anon insert" ON public.jee_questions;
+
+-- Ensure public read access policy exists
+DROP POLICY IF EXISTS "Allow public read access" ON public.jee_questions;
 CREATE POLICY "Allow public read access" 
-ON jee_questions 
+ON public.jee_questions 
 FOR SELECT 
 TO anon, authenticated 
 USING (true);
 
--- 2. Create the jee_chapters View
--- This view retrieves a list of unique subjects and chapters for the pre-test setup.
-CREATE OR REPLACE VIEW jee_chapters AS
+-- Enable RLS for ncert_knowledge_chunks
+ALTER TABLE IF EXISTS public.ncert_knowledge_chunks ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public read access to NCERT knowledge" ON public.ncert_knowledge_chunks;
+CREATE POLICY "Allow public read access to NCERT knowledge"
+ON public.ncert_knowledge_chunks
+FOR SELECT
+TO anon, authenticated
+USING (true);
+
+-- 2. Create the jee_chapters View with security_invoker = true
+-- (Fixes Supabase "Security Definer View" warning by enforcing querying user's RLS)
+CREATE OR REPLACE VIEW public.jee_chapters
+WITH (security_invoker = true) AS
 SELECT DISTINCT 
     subject, 
     chapter
-FROM jee_questions
+FROM public.jee_questions
 ORDER BY subject, chapter;
 
 -- 3. Create the get_random_balanced_questions Stored Procedure (RPC)

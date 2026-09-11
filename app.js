@@ -1613,29 +1613,7 @@ if (!BACKEND_URL || BACKEND_URL.includes('127.0.0.1') || BACKEND_URL.includes('l
     localStorage.setItem('EDUPOD_BACKEND_URL', BACKEND_URL);
 }
 
-function getSarvamRequestConfig() {
-    const isLocal = window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1' || 
-                    window.location.protocol === 'file:';
-    const localKey = window.env?.SARVAM_API_KEY;
-    
-    if (isLocal && localKey) {
-        return {
-            url: "https://api.sarvam.ai/v1/chat/completions",
-            headers: {
-                "Content-Type": "application/json",
-                "api-subscription-key": localKey
-            }
-        };
-    } else {
-        return {
-            url: "/.netlify/functions/sarvam-proxy",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        };
-    }
-}
+const SARVAM_API_KEY = window.env?.SARVAM_API_KEY || "";
 
 function initializePodcastListeners() {
     document.getElementById('generatePodcastBtn').addEventListener('click', generatePodcast);
@@ -1749,10 +1727,12 @@ Return strictly valid raw JSON.
     const userPrompt = `Write an educational podcast script about "${topic}" using simple English and vivid Indian analogies. Make it highly engaging, lively, and conversational.`;
 
     try {
-        const config = getSarvamRequestConfig();
-        const response = await fetch(config.url, {
+        const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
             method: 'POST',
-            headers: config.headers,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SARVAM_API_KEY}`
+            },
             body: JSON.stringify({
                 model: "sarvam-30b",
                 messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
@@ -3072,10 +3052,12 @@ Provide:
 4. Actionable Steps: Specific recommendations for their next custom test attempt.
 `;
 
-        const config = getSarvamRequestConfig();
-        const response = await fetch(config.url, {
+        const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
             method: 'POST',
-            headers: config.headers,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SARVAM_API_KEY}`
+            },
             body: JSON.stringify({
                 model: "sarvam-30b",
                 messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],

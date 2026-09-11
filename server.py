@@ -71,7 +71,7 @@ def stream_line():
         return send_file(filename, mimetype="audio/mp3")
 
     except Exception as e:
-        print(f"💥 Audio processing failure on line {index}: {str(e)}")
+        print(f"Audio processing failure on line {index}: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/purge-cache', methods=['POST'])
@@ -86,5 +86,5 @@ def purge_cache():
     return jsonify({"status": "cleared"})
 
 if __name__ == '__main__':
-    print("🚀 Starting EduPod Backend Server explicitly on http://127.0.0.1:8080...")
+    print("Starting EduPod Backend Server explicitly on http://127.0.0.1:8080...")
     app.run(host='127.0.0.1', port=8080, debug=False)

@@ -6,6 +6,7 @@
     <title>Custom Test Generator | Learnser AI</title>
     
     <script src="theme.js?v=2.0"></script>
+    <script src="env.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <!-- KaTeX for high-quality mathematical rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -3337,11 +3338,12 @@ Provide:
 4. Actionable Steps: Specific recommendations for their next custom test attempt.
 `;
 
-                const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
+                const sarvamKey = window.env?.SARVAM_API_KEY || "";
+                const response = await fetch(window.env?.SARVAM_ENDPOINT || 'https://api.sarvam.ai/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer sk_6fppdea6_iZG0WGKmfPXtZImv5W1m49uH`
+                        'Authorization': `Bearer ${sarvamKey}`
                     },
                     body: JSON.stringify({
                         model: "sarvam-30b",

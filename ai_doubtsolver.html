@@ -7,6 +7,7 @@
     <title>Doubt Solver | Learnser AI</title>
 
     <script src="theme.js?v=2.0"></script>
+    <script src="env.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
@@ -1564,29 +1565,7 @@
         // ==========================================
         //  AI BRAIN CONFIGURATION & SYSTEM PROMPT
         // ==========================================
-        function getSarvamRequestConfig() {
-            const isLocal = window.location.hostname === 'localhost' || 
-                            window.location.hostname === '127.0.0.1' || 
-                            window.location.protocol === 'file:';
-            const localKey = window.env?.SARVAM_API_KEY;
-            
-            if (isLocal && localKey) {
-                return {
-                    url: "https://api.sarvam.ai/v1/chat/completions",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "api-subscription-key": localKey
-                    }
-                };
-            } else {
-                return {
-                    url: "/.netlify/functions/sarvam-proxy",
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                };
-            }
-        }
+        const SARVAM_API_KEY = window.env?.SARVAM_API_KEY || "";
 
         const SYSTEM_PROMPT = `You are Learnser AI, an expert academic tutor who genuinely cares about the student's success. You are warm, encouraging, and incredibly patient, just like a favorite teacher. Your goal is to build confidence and deep intuition. You never make the student feel bad for asking a question.
 
@@ -1932,10 +1911,12 @@ You must ALWAYS format your answers using this exact structure, including the he
             document.getElementById('typing-status').style.display = 'block';
 
             try {
-                const config = getSarvamRequestConfig();
-                const res = await fetch(config.url, {
+                const res = await fetch("https://api.sarvam.ai/v1/chat/completions", {
                     method: "POST",
-                    headers: config.headers,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "api-subscription-key": SARVAM_API_KEY
+                    },
                     body: JSON.stringify({
                         model: "sarvam-30b",
                         messages: chatHistory,
